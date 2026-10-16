@@ -2,17 +2,41 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
+const pool = require('./config/database');
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
+// Verificar que Express funciona
 app.get('/api/health', (req, res) => {
   res.json({
     success: true,
     message: 'API del Sistema de Inventario PES funcionando'
   });
+});
+
+// Verificar la conexión con PostgreSQL en Neon
+app.get('/api/health/db', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT current_database() AS base_datos, current_user AS usuario'
+    );
+
+    res.json({
+      success: true,
+      message: 'Conexión con PostgreSQL exitosa',
+      data: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error de conexión con PostgreSQL:', error.message);
+
+    res.status(500).json({
+      success: false,
+      message: 'No se pudo conectar con PostgreSQL'
+    });
+  }
 });
 
 const PORT = process.env.PORT || 3000;
