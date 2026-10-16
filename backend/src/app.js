@@ -3,11 +3,15 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const pool = require('./config/database');
+const sedesRoutes = require('./routes/sedesRoutes');
+const laboratoriosRoutes = require('./routes/laboratoriosRoutes');
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use('/api/sedes', sedesRoutes);
+app.use('/api/laboratorios', laboratoriosRoutes);
 
 // Verificar que Express funciona
 app.get('/api/health', (req, res) => {
