@@ -7,6 +7,7 @@ const sedesRoutes = require('./routes/sedesRoutes');
 const laboratoriosRoutes = require('./routes/laboratoriosRoutes');
 const categoriasRoutes = require('./routes/categoriasRoutes');
 const estadosRoutes = require('./routes/estadosRoutes');
+const equiposRoutes = require('./routes/equiposRoutes');
 
 const app = express();
 
@@ -16,6 +17,7 @@ app.use('/api/sedes', sedesRoutes);
 app.use('/api/laboratorios', laboratoriosRoutes);
 app.use('/api/categorias', categoriasRoutes);
 app.use('/api/estados', estadosRoutes);
+app.use('/api/equipos', equiposRoutes);
 
 // Verificar que Express funciona
 app.get('/api/health', (req, res) => {
