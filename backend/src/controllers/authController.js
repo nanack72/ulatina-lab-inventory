@@ -60,6 +60,15 @@ const login = async (req, res) => {
             });
         }
 
+        // Validamos que JWT_SECRET esté configurado en las variables de entorno
+        if (!process.env.JWT_SECRET) {
+            console.error('ERROR CRÍTICO: JWT_SECRET no está configurado en las variables de entorno (.env)');
+            return res.status(500).json({
+                success: false,
+                message: 'Error de configuración del servidor: falta JWT_SECRET en las variables de entorno'
+            });
+        }
+
         // Armamos el token con los datos clave del usuario
         const token = jwt.sign(
             {

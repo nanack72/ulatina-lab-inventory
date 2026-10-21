@@ -2,6 +2,15 @@ const jwt = require('jsonwebtoken');
 
 // Middleware para proteger rutas y validar la sesión
 const verificarToken = (req, res, next) => {
+    // Validamos que JWT_SECRET esté configurado en el entorno
+    if (!process.env.JWT_SECRET) {
+        console.error('ERROR CRÍTICO: JWT_SECRET no está configurado en las variables de entorno (.env)');
+        return res.status(500).json({
+            success: false,
+            message: 'Error de configuración del servidor: falta JWT_SECRET en las variables de entorno'
+        });
+    }
+
     const authHeader = req.headers['authorization'];
 
     // Si no enviaron el token en los headers, frenamos la petición de una vez
@@ -22,7 +31,7 @@ const verificarToken = (req, res, next) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
         // Guardamos los datos decodificados en la petición
-        req.usuario = decoded; // Queda disponible idUsuario, idRol, correo, etc.
+        req.usuario = decoded; // Queda disponible idUsuario, idRol, correo, rol, etc.
 
         next(); // Todo bien, continuamos al controlador
     } catch (error) {
