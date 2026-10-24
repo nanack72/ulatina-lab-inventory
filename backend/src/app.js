@@ -8,6 +8,8 @@ const laboratoriosRoutes = require('./routes/laboratoriosRoutes');
 const categoriasRoutes = require('./routes/categoriasRoutes');
 const estadosRoutes = require('./routes/estadosRoutes');
 const equiposRoutes = require('./routes/equiposRoutes');
+// Rutas para la bitácora de mantenimientos (Semana 7)
+const mantenimientosRoutes = require('./routes/mantenimientosRoutes');
 // Rutas para inicio de sesión y validación de tokens
 const authRoutes = require('./routes/authRoutes');
 
@@ -20,6 +22,7 @@ app.use('/api/laboratorios', laboratoriosRoutes);
 app.use('/api/categorias', categoriasRoutes);
 app.use('/api/estados', estadosRoutes);
 app.use('/api/equipos', equiposRoutes);
+app.use('/api/mantenimientos', mantenimientosRoutes);
 // Conectamos las rutas de autenticación para login y perfil
 app.use('/api/auth', authRoutes);
 
