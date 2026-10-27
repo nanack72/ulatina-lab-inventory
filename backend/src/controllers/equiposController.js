@@ -1,10 +1,76 @@
 
 const pool = require('../config/database');
 
-// Obtener todos los equipos con su información relacionada
+// Obtener equipos con búsquedas y filtros
 const obtenerEquipos = async (req, res) => {
   try {
-    const resultado = await pool.query(`
+    const condiciones = [];
+    const valores = [];
+
+    // Filtros de texto
+    const filtrosTexto = {
+      nombre: 'e.nombre',
+      numero_serie: 'e.numero_serie',
+      placa_institucional: 'e.placa_institucional',
+      marca: 'e.marca',
+      modelo: 'e.modelo'
+    };
+
+    for (const [campo, columna] of Object.entries(filtrosTexto)) {
+      const valor = req.query[campo];
+
+      if (valor !== undefined) {
+        if (
+          typeof valor !== 'string' ||
+          !valor.trim()
+        ) {
+          return res.status(400).json({
+            success: false,
+            message: `El filtro ${campo} no es válido`
+          });
+        }
+
+        valores.push(`%${valor.trim()}%`);
+
+        condiciones.push(
+          `${columna} ILIKE $${valores.length}`
+        );
+      }
+    }
+
+    // Filtros por identificador
+    const filtrosId = {
+      id_categoria: 'e.id_categoria',
+      id_estado: 'e.id_estado',
+      id_laboratorio: 'e.id_laboratorio',
+      id_sede: 's.id_sede'
+    };
+
+    for (const [campo, columna] of Object.entries(filtrosId)) {
+      const valor = req.query[campo];
+
+      if (valor !== undefined) {
+        if (
+          typeof valor !== 'string' ||
+          !/^[1-9]\d*$/.test(valor) ||
+          !Number.isSafeInteger(Number(valor))
+        ) {
+          return res.status(400).json({
+            success: false,
+            message: `El filtro ${campo} debe ser un ID válido`
+          });
+        }
+
+        valores.push(Number(valor));
+
+        condiciones.push(
+          `${columna} = $${valores.length}`
+        );
+      }
+    }
+
+    // Consulta principal
+    let consulta = `
       SELECT
         e.id_equipo,
         e.nombre,
@@ -43,20 +109,38 @@ const obtenerEquipos = async (req, res) => {
 
       INNER JOIN public.sede s
         ON l.id_sede = s.id_sede
+    `;
 
+    // Agregar filtros cuando existan
+    if (condiciones.length > 0) {
+      consulta += `
+        WHERE ${condiciones.join(' AND ')}
+      `;
+    }
+
+    // Ordenar equipos
+    consulta += `
       ORDER BY e.id_equipo DESC
-    `);
+    `;
 
-    res.json({
+    const resultado = await pool.query(
+      consulta,
+      valores
+    );
+
+    return res.status(200).json({
       success: true,
       total: resultado.rowCount,
       data: resultado.rows
     });
 
   } catch (error) {
-    console.error('Error al obtener equipos:', error.message);
+    console.error(
+      'Error al obtener equipos:',
+      error.message
+    );
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Error al consultar los equipos'
     });
@@ -69,7 +153,10 @@ const obtenerEquipoPorId = async (req, res) => {
     const { id } = req.params;
 
     // Validar que el ID sea un número entero positivo
-    if (!/^[1-9]\d*$/.test(id)) {
+    if (
+      !/^[1-9]\d*$/.test(id) ||
+      !Number.isSafeInteger(Number(id))
+    ) {
       return res.status(400).json({
         success: false,
         message: 'El identificador del equipo no es válido'
@@ -117,7 +204,7 @@ const obtenerEquipoPorId = async (req, res) => {
         ON l.id_sede = s.id_sede
 
       WHERE e.id_equipo = $1
-    `, [id]);
+    `, [Number(id)]);
 
     // Comprobar si el equipo existe
     if (resultado.rows.length === 0) {
@@ -127,15 +214,18 @@ const obtenerEquipoPorId = async (req, res) => {
       });
     }
 
-    res.json({
+    return res.status(200).json({
       success: true,
       data: resultado.rows[0]
     });
 
   } catch (error) {
-    console.error('Error al obtener equipo por ID:', error.message);
+    console.error(
+      'Error al obtener equipo por ID:',
+      error.message
+    );
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Error al consultar el equipo'
     });
