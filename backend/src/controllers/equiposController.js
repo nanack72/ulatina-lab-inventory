@@ -1,3 +1,4 @@
+
 const pool = require('../config/database');
 
 // Obtener equipos con búsquedas y filtros
