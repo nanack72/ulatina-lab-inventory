@@ -1,11 +1,59 @@
-
 const pool = require('../config/database');
 
-// Obtener equipos con búsquedas y filtros
+// Verificar si el usuario tiene acceso global
+const tieneAccesoGlobal = (usuario) => {
+  return usuario?.rol?.toLowerCase() === 'superadministrador';
+};
+
+// Construir la condición de acceso a laboratorios
+const agregarRestriccionAcceso = (
+  condiciones,
+  valores,
+  usuario
+) => {
+  if (!usuario || !Number.isSafeInteger(Number(usuario.idUsuario))) {
+    return false;
+  }
+
+  if (tieneAccesoGlobal(usuario)) {
+    return true;
+  }
+
+  valores.push(Number(usuario.idUsuario));
+
+  condiciones.push(`
+    EXISTS (
+      SELECT 1
+      FROM public.usuario_sede us
+      INNER JOIN public.usuario_laboratorio ul
+        ON us.id_usuario_sede = ul.id_usuario_sede
+      WHERE us.id_usuario = $${valores.length}
+        AND us.id_sede = l.id_sede
+        AND ul.id_sede = l.id_sede
+        AND ul.id_laboratorio = e.id_laboratorio
+    )
+  `);
+
+  return true;
+};
+
+// Obtener equipos con búsquedas, filtros y permisos
 const obtenerEquipos = async (req, res) => {
   try {
     const condiciones = [];
     const valores = [];
+
+    // Restringir según los laboratorios asignados
+    if (!agregarRestriccionAcceso(
+      condiciones,
+      valores,
+      req.usuario
+    )) {
+      return res.status(403).json({
+        success: false,
+        message: 'Usuario sin autorización válida'
+      });
+    }
 
     // Filtros de texto
     const filtrosTexto = {
@@ -111,14 +159,13 @@ const obtenerEquipos = async (req, res) => {
         ON l.id_sede = s.id_sede
     `;
 
-    // Agregar filtros cuando existan
+    // Aplicar restricciones y filtros
     if (condiciones.length > 0) {
       consulta += `
         WHERE ${condiciones.join(' AND ')}
       `;
     }
 
-    // Ordenar equipos
     consulta += `
       ORDER BY e.id_equipo DESC
     `;
@@ -147,12 +194,11 @@ const obtenerEquipos = async (req, res) => {
   }
 };
 
-// Obtener un equipo específico por su ID
+// Obtener un equipo por ID respetando los permisos
 const obtenerEquipoPorId = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Validar que el ID sea un número entero positivo
     if (
       !/^[1-9]\d*$/.test(id) ||
       !Number.isSafeInteger(Number(id))
@@ -163,7 +209,25 @@ const obtenerEquipoPorId = async (req, res) => {
       });
     }
 
-    const resultado = await pool.query(`
+    const condiciones = [];
+    const valores = [Number(id)];
+
+    // Filtrar por el equipo solicitado
+    condiciones.push('e.id_equipo = $1');
+
+    // Agregar autorización por laboratorio
+    if (!agregarRestriccionAcceso(
+      condiciones,
+      valores,
+      req.usuario
+    )) {
+      return res.status(403).json({
+        success: false,
+        message: 'Usuario sin autorización válida'
+      });
+    }
+
+    const consulta = `
       SELECT
         e.id_equipo,
         e.nombre,
@@ -203,14 +267,18 @@ const obtenerEquipoPorId = async (req, res) => {
       INNER JOIN public.sede s
         ON l.id_sede = s.id_sede
 
-      WHERE e.id_equipo = $1
-    `, [Number(id)]);
+      WHERE ${condiciones.join(' AND ')}
+    `;
 
-    // Comprobar si el equipo existe
+    const resultado = await pool.query(
+      consulta,
+      valores
+    );
+
     if (resultado.rows.length === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Equipo no encontrado'
+        message: 'Equipo no encontrado o sin acceso autorizado'
       });
     }
 
@@ -232,7 +300,6 @@ const obtenerEquipoPorId = async (req, res) => {
   }
 };
 
-// Exportar las funciones
 module.exports = {
   obtenerEquipos,
   obtenerEquipoPorId

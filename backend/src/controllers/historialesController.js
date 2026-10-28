@@ -1,45 +1,66 @@
 const pool = require('../config/database');
 
-// Validar el identificador de un equipo
+const {
+  verificarAccesoEquipo
+} = require('../utils/accesoEquipos');
+
+// Validar el identificador del equipo
 const validarId = (id) => {
   return /^[1-9]\d*$/.test(id) &&
     Number.isSafeInteger(Number(id));
 };
 
-// Verificar si el equipo existe
-const verificarEquipo = async (id) => {
-  const resultado = await pool.query(
-    'SELECT id_equipo FROM public.equipo WHERE id_equipo = $1',
-    [Number(id)]
+// Comprobar acceso antes de consultar el historial
+const validarAccesoHistorial = async (req, res) => {
+  const { id } = req.params;
+
+  if (!validarId(id)) {
+    res.status(400).json({
+      success: false,
+      message: 'El identificador del equipo no es válido'
+    });
+
+    return false;
+  }
+
+  if (!req.usuario?.idUsuario) {
+    res.status(403).json({
+      success: false,
+      message: 'Usuario sin autorización válida'
+    });
+
+    return false;
+  }
+
+  const autorizado = await verificarAccesoEquipo(
+    id,
+    req.usuario
   );
 
-  return resultado.rowCount > 0;
+  if (!autorizado) {
+    res.status(404).json({
+      success: false,
+      message: 'Equipo no encontrado o sin acceso autorizado'
+    });
+
+    return false;
+  }
+
+  return true;
 };
 
 // Consultar historial de ubicación
 const obtenerHistorialUbicacion = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    if (!validarId(id)) {
-      return res.status(400).json({
-        success: false,
-        message: 'El identificador del equipo no es válido'
-      });
-    }
-
-    if (!(await verificarEquipo(id))) {
-      return res.status(404).json({
-        success: false,
-        message: 'Equipo no encontrado'
-      });
+    if (!(await validarAccesoHistorial(req, res))) {
+      return;
     }
 
     const resultado = await pool.query(
       `SELECT *
        FROM public.historial_ubicacion
        WHERE id_equipo = $1`,
-      [Number(id)]
+      [Number(req.params.id)]
     );
 
     return res.status(200).json({
@@ -64,27 +85,15 @@ const obtenerHistorialUbicacion = async (req, res) => {
 // Consultar historial de estados
 const obtenerHistorialEstados = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    if (!validarId(id)) {
-      return res.status(400).json({
-        success: false,
-        message: 'El identificador del equipo no es válido'
-      });
-    }
-
-    if (!(await verificarEquipo(id))) {
-      return res.status(404).json({
-        success: false,
-        message: 'Equipo no encontrado'
-      });
+    if (!(await validarAccesoHistorial(req, res))) {
+      return;
     }
 
     const resultado = await pool.query(
       `SELECT *
        FROM public.historial_estado
        WHERE id_equipo = $1`,
-      [Number(id)]
+      [Number(req.params.id)]
     );
 
     return res.status(200).json({
@@ -106,30 +115,18 @@ const obtenerHistorialEstados = async (req, res) => {
   }
 };
 
-// Consultar historial de modificaciones generales
+// Consultar historial de modificaciones
 const obtenerHistorialCambios = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    if (!validarId(id)) {
-      return res.status(400).json({
-        success: false,
-        message: 'El identificador del equipo no es válido'
-      });
-    }
-
-    if (!(await verificarEquipo(id))) {
-      return res.status(404).json({
-        success: false,
-        message: 'Equipo no encontrado'
-      });
+    if (!(await validarAccesoHistorial(req, res))) {
+      return;
     }
 
     const resultado = await pool.query(
       `SELECT *
        FROM public.historial_cambio
        WHERE id_equipo = $1`,
-      [Number(id)]
+      [Number(req.params.id)]
     );
 
     return res.status(200).json({
@@ -151,7 +148,6 @@ const obtenerHistorialCambios = async (req, res) => {
   }
 };
 
-// Exportar los tres controladores
 module.exports = {
   obtenerHistorialUbicacion,
   obtenerHistorialEstados,
