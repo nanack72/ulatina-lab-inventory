@@ -1,3 +1,4 @@
+
 const express = require('express');
 const router = express.Router();
 
@@ -11,6 +12,14 @@ const {
   obtenerHistorialEstados,
   obtenerHistorialCambios
 } = require('../controllers/historialesController');
+
+// Middleware de autenticación
+const {
+  verificarToken
+} = require('../middlewares/authMiddleware');
+
+// Proteger todas las rutas de inventario
+router.use(verificarToken);
 
 // Consultar todos los equipos
 router.get('/', obtenerEquipos);
