@@ -9,3 +9,7 @@ node_modules/
 # Archivos generados
 dist/
 coverage/
+
+# Archivos locales de Postman
+.postman/
+postman/.workspace.globals.yaml
