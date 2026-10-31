@@ -1,0 +1,370 @@
+/* ==========================================
+   LOGIN
+========================================== */
+
+.login-page {
+  display: grid;
+  grid-template-columns: 52% 48%;
+  min-height: 100vh;
+  width: 100%;
+  font-family: 'Inter', Arial, sans-serif;
+  background: #ffffff;
+}
+
+/* ==========================================
+   PANEL INSTITUCIONAL
+========================================== */
+
+.login-institutional {
+  position: relative;
+  overflow: hidden;
+  color: #ffffff;
+  background:
+    radial-gradient(
+      circle at 80% 20%,
+      rgba(255, 255, 255, 0.08),
+      transparent 40%
+    ),
+    linear-gradient(145deg, #176850 0%, #0c4236 100%);
+}
+
+.login-institutional::before {
+  content: '';
+  position: absolute;
+  width: 520px;
+  height: 520px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 50%;
+  right: -230px;
+  top: -170px;
+}
+
+.login-institutional::after {
+  content: '';
+  position: absolute;
+  width: 350px;
+  height: 350px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 50%;
+  left: -170px;
+  bottom: -170px;
+}
+
+.login-institutional-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding: 45px 60px;
+}
+
+.login-brand {
+  display: flex;
+  align-items: flex-start;
+}
+
+.login-logo {
+  display: block;
+  width: 230px;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.login-presentation {
+  max-width: 560px;
+  margin-top: auto;
+  margin-bottom: auto;
+  transform: translateY(-35px);
+}
+
+.login-presentation h1 {
+  margin: 0 0 20px;
+  color: #ffffff;
+  font-size: clamp(30px, 3vw, 45px);
+  font-weight: 750;
+  line-height: 1.2;
+  letter-spacing: -1.2px;
+}
+
+.login-presentation h2 {
+  margin: 0 0 18px;
+  color: #e1f0e7;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.login-presentation p {
+  max-width: 470px;
+  margin: 0;
+  color: #d0e2d9;
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+/* ==========================================
+   PANEL DEL FORMULARIO
+========================================== */
+
+.login-form-section {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  padding: 60px 65px;
+  background: #ffffff;
+}
+
+.login-form-container {
+  width: 100%;
+  max-width: 430px;
+  margin: auto;
+  transform: translateY(30px);
+}
+
+.login-mobile-brand {
+  display: none;
+  margin-bottom: 55px;
+}
+
+.login-logo-mobile {
+  display: block;
+  width: 200px;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.login-heading h1 {
+  margin: 0 0 10px;
+  color: #172c28;
+  font-size: 36px;
+  font-weight: 750;
+  letter-spacing: -1px;
+}
+
+.login-heading p {
+  margin: 0;
+  color: #78847f;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.login-form {
+  margin-top: 38px;
+}
+
+.login-field {
+  margin-bottom: 24px;
+}
+
+.login-field label {
+  display: block;
+  margin-bottom: 10px;
+  color: #293a35;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.login-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 54px;
+  padding: 0 15px;
+  border: 1px solid #dce5e0;
+  border-radius: 10px;
+  background: #ffffff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.login-input-wrapper:focus-within {
+  border-color: #16805e;
+  box-shadow: 0 0 0 3px rgba(22, 128, 94, 0.1);
+}
+
+.login-input-wrapper svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: #8b9b93;
+}
+
+.login-input-wrapper input {
+  width: 100%;
+  min-width: 0;
+  height: 50px;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #243630;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.login-input-wrapper input::placeholder {
+  color: #a1aba6;
+}
+
+/* ==========================================
+   OJITO DE CONTRASEÑA
+========================================== */
+
+.login-password-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #16805e;
+  cursor: pointer;
+}
+
+.login-password-toggle:hover {
+  color: #0c5e45;
+}
+
+.login-password-toggle svg {
+  width: 20px;
+  height: 20px;
+  color: currentColor;
+}
+
+/* ==========================================
+   OPCIONES
+========================================== */
+
+.login-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 3px 0 30px;
+}
+
+.login-remember {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #63726a;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.login-remember input {
+  width: 16px;
+  height: 16px;
+  accent-color: #16805e;
+}
+
+.login-forgot {
+  color: #16805e;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* ==========================================
+   BOTÓN
+========================================== */
+
+.login-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 54px;
+  border: none;
+  border-radius: 10px;
+  background: #137757;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.login-submit:hover {
+  background: #0c5e45;
+}
+
+.login-submit:active {
+  transform: scale(0.99);
+}
+
+/* ==========================================
+   RESPONSIVE
+========================================== */
+
+@media (max-width: 1000px) {
+  .login-page {
+    grid-template-columns: 46% 54%;
+  }
+
+  .login-institutional-content {
+    padding: 36px 35px 28px;
+  }
+
+  .login-form-section {
+    padding: 50px 35px 80px;
+  }
+
+  .login-logo {
+    width: 200px;
+  }
+}
+
+@media (max-width: 720px) {
+  .login-page {
+    display: block;
+  }
+
+  .login-institutional {
+    display: none;
+  }
+
+  .login-form-section {
+    min-height: 100vh;
+    padding: 35px 25px 100px;
+  }
+
+  .login-form-container {
+    transform: none;
+  }
+
+  .login-mobile-brand {
+    display: block;
+  }
+
+  .login-heading h1 {
+    font-size: 32px;
+  }
+}
+
+@media (max-width: 390px) {
+  .login-options {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+/* ==========================================
+   MENSAJES DE ERROR DEL LOGIN
+========================================== */
+
+.login-error {
+  margin: -10px 0 20px;
+  padding: 13px 15px;
+  border: 1px solid #f1c5c5;
+  border-radius: 9px;
+  background: #fff2f2;
+  color: #a52b2b;
+  font-size: 13px;
+  line-height: 1.5;
+}
