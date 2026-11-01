@@ -129,7 +129,40 @@ const obtenerPerfil = (req, res) => {
     });
 };
 
+const logout = async (req, res) => {
+    const { idUsuario, jti, exp } = req.usuario;
+
+    try {
+        // Registramos el token como revocado.
+        // ON CONFLICT permite repetir la operación sin error.
+        await pool.query(
+            `
+            INSERT INTO public.token_revocado
+                (jti, id_usuario, expira_en)
+            VALUES
+                ($1::uuid, $2, to_timestamp($3))
+            ON CONFLICT (jti) DO NOTHING
+            `,
+            [jti, idUsuario, exp]
+        );
+
+        return res.status(200).json({
+            success: true,
+            message: 'Sesión cerrada correctamente'
+        });
+
+    } catch (error) {
+        console.error('Error al cerrar sesión:', error);
+
+        return res.status(500).json({
+            success: false,
+            message: 'No fue posible cerrar la sesión de forma segura'
+        });
+    }
+};
+
 module.exports = {
     login,
-    obtenerPerfil
+    obtenerPerfil,
+    logout
 };
