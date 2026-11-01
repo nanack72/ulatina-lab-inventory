@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const pool = require('../config/database');
 
 // Procesa el inicio de sesión del usuario
@@ -17,19 +18,19 @@ const login = async (req, res) => {
     try {
         // Buscamos el usuario junto con el nombre de su rol
         const query = `
-                SELECT
-                    u.id_usuario,
-                    u.id_rol,
-                    u.nombre_completo,
-                    u.correo_institucional,
-                    u.contrasena_hash,
-                    u.activo,
-                    r.nombre AS rol
-                FROM public.usuario u
-                INNER JOIN public.rol r ON u.id_rol = r.id_rol
-                WHERE LOWER(u.correo_institucional) = LOWER($1)
-                LIMIT 1
-            `;
+            SELECT
+                u.id_usuario,
+                u.id_rol,
+                u.nombre_completo,
+                u.correo_institucional,
+                u.contrasena_hash,
+                u.activo,
+                r.nombre AS rol
+            FROM public.usuario u
+            INNER JOIN public.rol r ON u.id_rol = r.id_rol
+            WHERE LOWER(u.correo_institucional) = LOWER($1)
+            LIMIT 1
+        `;
 
         const resultado = await pool.query(query, [correo.trim()]);
 
@@ -51,8 +52,12 @@ const login = async (req, res) => {
             });
         }
 
-        // Comparamos la contraseña enviada con el hash de la base de datos
-        const contrasenaValida = await bcrypt.compare(contrasena, usuario.contrasena_hash);
+        // Comparamos la contraseña con el hash de la BD
+        const contrasenaValida = await bcrypt.compare(
+            contrasena,
+            usuario.contrasena_hash
+        );
+
         if (!contrasenaValida) {
             return res.status(401).json({
                 success: false,
@@ -60,16 +65,19 @@ const login = async (req, res) => {
             });
         }
 
-        // Validamos que JWT_SECRET esté configurado en las variables de entorno
+        // Validamos la clave utilizada para firmar los JWT
         if (!process.env.JWT_SECRET) {
-            console.error('ERROR CRÍTICO: JWT_SECRET no está configurado en las variables de entorno (.env)');
+            console.error(
+                'ERROR CRÍTICO: JWT_SECRET no está configurado.'
+            );
+
             return res.status(500).json({
                 success: false,
-                message: 'Error de configuración del servidor: falta JWT_SECRET en las variables de entorno'
+                message: 'Error interno de configuración del servidor'
             });
         }
 
-        // Armamos el token con los datos clave del usuario
+        // Generamos un JWT con identificador único (jti)
         const token = jwt.sign(
             {
                 idUsuario: usuario.id_usuario,
@@ -79,11 +87,16 @@ const login = async (req, res) => {
                 rol: usuario.rol
             },
             process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
+            {
+                expiresIn: process.env.JWT_EXPIRES_IN || '8h',
+                jwtid: crypto.randomUUID(),
+                algorithm: 'HS256'
+            }
         );
 
-        // Devolvemos el token y los datos básicos (sin el hash de la contraseña)
-        res.json({
+        // Devolvemos el token y los datos básicos del usuario
+        // Nunca enviamos el hash de la contraseña
+        return res.json({
             success: true,
             message: 'Inicio de sesión exitoso',
             token,
@@ -96,19 +109,21 @@ const login = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error en login:', error.message);
-        res.status(500).json({
+        // Registramos el detalle solo en el servidor
+        console.error('Error en login:', error);
+
+        // No exponemos información técnica al cliente
+        return res.status(500).json({
             success: false,
-            message: 'Error interno del servidor al procesar el login',
-            error: error.message
+            message: 'Error interno del servidor al procesar el login'
         });
     }
 };
 
-// Devuelve los datos del usuario logueado usando su token
+// Devuelve los datos del usuario autenticado
 const obtenerPerfil = (req, res) => {
-    // req.usuario ya viene cargado gracias a authMiddleware
-    res.json({
+    // req.usuario viene cargado por authMiddleware
+    return res.json({
         success: true,
         usuario: req.usuario
     });
