@@ -1,0 +1,277 @@
+/* ==========================================
+   SIDEBAR
+========================================== */
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  width: 250px;
+  height: 100vh;
+  min-height: 0;
+  overflow-y: auto;
+  background:
+    radial-gradient(
+      circle at 80% 20%,
+      rgba(255, 255, 255, 0.08),
+      transparent 40%
+    ),
+    linear-gradient(145deg, #176850 0%, #0c4236 100%);
+  color: #ffffff;
+  font-family: 'Inter', Arial, sans-serif;
+}
+
+/* ==========================================
+   LOGO OFICIAL
+========================================== */
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  min-height: 100px;
+  padding: 25px 22px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.13);
+}
+
+.sidebar-logo {
+  display: block;
+  width: 185px;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+/* ==========================================
+   NAVEGACIÓN
+========================================== */
+
+.sidebar-navigation {
+  flex: 1;
+  padding: 22px 12px;
+}
+
+.sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  width: 100%;
+  min-height: 46px;
+  padding: 11px 15px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #e8f2ed;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 450;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.sidebar-link svg {
+  flex-shrink: 0;
+}
+
+.sidebar-link:hover {
+  background: rgba(255, 255, 255, 0.10);
+  color: #ffffff;
+}
+
+.sidebar-link-active {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.sidebar-link-active:hover {
+  background: rgba(255, 255, 255, 0.23);
+}
+
+.sidebar-link:focus-visible {
+  outline: 2px solid #c5efc2;
+  outline-offset: 2px;
+}
+
+/* ==========================================
+   ADMINISTRACIÓN
+========================================== */
+
+.sidebar-admin {
+  margin-top: 30px;
+}
+
+.sidebar-section-title {
+  display: block;
+  margin: 0 0 14px;
+  padding: 0 15px;
+  color: #b3d8c6;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+}
+
+/* ==========================================
+   OPCIONES INFERIORES
+========================================== */
+
+.sidebar-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px 12px 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.13);
+}
+
+.sidebar-logout {
+  color: #d1e4da;
+}
+
+/* ==========================================
+   RESPONSIVE
+========================================== */
+
+@media (max-width: 900px) {
+  .sidebar {
+    width: 215px;
+  }
+
+  .sidebar-brand {
+    padding: 22px 16px;
+  }
+
+  .sidebar-logo {
+    width: 165px;
+  }
+
+  .sidebar-link {
+    gap: 11px;
+    padding: 11px 12px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 650px) {
+  .sidebar {
+    position: relative;
+    width: 100%;
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .sidebar-brand {
+    min-height: 75px;
+    padding: 15px 20px;
+  }
+
+  .sidebar-logo {
+    width: 150px;
+  }
+
+  .sidebar-navigation {
+    padding: 12px;
+  }
+
+  .sidebar-menu {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .sidebar-link {
+    width: auto;
+    min-height: 42px;
+  }
+
+  .sidebar-admin {
+    margin-top: 16px;
+  }
+
+  .sidebar-bottom {
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 12px;
+  }
+}
+
+/* ==========================================
+   LAYOUT PRINCIPAL
+========================================== */
+
+.main-layout {
+  display: flex;
+  min-height: 100vh;
+  background: #f5f6f7;
+}
+
+.main-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.main-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: 80px;
+  padding: 18px 35px;
+  border-bottom: 1px solid #e4e8e7;
+  background: #ffffff;
+  color: #243630;
+  font-size: 14px;
+}
+
+.main-breadcrumb {
+  color: #87938d;
+}
+
+.main-user {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.main-user span {
+  color: #78847f;
+  font-size: 12px;
+}
+
+.main-page {
+  padding: 36px;
+}
+
+.main-page h1 {
+  margin: 0 0 12px;
+  color: #172c28;
+  font-size: 28px;
+}
+
+.main-page p {
+  color: #6a7871;
+  font-size: 15px;
+}
+
+@media (max-width: 650px) {
+  .main-layout {
+    flex-direction: column;
+  }
+
+  .main-header {
+    min-height: 70px;
+    padding: 15px 20px;
+  }
+
+  .main-page {
+    padding: 24px 20px;
+  }
+}
