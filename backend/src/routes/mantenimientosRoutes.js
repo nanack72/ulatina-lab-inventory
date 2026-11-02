@@ -23,7 +23,7 @@ const { permitirRoles } = require('../middlewares/permisosMiddleware');
 router.post(
   '/',
   verificarToken,
-  permitirRoles('Administrador', 'Tecnico'),
+  permitirRoles('SuperAdministrador', 'Administrador', 'Tecnico'),
   crearMantenimiento
 );
 
@@ -53,7 +53,7 @@ router.get(
 router.patch(
   '/:id/estado',
   verificarToken,
-  permitirRoles('Administrador', 'Tecnico'),
+  permitirRoles('SuperAdministrador', 'Administrador', 'Tecnico'),
   actualizarEstadoMantenimiento
 );
 
