@@ -1,15 +1,20 @@
 const pool = require('../config/database');
+const { verificarAccesoEquipo } = require('../utils/accesoEquipos');
 
 /**
- * Función auxiliar para verificar si el usuario tiene rol de Administrador.
- * Los administradores poseen acceso global sobre todas las sedes y laboratorios.
+ * Función auxiliar para verificar si el usuario tiene rol con acceso administrativo global.
+ * Los administradores y superadministradores poseen acceso global sobre todas las sedes y laboratorios.
  * 
  * @param {string} rol - Nombre del rol obtenido desde req.usuario.rol
  * @returns {boolean}
  */
 const esUsuarioAdministrador = (rol) => {
   const rolNormalizado = (rol || '').toLowerCase().trim();
-  return rolNormalizado === 'administrador' || rolNormalizado === 'admin';
+  return (
+    rolNormalizado === 'superadministrador' ||
+    rolNormalizado === 'administrador' ||
+    rolNormalizado === 'admin'
+  );
 };
 
 /**
@@ -125,22 +130,14 @@ const crearMantenimiento = async (req, res) => {
 
     const equipoExistente = equipoConsulta.rows[0];
 
-    // 7. Control de Sede: Si no es Administrador, validar asignación del técnico a la sede
+    // 7. Control de Acceso por Laboratorio: Si no es Administrador / SuperAdministrador, validar acceso al equipo
     if (!esAdmin) {
-      const permisoSede = await pool.query(
-        `
-        SELECT 1 
-        FROM public.usuario_sede 
-        WHERE id_usuario = $1 AND id_sede = $2 
-        LIMIT 1
-        `,
-        [idUsuarioTecnico, equipoExistente.id_sede]
-      );
+      const tieneAcceso = await verificarAccesoEquipo(equipoId, req.usuario);
 
-      if (permisoSede.rowCount === 0) {
+      if (!tieneAcceso) {
         return res.status(403).json({
           success: false,
-          message: 'Acceso denegado: no estás asignado a la sede a la que pertenece este equipo'
+          message: 'Acceso denegado: no estás asignado al laboratorio de este equipo'
         });
       }
     }
@@ -345,9 +342,16 @@ const obtenerMantenimientos = async (req, res) => {
       LEFT JOIN public.estado es ON e.id_estado = es.id_estado
     `;
 
-    // Si el usuario es técnico, se filtra automáticamente a su sede asignada
+    // Si el usuario no es Administrador / SuperAdministrador, se filtra automáticamente a sus laboratorios asignados
     if (!esAdmin) {
-      query += ` INNER JOIN public.usuario_sede us ON s.id_sede = us.id_sede AND us.id_usuario = $${paramIndex++} `;
+      query += `
+        INNER JOIN public.usuario_sede us 
+          ON s.id_sede = us.id_sede AND us.id_usuario = $${paramIndex++}
+        INNER JOIN public.usuario_laboratorio ul 
+          ON us.id_usuario_sede = ul.id_usuario_sede 
+          AND ul.id_sede = l.id_sede 
+          AND ul.id_laboratorio = e.id_laboratorio
+      `;
       params.push(idUsuario);
     }
 
@@ -494,23 +498,15 @@ const obtenerMantenimientoPorId = async (req, res) => {
 
     const mantenimiento = resultado.rows[0];
 
-    // Control de Sede para técnicos
+    // Control de Acceso por Laboratorio para técnicos
     const esAdmin = esUsuarioAdministrador(req.usuario.rol);
     if (!esAdmin) {
-      const permisoSede = await pool.query(
-        `
-        SELECT 1 
-        FROM public.usuario_sede 
-        WHERE id_usuario = $1 AND id_sede = $2 
-        LIMIT 1
-        `,
-        [req.usuario.idUsuario, mantenimiento.id_sede]
-      );
+      const tieneAcceso = await verificarAccesoEquipo(mantenimiento.id_equipo, req.usuario);
 
-      if (permisoSede.rowCount === 0) {
+      if (!tieneAcceso) {
         return res.status(403).json({
           success: false,
-          message: 'Acceso denegado: no tienes permisos para consultar registros de esta sede'
+          message: 'Acceso denegado: no tienes permisos para consultar registros del laboratorio de este equipo'
         });
       }
     }
@@ -601,23 +597,15 @@ const obtenerHistorialPorEquipo = async (req, res) => {
 
     const equipo = resultadoEquipo.rows[0];
 
-    // Control de Sede para técnicos
+    // Control de Acceso por Laboratorio para técnicos
     const esAdmin = esUsuarioAdministrador(req.usuario.rol);
     if (!esAdmin) {
-      const permisoSede = await pool.query(
-        `
-        SELECT 1 
-        FROM public.usuario_sede 
-        WHERE id_usuario = $1 AND id_sede = $2 
-        LIMIT 1
-        `,
-        [req.usuario.idUsuario, equipo.id_sede]
-      );
+      const tieneAcceso = await verificarAccesoEquipo(equipo.id_equipo, req.usuario);
 
-      if (permisoSede.rowCount === 0) {
+      if (!tieneAcceso) {
         return res.status(403).json({
           success: false,
-          message: 'Acceso denegado: no tienes permisos sobre la sede de este equipo'
+          message: 'Acceso denegado: no tienes permisos sobre el laboratorio de este equipo'
         });
       }
     }
@@ -772,22 +760,14 @@ const actualizarEstadoMantenimiento = async (req, res) => {
 
     const mantenimientoActual = consultaMantenimiento.rows[0];
 
-    // 6. Validar permisos de sede para técnicos
+    // 6. Validar permisos de laboratorio para técnicos
     if (!esAdmin) {
-      const permisoSede = await pool.query(
-        `
-        SELECT 1 
-        FROM public.usuario_sede 
-        WHERE id_usuario = $1 AND id_sede = $2 
-        LIMIT 1
-        `,
-        [idUsuario, mantenimientoActual.id_sede]
-      );
+      const tieneAcceso = await verificarAccesoEquipo(mantenimientoActual.id_equipo, req.usuario);
 
-      if (permisoSede.rowCount === 0) {
+      if (!tieneAcceso) {
         return res.status(403).json({
           success: false,
-          message: 'Acceso denegado: no estás asignado a la sede de este mantenimiento'
+          message: 'Acceso denegado: no tienes permisos para modificar mantenimientos en el laboratorio de este equipo'
         });
       }
     }

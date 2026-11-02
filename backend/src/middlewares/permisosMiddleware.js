@@ -36,8 +36,12 @@ const validarSedeAsignada = async (req, res, next) => {
         const idUsuario = req.usuario.idUsuario;
         const rolUsuario = req.usuario.rol || '';
 
-        // El rol Administrador no tiene restricciones de sede, puede gestionar todo
-        if (rolUsuario.toLowerCase() === 'administrador' || rolUsuario.toLowerCase() === 'admin') {
+        // El rol Administrador / SuperAdministrador no tiene restricciones de sede, puede gestionar todo
+        if (
+            rolUsuario.toLowerCase() === 'superadministrador' ||
+            rolUsuario.toLowerCase() === 'administrador' ||
+            rolUsuario.toLowerCase() === 'admin'
+        ) {
             return next();
         }
 
@@ -88,8 +92,12 @@ const validarLaboratorioAsignado = async (req, res, next) => {
         const idUsuario = req.usuario.idUsuario;
         const rolUsuario = req.usuario.rol || '';
 
-        // El rol Administrador tiene acceso total a todos los laboratorios
-        if (rolUsuario.toLowerCase() === 'administrador' || rolUsuario.toLowerCase() === 'admin') {
+        // El rol Administrador / SuperAdministrador tiene acceso total a todos los laboratorios
+        if (
+            rolUsuario.toLowerCase() === 'superadministrador' ||
+            rolUsuario.toLowerCase() === 'administrador' ||
+            rolUsuario.toLowerCase() === 'admin'
+        ) {
             return next();
         }
 
