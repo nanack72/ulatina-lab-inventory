@@ -1,0 +1,343 @@
+/* ==========================================
+   REGISTRO DE EQUIPOS
+   ========================================== */
+
+.registro-pagina {
+  --registro-verde: #205c49;
+  --registro-verde-hover: #184938;
+  --registro-verde-suave: #edf5f1;
+
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 4px 0 30px;
+  color: #263443;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.registro-pagina *,
+.registro-pagina *::before,
+.registro-pagina *::after {
+  box-sizing: border-box;
+}
+
+/* NAVEGACIÓN */
+
+.registro-volver {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 9px;
+  padding: 9px 0;
+  border: none;
+  background: transparent;
+  color: var(--registro-verde);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.registro-volver:hover {
+  color: var(--registro-verde-hover);
+}
+
+/* ENCABEZADO */
+
+.registro-encabezado h1 {
+  margin: 0;
+  color: #202d3d;
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.registro-encabezado p {
+  margin: 8px 0 0;
+  color: #8190a2;
+  font-size: 13px;
+}
+
+/* DISTRIBUCIÓN */
+
+.registro-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+/* TARJETAS */
+
+.registro-tarjeta {
+  min-width: 0;
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid #dfe4eb;
+  border-radius: 12px;
+}
+
+.registro-tarjeta-titulo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 19px 21px;
+  border-bottom: 1px solid #edf0f3;
+}
+
+.registro-tarjeta-titulo h2 {
+  margin: 0;
+  color: #263443;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.registro-tarjeta-icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 35px;
+  height: 35px;
+  flex-shrink: 0;
+  border-radius: 9px;
+  background: var(--registro-verde);
+  color: #ffffff;
+}
+
+.registro-tarjeta-contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 17px;
+  padding: 22px;
+}
+
+/* CAMPOS */
+
+.registro-campos-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 17px;
+}
+
+.registro-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.registro-etiqueta {
+  color: #596b7e;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.registro-requerido {
+  color: #b34343;
+}
+
+.registro-campo input,
+.registro-campo select,
+.registro-campo textarea {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 12px 13px;
+  border: 1px solid #d9e3de;
+  border-radius: 8px;
+  outline: none;
+  background: #ffffff;
+  color: #263443;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.registro-campo input::placeholder,
+.registro-campo textarea::placeholder {
+  color: #a0abb7;
+}
+
+.registro-campo input:focus,
+.registro-campo select:focus,
+.registro-campo textarea:focus {
+  border-color: #2d765e;
+  box-shadow: 0 0 0 3px rgba(32, 92, 73, 0.1);
+}
+
+.registro-campo textarea {
+  resize: vertical;
+  min-height: 95px;
+}
+
+.registro-campo select {
+  cursor: pointer;
+}
+
+.registro-campo select:disabled {
+  background: #f4f6f5;
+  color: #98a5a0;
+  cursor: not-allowed;
+}
+
+/* MENSAJES */
+
+.registro-alerta {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 15px 17px;
+  border: 1px solid;
+  border-radius: 9px;
+  font-size: 13px;
+}
+
+.registro-alerta-error {
+  background: #fff5f5;
+  border-color: #efcaca;
+  color: #ae3838;
+}
+
+.registro-alerta-exito {
+  background: #edf5f1;
+  border-color: #b8d5c7;
+  color: #205c49;
+}
+
+.registro-alerta svg {
+  flex-shrink: 0;
+}
+
+.registro-cargando {
+  padding: 26px;
+  border: 1px solid #dfe4eb;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #75869b;
+  font-size: 13px;
+}
+
+/* BOTONES INFERIORES */
+
+.registro-acciones {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 22px;
+  padding: 20px 22px;
+  border: 1px solid #dfe4eb;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.registro-acciones > span {
+  color: #8290a0;
+  font-size: 11px;
+}
+
+.registro-botones {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.registro-cancelar,
+.registro-guardar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 42px;
+  padding: 0 19px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.registro-cancelar {
+  border: 1px solid #dce4e0;
+  background: #ffffff;
+  color: #526a60;
+}
+
+.registro-cancelar:hover {
+  background: #f4f7f5;
+}
+
+.registro-guardar {
+  border: 1px solid var(--registro-verde);
+  background: var(--registro-verde);
+  color: #ffffff;
+}
+
+.registro-guardar:hover:not(:disabled) {
+  background: var(--registro-verde-hover);
+}
+
+.registro-cancelar:disabled,
+.registro-guardar:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 1000px) {
+  .registro-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .registro-encabezado h1 {
+    font-size: 23px;
+  }
+
+  .registro-tarjeta-titulo {
+    padding: 16px;
+  }
+
+  .registro-tarjeta-contenido {
+    padding: 17px;
+  }
+
+  .registro-campos-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .registro-acciones {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 17px;
+  }
+
+  .registro-botones {
+    width: 100%;
+  }
+
+  .registro-botones button {
+    flex: 1;
+  }
+}
+
+/* Aviso de campos que se conservan en la edición */
+
+.registro-aviso {
+  margin: 0;
+  padding: 15px 17px;
+  border-left: 4px solid #205c49;
+  border-radius: 8px;
+  background: #edf5f1;
+  color: #315e4a;
+  font-size: 13px;
+  line-height: 1.7;
+}

@@ -5,7 +5,12 @@ const {
   obtenerLaboratorios
 } = require('../controllers/laboratoriosController');
 
+const {
+  verificarToken
+} = require('../middlewares/authMiddleware');
+
 // GET /api/laboratorios
-router.get('/', obtenerLaboratorios);
+// Solo usuarios autenticados.
+router.get('/', verificarToken, obtenerLaboratorios);
 
 module.exports = router;
