@@ -431,3 +431,77 @@ export async function obtenerHistorialUbicacion(
 
   return resultado.data;
 }
+
+
+/**
+ * Consulta el historial de estados de un equipo.
+ *
+ * GET /api/equipos/:id/historial-estados
+ */
+export async function obtenerHistorialEstados(
+  idEquipo,
+  token,
+  signal
+) {
+  const id = Number(idEquipo);
+
+  if (!Number.isSafeInteger(id) || id <= 0) {
+    throw new Error(
+      'El identificador del equipo no es válido.'
+    );
+  }
+
+  if (!token) {
+    throw new Error(
+      'Debés iniciar sesión para consultar el historial.'
+    );
+  }
+
+  let respuesta;
+
+  try {
+    respuesta = await fetch(
+      `/api/equipos/${encodeURIComponent(id)}/historial-estados`,
+      {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        signal,
+      }
+    );
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      throw error;
+    }
+
+    throw new Error(
+      'No se pudo conectar con el servidor.',
+      { cause: error }
+    );
+  }
+
+  const resultado = await respuesta.json().catch(() => null);
+
+  if (!respuesta.ok) {
+    const error = new Error(
+      resultado?.message ||
+      'No fue posible consultar el historial de estados.'
+    );
+
+    error.status = respuesta.status;
+    throw error;
+  }
+
+  if (
+    resultado?.success !== true ||
+    !Array.isArray(resultado.data)
+  ) {
+    throw new Error(
+      'El historial recibido no tiene el formato esperado.'
+    );
+  }
+
+  return resultado.data;
+}

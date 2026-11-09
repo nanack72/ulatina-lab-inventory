@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import {
   ArrowLeft,
@@ -7,16 +7,24 @@ import {
   Cpu,
   Tag,
   Hash,
-  CalendarDays,
-  FileText,
   AlertCircle,
   RefreshCw,
-  Building2,
+  History,
+  ClipboardList,
+  ArrowLeftRight,
+  FileClock,
+  MessageSquare,
+  Pencil,
+  MoreHorizontal,
+  ChevronDown,
 } from 'lucide-react';
 
-import { obtenerEquipoPorId } from '../services/equiposService';
+import { useEquipo } from '../hooks/useEquipo';
+import { tipoEstado } from '../utils/inventario';
 
 import HistorialUbicaciones from '../components/inventario/HistorialUbicaciones';
+import HistorialEstados from '../components/inventario/HistorialEstados';
+import HistorialCambios from '../components/inventario/HistorialCambios';
 
 import '../styles/equipoDetalle.css';
 
@@ -25,11 +33,7 @@ import '../styles/equipoDetalle.css';
 // ==========================================
 
 function texto(valor) {
-  if (
-    valor === null ||
-    valor === undefined ||
-    valor === ''
-  ) {
+  if (valor === null || valor === undefined) {
     return '';
   }
 
@@ -42,81 +46,40 @@ function texto(valor) {
       valor.nombre_laboratorio ??
       valor.nombre_sede ??
       ''
-    );
+    ).trim();
   }
 
-  return String(valor);
+  return String(valor).trim();
 }
 
 function obtenerValor(...valores) {
   for (const valor of valores) {
-    const convertido = texto(valor).trim();
+    const convertido = texto(valor);
 
-    if (convertido) {
-      return convertido;
-    }
+    if (convertido) return convertido;
   }
 
   return '';
 }
 
 function nombreSede(valor) {
-  if (!valor) {
-    return 'No registrada';
-  }
+  const nombre = texto(valor);
 
-  return /^sede\s/i.test(valor)
-    ? valor
-    : `Sede ${valor}`;
-}
+  if (!nombre) return 'No registrada';
 
-function claseEstado(valor) {
-  const estado = texto(valor)
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase();
-
-  if (
-    estado === 'operativo' ||
-    estado === 'activo'
-  ) {
-    return 'detalle-estado--operativo';
-  }
-
-  if (estado.includes('mantenimiento')) {
-    return 'detalle-estado--mantenimiento';
-  }
-
-  if (
-    estado.includes('baja') ||
-    estado.includes('fuera de servicio') ||
-    estado.includes('inactivo')
-  ) {
-    return 'detalle-estado--baja';
-  }
-
-  return 'detalle-estado--otro';
+  return /^sede\s/i.test(nombre)
+    ? nombre
+    : `Sede ${nombre}`;
 }
 
 // ==========================================
-// COMPONENTE CAMPO
+// CAMPO DE INFORMACIÓN
 // ==========================================
 
-function Campo({
-  etiqueta,
-  valor,
-  icono: Icono,
-}) {
+function Campo({ etiqueta, valor }) {
   return (
     <div className="detalle-campo">
       <span className="detalle-campo-etiqueta">
-        {Icono && (
-          <Icono
-            size={15}
-            aria-hidden="true"
-          />
-        )}
-
         {etiqueta}
       </span>
 
@@ -128,14 +91,10 @@ function Campo({
 }
 
 // ==========================================
-// COMPONENTE TARJETA
+// TARJETA
 // ==========================================
 
-function Tarjeta({
-  titulo,
-  icono: Icono,
-  children,
-}) {
+function Tarjeta({ titulo, icono: Icono, children }) {
   return (
     <section className="detalle-tarjeta">
       <div className="detalle-tarjeta-encabezado">
@@ -161,58 +120,92 @@ export default function EquipoDetalle({
   idEquipo,
   token,
   onVolver,
+  onEditar,
+  onTrasladar,
+  onCambiarEstado,
+  onSesionExpirada,
 }) {
-  // Estados.
-  const [equipo, setEquipo] = useState(null);
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState('');
-  const [recarga, setRecarga] = useState(0);
+  // ========================================
+  // CONSULTAR EQUIPO CON EL HOOK
+  // ========================================
+
+  const {
+    equipo,
+    cargando,
+    error,
+    recargar,
+  } = useEquipo(
+    idEquipo,
+    token,
+    onSesionExpirada
+  );
 
   // ========================================
-  // CONSULTAR EQUIPO DESDE NEON
+  // NAVEGACIÓN ENTRE PESTAÑAS
   // ========================================
+
+  const [seccionActiva, setSeccionActiva] =
+    useState('detalles');
+
+  const [historialActivo, setHistorialActivo] =
+    useState('ubicaciones');
+
+  // ========================================
+  // MENÚ MÁS ACCIONES
+  // ========================================
+
+  const [menuAccionesAbierto, setMenuAccionesAbierto] =
+    useState(false);
+
+  const menuAccionesRef = useRef(null);
+
+  const mostrarMenuAcciones =
+    typeof onTrasladar === 'function' ||
+    typeof onCambiarEstado === 'function';
 
   useEffect(() => {
-    const controlador = new AbortController();
+    if (!menuAccionesAbierto) return undefined;
 
-    async function cargarDetalle() {
-      setCargando(true);
-      setError('');
-      setEquipo(null);
-
-      try {
-        const resultado = await obtenerEquipoPorId(
-          idEquipo,
-          token,
-          controlador.signal
-        );
-
-        if (!controlador.signal.aborted) {
-          setEquipo(resultado);
-        }
-      } catch (err) {
-        if (controlador.signal.aborted) {
-          return;
-        }
-
-        setError(
-          err.message ||
-          'No se pudo consultar el equipo.'
-        );
-      } finally {
-        if (!controlador.signal.aborted) {
-          setCargando(false);
-        }
+    function cerrarAlHacerClicFuera(evento) {
+      if (
+        menuAccionesRef.current &&
+        !menuAccionesRef.current.contains(evento.target)
+      ) {
+        setMenuAccionesAbierto(false);
       }
     }
 
-    cargarDetalle();
+    function cerrarConEscape(evento) {
+      if (evento.key === 'Escape') {
+        setMenuAccionesAbierto(false);
+      }
+    }
 
-    return () => controlador.abort();
-  }, [idEquipo, token, recarga]);
+    document.addEventListener(
+      'pointerdown',
+      cerrarAlHacerClicFuera
+    );
+
+    document.addEventListener(
+      'keydown',
+      cerrarConEscape
+    );
+
+    return () => {
+      document.removeEventListener(
+        'pointerdown',
+        cerrarAlHacerClicFuera
+      );
+
+      document.removeEventListener(
+        'keydown',
+        cerrarConEscape
+      );
+    };
+  }, [menuAccionesAbierto]);
 
   // ========================================
-  // ADAPTAR LOS DATOS DEL EQUIPO
+  // DATOS DEL EQUIPO
   // ========================================
 
   const nombre = obtenerValor(
@@ -259,12 +252,23 @@ export default function EquipoDetalle({
     equipo?.ubicacionDetalle
   );
 
+  const marca = texto(equipo?.marca);
+  const modelo = texto(equipo?.modelo);
+  const anio = texto(equipo?.anio ?? equipo?.año);
+  const caracteristicas = texto(equipo?.caracteristicas);
+  const comentarios = texto(equipo?.comentarios);
+
+  const nombresLaboratorios =
+    equipo?.id_laboratorio != null && laboratorio
+      ? { [equipo.id_laboratorio]: laboratorio }
+      : {};
+
   // ========================================
   // INTERFAZ
   // ========================================
 
   return (
-    <div className="detalle-pagina">
+    <div className="detalle-pagina detalle-redisenado detalle-distribucion">
 
       {/* VOLVER AL INVENTARIO */}
       <div className="detalle-navegacion">
@@ -289,7 +293,7 @@ export default function EquipoDetalle({
       )}
 
       {/* ERROR */}
-      {error && !cargando && (
+      {!cargando && error && (
         <div
           className="detalle-mensaje detalle-mensaje--error"
           role="alert"
@@ -300,11 +304,7 @@ export default function EquipoDetalle({
 
           <button
             type="button"
-            onClick={() =>
-              setRecarga(
-                (valor) => valor + 1
-              )
-            }
+            onClick={recargar}
           >
             <RefreshCw size={15} />
             Reintentar
@@ -312,20 +312,24 @@ export default function EquipoDetalle({
         </div>
       )}
 
-      {/* DETALLE DEL EQUIPO */}
+      {/* CONTENIDO */}
       {!cargando && !error && equipo && (
         <>
-          {/* ENCABEZADO PRINCIPAL */}
-          <div className="detalle-principal">
+          {/* ==================================
+              ENCABEZADO PRINCIPAL
+              ================================== */}
+
+          <header className="detalle-principal">
 
             <div className="detalle-principal-icono">
-              <Monitor size={30} />
+              <Monitor size={27} />
             </div>
 
             <div className="detalle-principal-info">
-              <p className="detalle-subtitulo">
-                Información detallada del equipo tecnológico
-              </p>
+
+              <span className="detalle-categoria-superior">
+                {categoria || 'Sin categoría'}
+              </span>
 
               <h1>
                 {nombre || 'Equipo sin nombre'}
@@ -342,144 +346,348 @@ export default function EquipoDetalle({
                   Serie: {serie || 'No registrada'}
                 </span>
               </div>
+
             </div>
 
-            <span
-              className={`detalle-estado ${claseEstado(
-                estado
-              )}`}
-            >
-              <span className="detalle-estado-punto" />
-              {estado || 'Sin estado'}
-            </span>
-          </div>
+            {/* ==================================
+                ESTADO Y ACCIONES
+                ================================== */}
+
+            <div className="detalle-acciones-encabezado">
+
+              {/* ESTADO ACTUAL */}
+              <span
+                className={`detalle-estado detalle-estado--${tipoEstado(estado)}`}
+              >
+                <span className="detalle-estado-punto" />
+                {estado || 'Sin estado'}
+              </span>
+
+              {/* EDITAR EQUIPO */}
+              {typeof onEditar === 'function' && (
+                <button
+                  type="button"
+                  className="detalle-boton-editar"
+                  onClick={() => onEditar(equipo)}
+                >
+                  <Pencil size={15} />
+                  Editar equipo
+                </button>
+              )}
+
+              {/* ==================================
+                  MENÚ MÁS ACCIONES
+                  ================================== */}
+
+              {mostrarMenuAcciones && (
+                <div
+                  className="detalle-menu-acciones"
+                  ref={menuAccionesRef}
+                >
+
+                  <button
+                    type="button"
+                    className="detalle-boton-mas"
+                    aria-expanded={menuAccionesAbierto}
+                    aria-haspopup="true"
+                    onClick={() =>
+                      setMenuAccionesAbierto(
+                        (abierto) => !abierto
+                      )
+                    }
+                  >
+                    <MoreHorizontal size={17} />
+                    Más acciones
+                    <ChevronDown size={14} />
+                  </button>
+
+                  {menuAccionesAbierto && (
+                    <div className="detalle-menu-opciones">
+
+                      {/* TRASLADAR EQUIPO */}
+                      {typeof onTrasladar === 'function' && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setMenuAccionesAbierto(false);
+                            onTrasladar(equipo);
+                          }}
+                        >
+                          <ArrowLeftRight size={16} />
+                          Trasladar equipo
+                        </button>
+                      )}
+
+                      {/* CAMBIAR ESTADO */}
+                      {typeof onCambiarEstado === 'function' && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setMenuAccionesAbierto(false);
+                            onCambiarEstado(equipo);
+                          }}
+                        >
+                          <RefreshCw size={16} />
+                          Cambiar estado
+                        </button>
+                      )}
+
+                    </div>
+                  )}
+
+                </div>
+              )}
+
+            </div>
+
+          </header>
 
           {/* ==================================
-              TARJETAS DE INFORMACIÓN
+              PESTAÑAS
               ================================== */}
 
-          <div className="detalle-grid">
+          <nav
+            className="detalle-pestanas"
+            aria-label="Secciones del equipo"
+          >
 
-            {/* IDENTIFICACIÓN */}
-            <Tarjeta
-              titulo="Identificación del equipo"
-              icono={FileText}
+            <button
+              type="button"
+              className={`detalle-pestana ${
+                seccionActiva === 'detalles'
+                  ? 'detalle-pestana--activa'
+                  : ''
+              }`}
+              aria-current={
+                seccionActiva === 'detalles'
+                  ? 'page'
+                  : undefined
+              }
+              onClick={() =>
+                setSeccionActiva('detalles')
+              }
             >
-              <Campo
-                etiqueta="Nombre del equipo"
-                valor={nombre}
-                icono={Monitor}
-              />
+              <ClipboardList size={17} />
+              Detalles del equipo
+            </button>
 
-              <Campo
-                etiqueta="Número de serie"
-                valor={serie}
-                icono={Hash}
-              />
-
-              <Campo
-                etiqueta="Placa institucional"
-                valor={placa}
-                icono={Tag}
-              />
-
-              <Campo
-                etiqueta="Categoría"
-                valor={categoria}
-                icono={Tag}
-              />
-            </Tarjeta>
-
-            {/* CARACTERÍSTICAS TÉCNICAS */}
-            <Tarjeta
-              titulo="Características técnicas"
-              icono={Cpu}
+            <button
+              type="button"
+              className={`detalle-pestana ${
+                seccionActiva === 'historiales'
+                  ? 'detalle-pestana--activa'
+                  : ''
+              }`}
+              aria-current={
+                seccionActiva === 'historiales'
+                  ? 'page'
+                  : undefined
+              }
+              onClick={() =>
+                setSeccionActiva('historiales')
+              }
             >
-              <Campo
-                etiqueta="Marca"
-                valor={texto(equipo.marca)}
-              />
+              <History size={17} />
+              Historiales
+            </button>
 
-              <Campo
-                etiqueta="Modelo"
-                valor={texto(equipo.modelo)}
-              />
-
-              <Campo
-                etiqueta="Año"
-                valor={texto(
-                  equipo.anio ?? equipo.año
-                )}
-                icono={CalendarDays}
-              />
-
-              <Campo
-                etiqueta="Características"
-                valor={texto(
-                  equipo.caracteristicas
-                )}
-              />
-            </Tarjeta>
-
-            {/* UBICACIÓN */}
-            <Tarjeta
-              titulo="Ubicación del equipo"
-              icono={MapPin}
-            >
-              <Campo
-                etiqueta="Sede"
-                valor={nombreSede(sede)}
-                icono={Building2}
-              />
-
-              <Campo
-                etiqueta="Laboratorio"
-                valor={laboratorio}
-                icono={MapPin}
-              />
-
-              <Campo
-                etiqueta="Ubicación detallada"
-                valor={ubicacion}
-              />
-            </Tarjeta>
-
-            {/* ESTADO Y OBSERVACIONES */}
-            <Tarjeta
-              titulo="Estado y observaciones"
-              icono={FileText}
-            >
-              <Campo
-                etiqueta="Estado actual"
-                valor={estado}
-              />
-
-              <Campo
-                etiqueta="Comentarios"
-                valor={texto(
-                  equipo.comentarios
-                )}
-              />
-            </Tarjeta>
-
-          </div>
+          </nav>
 
           {/* ==================================
-              HISTORIAL DE UBICACIONES
+              DETALLES DEL EQUIPO
               ================================== */}
 
-          <HistorialUbicaciones
-            idEquipo={idEquipo}
-            token={token}
-            nombresLaboratorios={
-              equipo?.id_laboratorio != null &&
-              laboratorio
-                ? {
-                    [equipo.id_laboratorio]: laboratorio,
+          {seccionActiva === 'detalles' && (
+            <div className="detalle-columnas">
+
+              {/* COLUMNA IZQUIERDA */}
+              <div className="detalle-columna-izquierda">
+
+                <Tarjeta
+                  titulo="Datos técnicos"
+                  icono={Cpu}
+                >
+                  <div className="detalle-datos-tecnicos">
+
+                    <Campo
+                      etiqueta="Marca"
+                      valor={marca}
+                    />
+
+                    <Campo
+                      etiqueta="Modelo"
+                      valor={modelo}
+                    />
+
+                    <Campo
+                      etiqueta="Año"
+                      valor={anio}
+                    />
+
+                  </div>
+
+                  <div className="detalle-caracteristicas">
+                    <Campo
+                      etiqueta="Características"
+                      valor={caracteristicas}
+                    />
+                  </div>
+
+                </Tarjeta>
+
+                <Tarjeta
+                  titulo="Observaciones"
+                  icono={MessageSquare}
+                >
+                  <Campo
+                    etiqueta="Comentarios"
+                    valor={comentarios}
+                  />
+                </Tarjeta>
+
+              </div>
+
+              {/* COLUMNA DERECHA */}
+              <div className="detalle-columna-derecha">
+
+                <Tarjeta
+                  titulo="Ubicación"
+                  icono={MapPin}
+                >
+                  <Campo
+                    etiqueta="Sede"
+                    valor={nombreSede(sede)}
+                  />
+
+                  <Campo
+                    etiqueta="Laboratorio"
+                    valor={laboratorio}
+                  />
+
+                  <Campo
+                    etiqueta="Ubicación detallada"
+                    valor={ubicacion}
+                  />
+                </Tarjeta>
+
+              </div>
+
+            </div>
+          )}
+
+          {/* ==================================
+              HISTORIALES
+              ================================== */}
+
+          {seccionActiva === 'historiales' && (
+            <div className="detalle-historiales">
+
+              <div className="detalle-historial-selector">
+
+                <div className="detalle-historial-selector-texto">
+                  <h2>Historiales del equipo</h2>
+
+                  <p>
+                    Seleccione el tipo de historial
+                    que desea consultar.
+                  </p>
+                </div>
+
+                <div
+                  className="detalle-historial-opciones"
+                  aria-label="Tipo de historial"
+                >
+
+                  {/* UBICACIONES */}
+                  <button
+                    type="button"
+                    className={`detalle-historial-opcion ${
+                      historialActivo === 'ubicaciones'
+                        ? 'detalle-historial-opcion--activa'
+                        : ''
+                    }`}
+                    aria-pressed={
+                      historialActivo === 'ubicaciones'
+                    }
+                    onClick={() =>
+                      setHistorialActivo('ubicaciones')
+                    }
+                  >
+                    <MapPin size={16} />
+                    Ubicaciones
+                  </button>
+
+                  {/* ESTADOS */}
+                  <button
+                    type="button"
+                    className={`detalle-historial-opcion ${
+                      historialActivo === 'estados'
+                        ? 'detalle-historial-opcion--activa'
+                        : ''
+                    }`}
+                    aria-pressed={
+                      historialActivo === 'estados'
+                    }
+                    onClick={() =>
+                      setHistorialActivo('estados')
+                    }
+                  >
+                    <ArrowLeftRight size={16} />
+                    Estados
+                  </button>
+
+                  {/* MODIFICACIONES GENERALES */}
+                  <button
+                    type="button"
+                    className={`detalle-historial-opcion ${
+                      historialActivo === 'cambios'
+                        ? 'detalle-historial-opcion--activa'
+                        : ''
+                    }`}
+                    aria-pressed={
+                      historialActivo === 'cambios'
+                    }
+                    onClick={() =>
+                      setHistorialActivo('cambios')
+                    }
+                  >
+                    <FileClock size={16} />
+                    Modificaciones generales
+                  </button>
+
+                </div>
+              </div>
+
+              {/* HISTORIAL DE UBICACIONES */}
+              {historialActivo === 'ubicaciones' && (
+                <HistorialUbicaciones
+                  idEquipo={idEquipo}
+                  token={token}
+                  nombresLaboratorios={
+                    nombresLaboratorios
                   }
-                : {}
-            }
-          />
+                />
+              )}
+
+              {/* HISTORIAL DE ESTADOS */}
+              {historialActivo === 'estados' && (
+                <HistorialEstados
+                  idEquipo={idEquipo}
+                  token={token}
+                />
+              )}
+
+              {/* HISTORIAL DE MODIFICACIONES */}
+
+              {historialActivo === 'cambios' && (
+                <HistorialCambios
+                  idEquipo={idEquipo}
+                  token={token}
+                />
+              )}
+              
+            </div>
+          )}
 
         </>
       )}

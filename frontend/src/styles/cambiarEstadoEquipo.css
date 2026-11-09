@@ -1,0 +1,215 @@
+/* ==========================================
+   CAMBIO DE ESTADO DE EQUIPOS
+   ========================================== */
+
+.cambio-estado-pagina {
+  --cambio-verde: #205c49;
+  --cambio-suave: #edf5f1;
+}
+
+/* INFORMACIÓN DEL EQUIPO */
+
+.cambio-estado-equipo {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.cambio-estado-equipo > div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.cambio-estado-equipo span {
+  color: #8190a2;
+  font-size: 12px;
+}
+
+.cambio-estado-equipo strong {
+  color: #263443;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+/* TARJETA DE ESTADOS */
+
+.cambio-estado-tarjeta {
+  margin-top: 20px;
+}
+
+.cambio-estado-comparacion {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 36px minmax(0, 1fr);
+  align-items: center;
+  gap: 20px;
+}
+
+.cambio-estado-actual {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 20px;
+  border-radius: 9px;
+  background: #f2f5f6;
+}
+
+.cambio-estado-etiqueta {
+  color: #8190a2;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.cambio-estado-actual strong {
+  color: #263443;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+
+.cambio-estado-flecha {
+  display: flex;
+  justify-content: center;
+  color: var(--cambio-verde);
+}
+
+.cambio-estado-nuevo {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid #d5e7dd;
+  border-radius: 9px;
+  background: var(--cambio-suave);
+}
+
+.cambio-estado-nuevo select {
+  width: 100%;
+  margin-top: 10px;
+  padding: 12px 13px;
+  border: 1px solid #d1e0d7;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #263443;
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.cambio-estado-nuevo select:focus {
+  outline: 2px solid #205c49;
+  outline-offset: 2px;
+}
+
+.cambio-estado-descripcion {
+  margin: 10px 0 0;
+  color: #597566;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+/* AVISO */
+
+.cambio-estado-aviso {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 20px;
+  padding: 16px;
+  border-left: 4px solid var(--cambio-verde);
+  border-radius: 8px;
+  background: var(--cambio-suave);
+  color: #315e4a;
+}
+
+.cambio-estado-aviso svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.cambio-estado-aviso p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+/* CONFIRMACIÓN */
+
+.cambio-estado-confirmacion {
+  display: flex;
+  flex-direction: column;
+  gap: 17px;
+  margin-top: 20px;
+  padding: 23px;
+  border: 1px solid #bdd6c8;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.cambio-estado-confirmacion-titulo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--cambio-verde);
+}
+
+.cambio-estado-confirmacion-titulo h2 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.cambio-estado-confirmacion > p {
+  margin: 0;
+  color: #667789;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.cambio-estado-resumen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 18px;
+  border-radius: 9px;
+  background: #f4f8f5;
+  color: #526a60;
+  font-size: 13px;
+}
+
+.cambio-estado-resumen strong {
+  color: var(--cambio-verde);
+}
+
+.cambio-estado-confirmacion-botones {
+  justify-content: flex-end;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 800px) {
+  .cambio-estado-comparacion {
+    grid-template-columns: 1fr;
+  }
+
+  .cambio-estado-flecha {
+    transform: rotate(90deg);
+  }
+}
+
+@media (max-width: 600px) {
+  .cambio-estado-equipo {
+    grid-template-columns: 1fr;
+  }
+
+  .cambio-estado-confirmacion {
+    padding: 17px;
+  }
+
+  .cambio-estado-confirmacion-botones {
+    flex-direction: column;
+  }
+
+  .cambio-estado-confirmacion-botones button {
+    width: 100%;
+  }
+}

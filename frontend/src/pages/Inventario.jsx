@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import {
   Search,
@@ -25,17 +25,19 @@ import {
 
 import '../styles/inventario.css';
 
+// ==========================================
+// INVENTARIO DE EQUIPOS
+// ==========================================
+
 export default function Inventario({
   token,
   puedeRegistrar = false,
   onRegistrarEquipo,
   onVerEquipo,
-  onEditarEquipo,
-  onTrasladarEquipo,
   onSesionExpirada,
 }) {
   // ========================================
-  // CONSULTAR EQUIPOS DESDE NEON
+  // CONSULTAR EQUIPOS
   // ========================================
 
   const {
@@ -55,44 +57,33 @@ export default function Inventario({
 
   const [pagina, setPagina] = useState(1);
 
-  const [menuAbierto, setMenuAbierto] = useState(null);
-
   // ========================================
-  // FUNCIONES DE FILTROS
+  // FILTROS Y NAVEGACIÓN
   // ========================================
 
   function cambiarFiltro(clave, valor) {
     setFiltros((anteriores) => ({
       ...anteriores,
       [clave]: valor,
-
       ...(clave === 'sede'
         ? { laboratorio: '' }
         : {}),
     }));
 
     setPagina(1);
-    setMenuAbierto(null);
   }
 
   function limpiarFiltros() {
-    setFiltros(FILTROS_INICIALES);
+    setFiltros({ ...FILTROS_INICIALES });
     setPagina(1);
-    setMenuAbierto(null);
-  }
-
-  function actualizarInventario() {
-    setMenuAbierto(null);
-    recargar();
   }
 
   function cambiarPagina(numero) {
     setPagina(numero);
-    setMenuAbierto(null);
   }
 
   // ========================================
-  // OPCIONES DE LOS FILTROS
+  // OPCIONES PARA LOS FILTROS
   // ========================================
 
   const opciones = useMemo(() => {
@@ -105,10 +96,7 @@ export default function Inventario({
       : equipos;
 
     return {
-      sede: opcionesUnicas(
-        equipos,
-        'sede'
-      ),
+      sede: opcionesUnicas(equipos, 'sede'),
 
       laboratorio: opcionesUnicas(
         equiposSede,
@@ -128,13 +116,17 @@ export default function Inventario({
   }, [equipos, filtros.sede]);
 
   // ========================================
-  // APLICAR FILTROS
+  // EQUIPOS FILTRADOS
   // ========================================
 
   const equiposFiltrados = useMemo(
     () => filtrarEquipos(equipos, filtros),
     [equipos, filtros]
   );
+
+  // ========================================
+  // FILTROS ACTIVOS
+  // ========================================
 
   const filtrosActivos = [
     ...FILTROS_SELECT
@@ -161,8 +153,7 @@ export default function Inventario({
   const totalPaginas = Math.max(
     1,
     Math.ceil(
-      equiposFiltrados.length /
-        EQUIPOS_POR_PAGINA
+      equiposFiltrados.length / EQUIPOS_POR_PAGINA
     )
   );
 
@@ -172,8 +163,7 @@ export default function Inventario({
   );
 
   const inicio =
-    (paginaActual - 1) *
-    EQUIPOS_POR_PAGINA;
+    (paginaActual - 1) * EQUIPOS_POR_PAGINA;
 
   const equiposPagina = equiposFiltrados.slice(
     inicio,
@@ -181,132 +171,35 @@ export default function Inventario({
   );
 
   // ========================================
-  // PERMISOS Y ACCIONES
+  // PERMISOS Y ACCESO AL DETALLE
   // ========================================
 
   const mostrarRegistrar =
     puedeRegistrar &&
     typeof onRegistrarEquipo === 'function';
 
-  // VER DETALLE
+  // useEquipos entrega equipos adaptados para
+  // la tabla y conserva el registro original.
   const abrirDetalle =
     typeof onVerEquipo === 'function'
       ? (equipo) => {
-          setMenuAbierto(null);
-          onVerEquipo(equipo.original);
+          onVerEquipo(equipo.original ?? equipo);
         }
       : undefined;
 
-  // EDITAR EQUIPO
-  const abrirEdicion =
-    typeof onEditarEquipo === 'function'
-      ? (equipo) => {
-          setMenuAbierto(null);
-          onEditarEquipo(equipo.original);
-        }
-      : undefined;
-
-  // TRASLADAR EQUIPO
-  const abrirTraslado =
-    typeof onTrasladarEquipo === 'function'
-      ? (equipo) => {
-          setMenuAbierto(null);
-          onTrasladarEquipo(equipo.original);
-        }
-      : undefined;
-
-  // Mostrar la columna de acciones si existe
-  // al menos una opción disponible.
-  const mostrarAcciones = Boolean(
-    abrirDetalle ||
-    abrirEdicion ||
-    abrirTraslado
-  );
-
   // ========================================
-  // CERRAR MENÚ AL HACER CLIC FUERA
-  // ========================================
-
-  useEffect(() => {
-    if (menuAbierto === null) {
-      return undefined;
-    }
-
-    function cerrarConClicFuera(evento) {
-      if (
-        !(evento.target instanceof Element) ||
-        !evento.target.closest(
-          '.inv-menu-contenedor, .inv-menu-desplegable'
-        )
-      ) {
-        setMenuAbierto(null);
-      }
-    }
-
-    function cerrarConEscape(evento) {
-      if (evento.key === 'Escape') {
-        setMenuAbierto(null);
-      }
-    }
-
-    function cerrarAlDesplazarse() {
-      setMenuAbierto(null);
-    }
-
-    document.addEventListener(
-      'mousedown',
-      cerrarConClicFuera
-    );
-
-    document.addEventListener(
-      'keydown',
-      cerrarConEscape
-    );
-
-    window.addEventListener(
-      'scroll',
-      cerrarAlDesplazarse,
-      true
-    );
-
-    window.addEventListener(
-      'resize',
-      cerrarAlDesplazarse
-    );
-
-    return () => {
-      document.removeEventListener(
-        'mousedown',
-        cerrarConClicFuera
-      );
-
-      document.removeEventListener(
-        'keydown',
-        cerrarConEscape
-      );
-
-      window.removeEventListener(
-        'scroll',
-        cerrarAlDesplazarse,
-        true
-      );
-
-      window.removeEventListener(
-        'resize',
-        cerrarAlDesplazarse
-      );
-    };
-  }, [menuAbierto]);
-
-  // ========================================
-  // INTERFAZ DEL INVENTARIO
+  // INTERFAZ
   // ========================================
 
   return (
     <div className="inv-pagina">
 
-      {/* ENCABEZADO */}
+      {/* ==================================
+          ENCABEZADO DEL INVENTARIO
+          ================================== */}
+
       <div className="inv-encabezado">
+
         <div className="inv-encabezado-texto">
           <h1>Inventario</h1>
 
@@ -322,12 +215,15 @@ export default function Inventario({
           <button
             type="button"
             className="inv-boton-actualizar"
-            onClick={actualizarInventario}
+            onClick={recargar}
             disabled={cargando}
             title="Actualizar equipos"
             aria-label="Actualizar inventario"
           >
-            <RefreshCw size={17} />
+            <RefreshCw
+              size={17}
+              aria-hidden="true"
+            />
           </button>
 
           {/* REGISTRAR EQUIPO */}
@@ -337,14 +233,22 @@ export default function Inventario({
               className="inv-boton-registrar"
               onClick={onRegistrarEquipo}
             >
-              <Plus size={17} />
+              <Plus
+                size={17}
+                aria-hidden="true"
+              />
+
               <span>Registrar equipo</span>
             </button>
           )}
+
         </div>
       </div>
 
-      {/* CONTENEDOR PRINCIPAL */}
+      {/* ==================================
+          CONTENEDOR PRINCIPAL
+          ================================== */}
+
       <section className="inv-contenedor">
 
         {/* ==================================
@@ -353,7 +257,9 @@ export default function Inventario({
 
         <div className="inv-barra-filtros">
 
+          {/* BUSCADOR */}
           <div className="inv-buscador">
+
             <Search
               size={18}
               aria-hidden="true"
@@ -371,9 +277,12 @@ export default function Inventario({
                 )
               }
             />
+
           </div>
 
+          {/* SELECTORES */}
           <div className="inv-selectores">
+
             {FILTROS_SELECT.map(
               ({ clave, etiqueta }) => (
                 <FiltroSelect
@@ -387,6 +296,7 @@ export default function Inventario({
                 />
               )
             )}
+
           </div>
         </div>
 
@@ -402,6 +312,7 @@ export default function Inventario({
             </span>
 
             <div className="inv-chips">
+
               {filtrosActivos.map(
                 ({ clave, nombre }) => (
                   <button
@@ -422,6 +333,7 @@ export default function Inventario({
                   </button>
                 )
               )}
+
             </div>
 
             <button
@@ -431,11 +343,12 @@ export default function Inventario({
             >
               Limpiar filtros
             </button>
+
           </div>
         )}
 
         {/* ==================================
-            MENSAJES DE ERROR
+            MENSAJE DE ERROR
             ================================== */}
 
         {error && (
@@ -449,14 +362,17 @@ export default function Inventario({
 
             <button
               type="button"
-              onClick={actualizarInventario}
+              onClick={recargar}
             >
               Reintentar
             </button>
           </div>
         )}
 
-        {/* MENSAJE DE CARGA */}
+        {/* ==================================
+            CARGANDO EQUIPOS
+            ================================== */}
+
         {cargando && !error && (
           <div
             className="inv-mensaje"
@@ -467,42 +383,47 @@ export default function Inventario({
         )}
 
         {/* ==================================
-            TABLA DE EQUIPOS
+            TABLA DEL INVENTARIO
             ================================== */}
 
         {!cargando && !error && (
           <>
+
             <div className="inv-tabla-contenedor">
+
               <table className="inv-tabla">
 
                 {/* ENCABEZADOS */}
                 <thead>
                   <tr>
-                    <th>Placa</th>
-                    <th>Equipo</th>
-                    <th>Categoría</th>
-                    <th>Marca / Modelo</th>
-                    <th>Ubicación</th>
-                    <th>Estado</th>
+                    <th scope="col">Placa</th>
+                    <th scope="col">Equipo</th>
+                    <th scope="col">Categoría</th>
+                    <th scope="col">
+                      Marca / Modelo
+                    </th>
+                    <th scope="col">Ubicación</th>
+                    <th scope="col">Estado</th>
 
-                    {mostrarAcciones && (
-                      <th className="inv-columna-acciones">
-                        <span className="inv-sr-only">
-                          Acciones
-                        </span>
-                      </th>
-                    )}
+                    {/* FLECHA DE DETALLE */}
+                    <th
+                      scope="col"
+                      className="inv-columna-detalle"
+                    >
+                      <span className="inv-sr-only">
+                        Ver detalle
+                      </span>
+                    </th>
                   </tr>
                 </thead>
 
                 {/* FILAS */}
                 <tbody>
+
                   {equiposPagina.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={
-                          mostrarAcciones ? 7 : 6
-                        }
+                        colSpan={7}
                         className="inv-tabla-vacia"
                       >
                         {equipos.length === 0
@@ -515,27 +436,12 @@ export default function Inventario({
                       <FilaEquipo
                         key={equipo.clave}
                         equipo={equipo}
-
-                        menuAbierto={
-                          menuAbierto === equipo.clave
-                        }
-
-                        onAlternarMenu={() =>
-                          setMenuAbierto(
-                            menuAbierto === equipo.clave
-                              ? null
-                              : equipo.clave
-                          )
-                        }
-
                         onVer={abrirDetalle}
-                        onEditar={abrirEdicion}
-                        onTrasladar={abrirTraslado}
                       />
                     ))
                   )}
-                </tbody>
 
+                </tbody>
               </table>
             </div>
 
@@ -551,6 +457,7 @@ export default function Inventario({
 
           </>
         )}
+
       </section>
     </div>
   );

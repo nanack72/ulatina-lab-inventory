@@ -187,18 +187,15 @@ export function filtrarEquipos(equipos, filtros) {
   });
 }
 
-export function claseEstado(estado) {
+export function tipoEstado(estado) {
   const valor = normalizar(estado);
 
-  if (
-    valor === 'operativo' ||
-    valor === 'activo'
-  ) {
-    return 'inv-estado--operativo';
+  if (valor === 'operativo' || valor === 'activo') {
+    return 'operativo';
   }
 
   if (valor.includes('mantenimiento')) {
-    return 'inv-estado--mantenimiento';
+    return 'mantenimiento';
   }
 
   if (
@@ -206,10 +203,14 @@ export function claseEstado(estado) {
     valor.includes('fuera de servicio') ||
     valor.includes('inactivo')
   ) {
-    return 'inv-estado--baja';
+    return 'baja';
   }
 
-  return 'inv-estado--otro';
+  return 'otro';
+}
+
+export function claseEstado(estado) {
+  return `inv-estado--${tipoEstado(estado)}`;
 }
 
 export function generarPaginas(actual, total) {

@@ -1,101 +1,101 @@
-/* ==========================================
-   INVENTARIO
-   ========================================== */
+/* ======================================
+  INVENTARIO
+   ====================================== */
+
+
+/* 1. CONTENEDOR Y VARIABLES */
 
 .inv-pagina {
   --inv-verde: #205c49;
-  --inv-verde-hover: #184938;
-  --inv-verde-medio: #2d765e;
-  --inv-verde-suave: #edf5f1;
-  --inv-verde-borde: #b8d5c7;
+  --inv-hover: #184938;
+  --inv-medio: #2d765e;
+  --inv-suave: #edf5f1;
+  --inv-borde: #d9e4dd;
+  --inv-texto: #263443;
+  --inv-secundario: #71877a;
 
-  width: 100%;
-  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 28px;
+  width: 100%;
+  min-width: 0;
   padding: 4px 0 28px;
-  color: #263443;
-  font-family: inherit;
+  color: var(--inv-texto);
 }
 
-/* ==========================================
-   ENCABEZADO
-   ========================================== */
+/* 2. ENCABEZADO */
 
-.inv-encabezado {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 20px;
-}
-
-.inv-encabezado-texto h1 {
-  margin: 0;
-  font-size: 26px;
-  line-height: 1.3;
-  font-weight: 500;
-  color: #1e2732;
-}
-
-.inv-encabezado-texto p {
-  margin: 8px 0 0;
-  font-size: 13px;
-  line-height: 1.5;
-  color: #74819a;
-}
-
+.inv-encabezado,
 .inv-acciones {
   display: flex;
   align-items: center;
+  gap: 20px;
+}
+
+.inv-encabezado {
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.inv-acciones {
   gap: 10px;
   flex-shrink: 0;
 }
 
-/* BOTÓN REGISTRAR EQUIPO */
+.inv-encabezado-texto h1 {
+  margin: 0;
+  color: #1e2732;
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1.3;
+}
 
-.inv-boton-registrar {
+.inv-encabezado-texto p {
+  margin: 8px 0 0;
+  color: #74819a;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* 3. BOTONES PRINCIPALES */
+
+.inv-boton-registrar,
+.inv-boton-actualizar {
   display: inline-flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   gap: 9px;
-  min-height: 41px;
-  padding: 0 19px;
-  border: 1px solid #205c49;
+  height: 41px;
   border-radius: 8px;
-  background: #205c49;
-  color: #ffffff;
   font-family: inherit;
-  font-size: 12px;
-  font-weight: 700;
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
 
-.inv-boton-registrar:hover {
-  background: #184938;
-  border-color: #184938;
+.inv-boton-registrar {
+  padding: 0 19px;
+  border: 1px solid var(--inv-verde);
+  background: var(--inv-verde);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
 }
 
-/* BOTÓN ACTUALIZAR */
+.inv-boton-registrar:hover {
+  background: var(--inv-hover);
+  border-color: var(--inv-hover);
+}
 
 .inv-boton-actualizar {
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
   width: 41px;
-  height: 41px;
-  border: 1px solid #d9e4dd;
-  border-radius: 8px;
-  background: #ffffff;
+  border: 1px solid var(--inv-borde);
+  background: #fff;
   color: var(--inv-verde);
-  cursor: pointer;
-  transition: all 0.2s ease;
 }
 
 .inv-boton-actualizar:hover {
-  background: var(--inv-verde-suave);
-  border-color: var(--inv-verde-borde);
+  background: var(--inv-suave);
+  border-color: #b8d5c7;
 }
 
 .inv-boton-actualizar:disabled {
@@ -103,23 +103,19 @@
   cursor: not-allowed;
 }
 
-/* ==========================================
-   CONTENEDOR PRINCIPAL
-   ========================================== */
+/* 4. CONTENEDOR PRINCIPAL */
 
 .inv-contenedor {
   width: 100%;
   min-width: 0;
-  background: #ffffff;
-  border: 1px solid #d9e4dd;
-  border-radius: 12px;
   overflow: hidden;
+  border: 1px solid var(--inv-borde);
+  border-radius: 12px;
+  background: #fff;
   box-shadow: 0 2px 8px rgba(32, 92, 73, 0.04);
 }
 
-/* ==========================================
-   BARRA DE BÚSQUEDA Y FILTROS
-   ========================================== */
+/* 5. BÚSQUEDA Y FILTROS */
 
 .inv-barra-filtros {
   display: flex;
@@ -129,11 +125,8 @@
   gap: 18px;
   min-height: 74px;
   padding: 17px 19px;
-  background: #ffffff;
   border-bottom: 1px solid #e3ebe6;
 }
-
-/* BUSCADOR */
 
 .inv-buscador {
   display: flex;
@@ -143,15 +136,13 @@
   max-width: 100%;
   min-height: 40px;
   padding: 0 13px;
-  border: 1px solid #d9e4dd;
+  border: 1px solid var(--inv-borde);
   border-radius: 8px;
-  background: #ffffff;
   color: #789688;
-  transition: border-color 0.2s ease;
 }
 
 .inv-buscador:focus-within {
-  border-color: var(--inv-verde-medio);
+  border-color: var(--inv-medio);
   box-shadow: 0 0 0 3px rgba(32, 92, 73, 0.1);
 }
 
@@ -164,11 +155,11 @@
   width: 100%;
   min-width: 0;
   padding: 10px 0;
-  border: none;
-  outline: none;
+  border: 0;
+  outline: 0;
   background: transparent;
   color: #243c31;
-  font-family: inherit;
+  font: inherit;
   font-size: 13px;
 }
 
@@ -176,8 +167,6 @@
   color: #92a49a;
   opacity: 1;
 }
-
-/* FILTROS */
 
 .inv-selectores {
   display: flex;
@@ -190,27 +179,30 @@
   position: relative;
   display: flex;
   align-items: center;
-  height: 35px;
   min-width: 80px;
-  border: 1px solid #d9e4dd;
+  height: 35px;
+  border: 1px solid var(--inv-borde);
   border-radius: 7px;
-  background: #ffffff;
-  transition: border-color 0.2s ease;
+  background: #fff;
+}
+
+.inv-select-contenedor:focus-within {
+  border-color: var(--inv-medio);
 }
 
 .inv-select-contenedor select {
   width: 100%;
-  max-width: 165px;
   min-width: 80px;
+  max-width: 165px;
   height: 100%;
   padding: 0 29px 0 11px;
-  border: none;
+  border: 0;
   border-radius: inherit;
-  outline: none;
+  outline: 0;
   appearance: none;
   background: transparent;
   color: #315e4a;
-  font-family: inherit;
+  font: inherit;
   font-size: 12px;
   cursor: pointer;
 }
@@ -222,34 +214,29 @@
   color: #547c67;
 }
 
-.inv-select-contenedor:focus-within {
-  border-color: var(--inv-verde-medio);
-}
+/* 6. FILTROS ACTIVOS */
 
-/* ==========================================
-   FILTROS ACTIVOS
-   ========================================== */
-
-.inv-filtros-activos {
+.inv-filtros-activos,
+.inv-chips {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 9px;
+}
+
+.inv-filtros-activos {
   min-height: 43px;
   padding: 8px 19px;
-  background: #fafcfb;
   border-bottom: 1px solid #e3ebe6;
+  background: #fafcfb;
 }
 
 .inv-etiqueta-filtros {
-  font-size: 10px;
   color: #74849b;
+  font-size: 10px;
 }
 
 .inv-chips {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
   gap: 6px;
 }
 
@@ -260,9 +247,9 @@
   padding: 5px 9px;
   border: 1px solid #d8e7de;
   border-radius: 999px;
-  background: #edf5f1;
+  background: var(--inv-suave);
   color: var(--inv-verde);
-  font-family: inherit;
+  font: inherit;
   font-size: 10px;
   cursor: pointer;
 }
@@ -272,11 +259,11 @@
 }
 
 .inv-limpiar {
-  border: none;
-  background: transparent;
   padding: 5px;
+  border: 0;
+  background: transparent;
   color: var(--inv-verde);
-  font-family: inherit;
+  font: inherit;
   font-size: 10px;
   font-weight: 700;
   cursor: pointer;
@@ -286,14 +273,12 @@
   text-decoration: underline;
 }
 
-/* ==========================================
-   TABLA DE INVENTARIO
-   ========================================== */
+/* 7. TABLA */
 
 .inv-tabla-contenedor {
   width: 100%;
   overflow-x: auto;
-  background: #ffffff;
+  background: #fff;
 }
 
 .inv-tabla {
@@ -301,35 +286,26 @@
   min-width: 850px;
   border-collapse: separate;
   border-spacing: 0;
+  background: #fff;
   text-align: left;
-  background: #ffffff;
-}
-
-/* ENCABEZADOS BLANCOS */
-
-.inv-tabla thead tr {
-  background: #ffffff;
 }
 
 .inv-tabla th {
   padding: 15px 19px;
-  background: #ffffff;
+  border-bottom: 1px solid #e3ebe6;
+  background: #fff;
   color: #70857b;
   font-size: 10px;
   font-weight: 700;
-  line-height: 1.4;
   letter-spacing: 0.035em;
   text-transform: uppercase;
   white-space: nowrap;
-  border-bottom: 1px solid #e3ebe6;
 }
-
-/* CELDAS */
 
 .inv-tabla td {
   padding: 17px 19px;
   border-top: 1px solid #e7eeea;
-  background: #ffffff;
+  background: #fff;
   color: #243c31;
   font-size: 12px;
   line-height: 1.5;
@@ -337,43 +313,27 @@
   transition: background-color 0.2s ease;
 }
 
-/* TODAS LAS FILAS BLANCAS */
-
-.inv-tabla tbody tr,
-.inv-tabla tbody tr:nth-child(even) {
-  background: #ffffff;
-}
-
-/* LÍNEA VERDE AL INICIO DE CADA EQUIPO */
-
 .inv-tabla tbody tr td:first-child {
-  border-left: 4px solid var(--inv-verde);
   padding-left: 15px;
+  border-left: 4px solid var(--inv-verde);
 }
-
-/* EFECTO HOVER VERDE SUAVE */
 
 .inv-tabla tbody tr:hover td {
-  background: #edf5f1;
+  background: var(--inv-suave);
 }
-
-/* LÍNEA UN POCO MÁS OSCURA AL PASAR EL MOUSE */
 
 .inv-tabla tbody tr:hover td:first-child {
-  border-left-color: #184938;
+  border-left-color: var(--inv-hover);
 }
 
-/* PLACA */
+/* 8. CONTENIDO DE LAS CELDAS */
 
 .inv-placa {
-  color: #205c49;
-  font-weight: 700;
-  font-family: inherit;
+  color: var(--inv-verde);
   font-size: 11px;
+  font-weight: 700;
   white-space: nowrap;
 }
-
-/* CELDAS DE DOS LÍNEAS */
 
 .inv-celda-doble {
   display: flex;
@@ -391,27 +351,47 @@
 .inv-celda-doble small {
   color: #7e9487;
   font-size: 11px;
-  font-weight: 400;
 }
 
-/* SIN RESULTADOS */
+/* Nombre del equipo clicable */
 
-.inv-tabla-vacia {
-  padding: 40px 20px !important;
+.inv-equipo-enlace {
+  display: inline;
+  width: fit-content;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--inv-verde);
+  font: inherit;
+  font-weight: 700;
+  line-height: 1.5;
+  text-align: left;
+  cursor: pointer;
+}
+
+.inv-equipo-enlace:hover {
+  color: var(--inv-hover);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.inv-equipo-enlace:focus-visible {
+  outline: 2px solid var(--inv-verde);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+/* Sin resultados */
+
+.inv-tabla td.inv-tabla-vacia {
+  padding: 40px 20px;
+  border-left: 0;
+  color: #7b8799;
+  font-size: 13px;
   text-align: center;
-  color: #7b8799 !important;
-  font-size: 13px !important;
 }
 
-/* EVITAR LÍNEA VERDE EN MENSAJES VACÍOS */
-
-.inv-tabla-vacia:first-child {
-  border-left: none !important;
-}
-
-/* ==========================================
-   ESTADOS DE LOS EQUIPOS
-   ========================================== */
+/* 9. ESTADOS */
 
 .inv-estado {
   display: inline-flex;
@@ -427,15 +407,11 @@
   white-space: nowrap;
 }
 
-/* OPERATIVO */
-
 .inv-estado--operativo {
   background: #e1f3d9;
   color: #42751f;
   border-color: #c5e5b4;
 }
-
-/* EN MANTENIMIENTO */
 
 .inv-estado--mantenimiento {
   background: #fff2dc;
@@ -443,15 +419,11 @@
   border-color: #f2dfb9;
 }
 
-/* FUERA DE SERVICIO / BAJA */
-
 .inv-estado--baja {
   background: #fdeaea;
   color: #c34848;
   border-color: #f3cece;
 }
-
-/* OTROS ESTADOS */
 
 .inv-estado--otro {
   background: #eef2f0;
@@ -459,75 +431,7 @@
   border-color: #d9e4dd;
 }
 
-/* ==========================================
-   MENÚ DE LOS TRES PUNTOS
-   ========================================== */
-
-.inv-columna-acciones {
-  width: 56px;
-  text-align: center;
-}
-
-.inv-menu-contenedor {
-  position: relative;
-  display: inline-flex;
-  justify-content: center;
-}
-
-.inv-menu-boton {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border: none;
-  border-radius: 7px;
-  background: transparent;
-  color: var(--inv-verde);
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.inv-menu-boton:hover {
-  background: #dceee4;
-}
-
-/* MENÚ DESPLEGABLE */
-
-.inv-menu-desplegable {
-  position: absolute;
-  right: 0;
-  bottom: calc(100% + 5px);
-  z-index: 10;
-  min-width: 128px;
-  padding: 5px;
-  background: #ffffff;
-  border: 1px solid #d3e3d9;
-  border-radius: 8px;
-  box-shadow: 0 6px 18px rgba(32, 92, 73, 0.13);
-}
-
-.inv-menu-desplegable button {
-  display: block;
-  width: 100%;
-  padding: 9px 11px;
-  border: none;
-  border-radius: 5px;
-  background: transparent;
-  text-align: left;
-  color: var(--inv-verde);
-  font-family: inherit;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.inv-menu-desplegable button:hover {
-  background: #edf5f1;
-}
-
-/* ==========================================
-   MENSAJES DE CARGA Y ERROR
-   ========================================== */
+/* 10. MENSAJES */
 
 .inv-mensaje {
   display: flex;
@@ -539,8 +443,8 @@
 }
 
 .inv-mensaje--error {
-  color: #bd3838;
   background: #fff7f7;
+  color: #bd3838;
 }
 
 .inv-mensaje button {
@@ -553,25 +457,23 @@
   cursor: pointer;
 }
 
-/* ==========================================
-   PAGINACIÓN
-   ========================================== */
+/* 11. PAGINACIÓN */
 
 .inv-paginacion {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 14px;
+  justify-content: space-between;
   flex-wrap: wrap;
+  gap: 14px;
   min-height: 60px;
   padding: 12px 19px;
   border-top: 1px solid #e3ebe6;
-  background: #ffffff;
+  background: #fff;
 }
 
 .inv-paginacion p {
   margin: 0;
-  color: #71877a;
+  color: var(--inv-secundario);
   font-size: 11px;
 }
 
@@ -584,36 +486,33 @@
 .inv-controles-paginacion button,
 .inv-puntos {
   display: inline-flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   min-width: 29px;
   height: 29px;
   padding: 0 7px;
-  border: 1px solid #d9e4dd;
+  border: 1px solid var(--inv-borde);
   border-radius: 6px;
-  background: #ffffff;
+  background: #fff;
   color: #476a58;
-  font-family: inherit;
+  font: inherit;
   font-size: 11px;
 }
 
 .inv-controles-paginacion button {
   cursor: pointer;
-  transition: all 0.2s ease;
 }
 
 .inv-controles-paginacion button:hover:not(:disabled) {
-  background: #edf5f1;
+  background: var(--inv-suave);
   border-color: #b8d5c7;
   color: var(--inv-verde);
 }
 
-/* PÁGINA ACTIVA */
-
 .inv-controles-paginacion button.inv-pagina-activa {
-  background: var(--inv-verde);
   border-color: var(--inv-verde);
-  color: #ffffff;
+  background: var(--inv-verde);
+  color: #fff;
 }
 
 .inv-controles-paginacion button:disabled {
@@ -627,9 +526,7 @@
   pointer-events: none;
 }
 
-/* ==========================================
-   ACCESIBILIDAD
-   ========================================== */
+/* 12. ACCESIBILIDAD */
 
 .inv-sr-only {
   position: absolute;
@@ -643,9 +540,7 @@
   border: 0;
 }
 
-/* ==========================================
-   RESPONSIVE
-   ========================================== */
+/* 13. RESPONSIVE */
 
 @media (max-width: 1200px) {
   .inv-barra-filtros {
@@ -653,10 +548,7 @@
     flex-direction: column;
   }
 
-  .inv-buscador {
-    width: 100%;
-  }
-
+  .inv-buscador,
   .inv-selectores {
     width: 100%;
   }
@@ -669,7 +561,6 @@
 
   .inv-encabezado {
     flex-wrap: wrap;
-    align-items: flex-start;
   }
 
   .inv-encabezado-texto h1 {
@@ -684,7 +575,6 @@
   .inv-selectores {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
   }
 
   .inv-select-contenedor,
@@ -693,16 +583,9 @@
     max-width: none;
   }
 
-  .inv-filtros-activos {
-    padding: 11px 14px;
-  }
-
+  .inv-filtros-activos,
   .inv-paginacion {
     padding: 14px;
-  }
-
-  .inv-tabla {
-    min-width: 820px;
   }
 }
 
@@ -719,10 +602,6 @@
     flex: 1;
   }
 
-  .inv-selectores {
-    grid-template-columns: 1fr 1fr;
-  }
-
   .inv-paginacion {
     flex-direction: column;
     align-items: flex-start;
@@ -732,4 +611,37 @@
     max-width: 100%;
     flex-wrap: wrap;
   }
+}
+
+/* ==========================================
+   FLECHA PARA VER DETALLE
+   ========================================== */
+
+.inv-columna-detalle {
+  width: 52px;
+  text-align: center;
+}
+
+.inv-boton-detalle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: #205c49;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.inv-boton-detalle:hover {
+  background: #e0eee5;
+}
+
+.inv-boton-detalle:focus-visible {
+  outline: 2px solid #205c49;
+  outline-offset: 2px;
 }

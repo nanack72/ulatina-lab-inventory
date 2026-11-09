@@ -6,6 +6,7 @@ import EquipoDetalle from '../pages/EquipoDetalle';
 import RegistrarEquipo from '../pages/RegistrarEquipo';
 import EditarEquipo from '../pages/EditarEquipo';
 import TrasladarEquipo from '../pages/TrasladarEquipo';
+import CambiarEstadoEquipo from '../pages/CambiarEstadoEquipo';
 
 // ==========================================
 // NOMBRES DE LAS PÁGINAS
@@ -24,13 +25,13 @@ const nombresPaginas = {
 };
 
 // ==========================================
-// NORMALIZAR EL ROL DEL USUARIO
+// NORMALIZAR ROL
 // ==========================================
 
 function normalizarRol(rol) {
   const nombre =
     typeof rol === 'object' && rol !== null
-      ? rol?.nombre ?? rol?.nombre_rol ?? ''
+      ? rol.nombre ?? rol.nombre_rol ?? ''
       : rol ?? '';
 
   return String(nombre)
@@ -38,6 +39,21 @@ function normalizarRol(rol) {
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/\s+/g, '')
     .toLowerCase();
+}
+
+function obtenerIdEquipo(equipo) {
+  const id = Number(
+    equipo?.id_equipo ?? equipo?.id
+  );
+
+  if (!Number.isSafeInteger(id) || id <= 0) {
+    console.error(
+      'El equipo no tiene un identificador válido.'
+    );
+    return null;
+  }
+
+  return id;
 }
 
 // ==========================================
@@ -49,25 +65,31 @@ export default function MainLayout({
   token,
   cerrarSesion,
 }) {
-  // Página seleccionada desde el sidebar.
   const [paginaActual, cambiarPagina] = useState('inicio');
 
-  // Equipo seleccionado.
-  const [equipoSeleccionado, setEquipoSeleccionado] = useState(null);
+  const [equipoSeleccionado, setEquipoSeleccionado] =
+    useState(null);
 
-  // Pantallas del inventario.
-  const [registrandoEquipo, setRegistrandoEquipo] = useState(false);
-  const [editandoEquipo, setEditandoEquipo] = useState(false);
-  const [trasladandoEquipo, setTrasladandoEquipo] = useState(false);
+  const [registrandoEquipo, setRegistrandoEquipo] =
+    useState(false);
+
+  const [editandoEquipo, setEditandoEquipo] =
+    useState(false);
+
+  const [trasladandoEquipo, setTrasladandoEquipo] =
+    useState(false);
+
+  const [cambiandoEstado, setCambiandoEstado] =
+    useState(false);
 
   // ========================================
-  // PERMISOS DEL USUARIO
+  // PERMISOS
   // ========================================
 
   const rol = normalizarRol(usuario?.rol);
 
-  // El backend sigue siendo responsable de
-  // verificar los permisos reales.
+  // El backend es quien autoriza realmente
+  // las operaciones mediante JWT.
   const usuarioPuedeModificar =
     rol === 'superadministrador' ||
     rol === 'tecnico';
@@ -76,78 +98,87 @@ export default function MainLayout({
     nombresPaginas[paginaActual] || 'Inicio';
 
   // ========================================
-  // VER DETALLE DE UN EQUIPO
+  // CERRAR PANTALLAS DEL INVENTARIO
+  // ========================================
+
+  function cerrarPantallasInventario() {
+    setEquipoSeleccionado(null);
+    setRegistrandoEquipo(false);
+    setEditandoEquipo(false);
+    setTrasladandoEquipo(false);
+    setCambiandoEstado(false);
+  }
+
+  // ========================================
+  // VER DETALLE
   // ========================================
 
   function verEquipo(equipo) {
-    const id = equipo?.id_equipo ?? equipo?.id;
+    const id = obtenerIdEquipo(equipo);
 
-    if (id === undefined || id === null) {
-      console.error('El equipo no tiene identificador.');
-      return;
-    }
+    if (id === null) return;
 
-    setRegistrandoEquipo(false);
-    setEditandoEquipo(false);
-    setTrasladandoEquipo(false);
-
+    cerrarPantallasInventario();
     setEquipoSeleccionado(id);
   }
 
   // ========================================
-  // EDITAR EQUIPO
-  // ========================================
-
-  function editarEquipo(equipo) {
-    if (!usuarioPuedeModificar) return;
-
-    const id = equipo?.id_equipo ?? equipo?.id;
-
-    if (id === undefined || id === null) {
-      console.error('El equipo no tiene identificador.');
-      return;
-    }
-
-    setRegistrandoEquipo(false);
-    setTrasladandoEquipo(false);
-
-    setEquipoSeleccionado(id);
-    setEditandoEquipo(true);
-  }
-
-  // ========================================
-  // TRASLADAR EQUIPO
-  // ========================================
-
-  function abrirTraslado(equipo) {
-    if (!usuarioPuedeModificar) return;
-
-    const id = equipo?.id_equipo ?? equipo?.id;
-
-    if (id === undefined || id === null) {
-      console.error('El equipo no tiene identificador.');
-      return;
-    }
-
-    setRegistrandoEquipo(false);
-    setEditandoEquipo(false);
-
-    setEquipoSeleccionado(id);
-    setTrasladandoEquipo(true);
-  }
-
-  // ========================================
-  // REGISTRAR EQUIPO
+  // REGISTRAR
   // ========================================
 
   function abrirRegistro() {
     if (!usuarioPuedeModificar) return;
 
-    setEquipoSeleccionado(null);
-
-    setEditandoEquipo(false);
-    setTrasladandoEquipo(false);
+    cerrarPantallasInventario();
     setRegistrandoEquipo(true);
+  }
+
+  // ========================================
+  // EDITAR
+  // ========================================
+
+  function editarEquipo(equipo) {
+    if (!usuarioPuedeModificar) return;
+
+    const id = obtenerIdEquipo(equipo);
+
+    if (id === null) return;
+
+    cerrarPantallasInventario();
+    setEquipoSeleccionado(id);
+    setEditandoEquipo(true);
+  }
+
+  // ========================================
+  // TRASLADAR
+  // ========================================
+
+  function abrirTraslado(equipo) {
+    if (!usuarioPuedeModificar) return;
+
+    const id = obtenerIdEquipo(equipo);
+
+    if (id === null) return;
+
+    cerrarPantallasInventario();
+    setEquipoSeleccionado(id);
+    setTrasladandoEquipo(true);
+  }
+
+  // ========================================
+  // CAMBIAR ESTADO
+  // ========================================
+
+  function abrirCambioEstado(equipo) {
+    if (!usuarioPuedeModificar) return;
+
+    const id = obtenerIdEquipo(equipo);
+
+    if (id === null) return;
+
+    cerrarPantallasInventario();
+    setEquipoSeleccionado(id);
+    setCambiandoEstado(true);
   }
 
   // ========================================
@@ -155,20 +186,12 @@ export default function MainLayout({
   // ========================================
 
   function volverAlInventario() {
-    setEquipoSeleccionado(null);
-
-    setRegistrandoEquipo(false);
-    setEditandoEquipo(false);
-    setTrasladandoEquipo(false);
+    cerrarPantallasInventario();
   }
 
-  // ========================================
-  // FINALIZAR UNA OPERACIÓN
-  // ========================================
-
   function guardarCompletado() {
-    // Al regresar, Inventario se monta de
-    // nuevo y consulta los equipos actualizados.
+    // Al volver a montar Inventario,
+    // se consultan de nuevo los equipos.
     volverAlInventario();
   }
 
@@ -177,12 +200,12 @@ export default function MainLayout({
   // ========================================
 
   function navegarA(pagina) {
-    volverAlInventario();
+    cerrarPantallasInventario();
     cambiarPagina(pagina);
   }
 
   // ========================================
-  // TÍTULO DEL ENCABEZADO
+  // TÍTULO DE LA PANTALLA
   // ========================================
 
   function obtenerTitulo() {
@@ -199,6 +222,10 @@ export default function MainLayout({
         return 'Trasladar equipo';
       }
 
+      if (cambiandoEstado) {
+        return 'Cambiar estado del equipo';
+      }
+
       if (equipoSeleccionado !== null) {
         return 'Detalle del equipo';
       }
@@ -208,13 +235,13 @@ export default function MainLayout({
   }
 
   // ========================================
-  // CONTENIDO DE CADA PÁGINA
+  // MOSTRAR CONTENIDO
   // ========================================
 
   function renderizarContenido() {
     if (paginaActual === 'inventario') {
 
-      // REGISTRAR EQUIPO
+      // REGISTRO
       if (registrandoEquipo) {
         return (
           <RegistrarEquipo
@@ -225,7 +252,23 @@ export default function MainLayout({
         );
       }
 
-      // TRASLADAR EQUIPO
+      // CAMBIO DE ESTADO
+      if (
+        cambiandoEstado &&
+        equipoSeleccionado !== null
+      ) {
+        return (
+          <CambiarEstadoEquipo
+            key={equipoSeleccionado}
+            idEquipo={equipoSeleccionado}
+            token={token}
+            onCancelar={volverAlInventario}
+            onActualizado={guardarCompletado}
+          />
+        );
+      }
+
+      // TRASLADO
       if (
         trasladandoEquipo &&
         equipoSeleccionado !== null
@@ -241,7 +284,7 @@ export default function MainLayout({
         );
       }
 
-      // EDITAR EQUIPO
+      // EDICIÓN
       if (
         editandoEquipo &&
         equipoSeleccionado !== null
@@ -257,7 +300,7 @@ export default function MainLayout({
         );
       }
 
-      // VER DETALLE DEL EQUIPO
+      // DETALLE DEL EQUIPO
       if (equipoSeleccionado !== null) {
         return (
           <EquipoDetalle
@@ -265,11 +308,27 @@ export default function MainLayout({
             idEquipo={equipoSeleccionado}
             token={token}
             onVolver={volverAlInventario}
+            onEditar={
+              usuarioPuedeModificar
+                ? editarEquipo
+                : undefined
+            }
+            onTrasladar={
+              usuarioPuedeModificar
+                ? abrirTraslado
+                : undefined
+            }
+            onCambiarEstado={
+              usuarioPuedeModificar
+                ? abrirCambioEstado
+                : undefined
+            }
           />
         );
       }
 
-      // LISTADO DEL INVENTARIO
+
+      // LISTADO DE INVENTARIO
       return (
         <Inventario
           token={token}
@@ -284,6 +343,11 @@ export default function MainLayout({
           onTrasladarEquipo={
             usuarioPuedeModificar
               ? abrirTraslado
+              : undefined
+          }
+          onCambiarEstadoEquipo={
+            usuarioPuedeModificar
+              ? abrirCambioEstado
               : undefined
           }
         />
@@ -305,7 +369,7 @@ export default function MainLayout({
   }
 
   // ========================================
-  // ESTRUCTURA PRINCIPAL DEL SISTEMA
+  // ESTRUCTURA GENERAL DEL SISTEMA
   // ========================================
 
   return (
@@ -322,16 +386,13 @@ export default function MainLayout({
       {/* CONTENIDO PRINCIPAL */}
       <main className="main-content">
 
-        {/* ENCABEZADO SUPERIOR */}
         <header className="main-header">
           <div>
             <span className="main-breadcrumb">
               Sistema /{' '}
             </span>
 
-            <strong>
-              {obtenerTitulo()}
-            </strong>
+            <strong>{obtenerTitulo()}</strong>
           </div>
 
           <div className="main-user">
@@ -347,7 +408,6 @@ export default function MainLayout({
           </div>
         </header>
 
-        {/* PÁGINA ACTUAL */}
         <section className="main-page">
           {renderizarContenido()}
         </section>

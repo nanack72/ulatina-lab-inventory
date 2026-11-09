@@ -1,90 +1,19 @@
-import { useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { MoreHorizontal } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 
 import {
   claseEstado,
   formatearSede,
 } from '../../utils/inventario';
 
+// ==========================================
+// FILA DE EQUIPO - INVENTARIO PES
+// ==========================================
+
 export default function FilaEquipo({
   equipo,
-  menuAbierto,
-  onAlternarMenu,
   onVer,
-  onEditar,
-  onTrasladar,
 }) {
-  const botonRef = useRef(null);
-  const [posicionMenu, setPosicionMenu] = useState(null);
-
-  // ==========================================
-  // OPCIONES DEL MENÚ DE TRES PUNTOS
-  // ==========================================
-
-  const acciones = [
-    onVer && {
-      texto: 'Ver detalle',
-      ejecutar: () => onVer(equipo),
-    },
-    onEditar && {
-      texto: 'Editar equipo',
-      ejecutar: () => onEditar(equipo),
-    },
-    onTrasladar && {
-      texto: 'Trasladar equipo',
-      ejecutar: () => onTrasladar(equipo),
-    },
-  ].filter(Boolean);
-
-  // ==========================================
-  // POSICIÓN DEL MENÚ FLOTANTE
-  // ==========================================
-
-  useEffect(() => {
-    if (!menuAbierto || !botonRef.current) {
-      setPosicionMenu(null);
-      return;
-    }
-
-    const rect = botonRef.current.getBoundingClientRect();
-
-    const ancho = 180;
-    const altura = acciones.length * 40 + 12;
-
-    const espacioAbajo =
-      window.innerHeight - rect.bottom;
-
-    const izquierda = Math.max(
-      8,
-      Math.min(
-        window.innerWidth - ancho - 8,
-        rect.right - ancho
-      )
-    );
-
-    const arriba =
-      espacioAbajo >= altura + 8
-        ? rect.bottom + 5
-        : Math.max(
-            8,
-            rect.top - altura - 5
-          );
-
-    setPosicionMenu({
-      position: 'fixed',
-      left: izquierda,
-      top: arriba,
-      right: 'auto',
-      bottom: 'auto',
-      width: ancho,
-      zIndex: 9999,
-    });
-  }, [menuAbierto, acciones.length]);
-
-  // ==========================================
-  // FORMATO DE LA UBICACIÓN
-  // ==========================================
+  const puedeVerDetalle = typeof onVer === 'function';
 
   const ubicacion = [
     formatearSede(equipo.sede),
@@ -93,29 +22,41 @@ export default function FilaEquipo({
     .filter(Boolean)
     .join(' · ');
 
-  // ==========================================
-  // TABLA
-  // ==========================================
+  function abrirDetalle() {
+    if (puedeVerDetalle) {
+      onVer(equipo);
+    }
+  }
+
+  const nombreEquipo = equipo.nombre || 'Sin nombre';
 
   return (
     <tr>
       {/* PLACA INSTITUCIONAL */}
       <td>
-        <span className="inv-placa">
-          {equipo.placa || '—'}
-        </span>
+          <span className="inv-placa">
+            {equipo.placa || '—'}
+          </span>
       </td>
 
-      {/* NOMBRE Y NÚMERO DE SERIE */}
+      {/* NOMBRE Y SERIE */}
       <td>
         <div className="inv-celda-doble">
-          <strong>
-            {equipo.nombre || 'Sin nombre'}
-          </strong>
+          {puedeVerDetalle ? (
+            <button
+              type="button"
+              className="inv-equipo-enlace"
+              onClick={abrirDetalle}
+              title={`Ver detalle de ${nombreEquipo}`}
+            >
+              {nombreEquipo}
+            </button>
+          ) : (
+            <strong>{nombreEquipo}</strong>
+          )}
 
           <small>
-            Serie{' '}
-            {equipo.serie || 'no registrada'}
+            Serie {equipo.serie || 'no registrada'}
           </small>
         </div>
       </td>
@@ -162,47 +103,23 @@ export default function FilaEquipo({
         </span>
       </td>
 
-      {/* ACCIONES */}
-      {acciones.length > 0 && (
-        <td className="inv-columna-acciones">
-          <div className="inv-menu-contenedor">
-
-            {/* BOTÓN DE TRES PUNTOS */}
-            <button
-              ref={botonRef}
-              type="button"
-              className="inv-menu-boton"
-              aria-label={`Opciones de ${equipo.nombre}`}
-              aria-expanded={menuAbierto}
-              aria-haspopup="true"
-              onClick={onAlternarMenu}
-            >
-              <MoreHorizontal size={20} />
-            </button>
-
-            {/* MENÚ FLOTANTE */}
-            {menuAbierto &&
-              posicionMenu &&
-              createPortal(
-                <div
-                  className="inv-menu-desplegable"
-                  style={posicionMenu}
-                >
-                  {acciones.map((accion) => (
-                    <button
-                      key={accion.texto}
-                      type="button"
-                      onClick={accion.ejecutar}
-                    >
-                      {accion.texto}
-                    </button>
-                  ))}
-                </div>,
-                document.body
-              )}
-          </div>
-        </td>
-      )}
+      {/* FLECHA PARA VER DETALLE */}
+      <td className="inv-columna-detalle">
+        {puedeVerDetalle && (
+          <button
+            type="button"
+            className="inv-boton-detalle"
+            onClick={abrirDetalle}
+            aria-label={`Ver detalle de ${nombreEquipo}`}
+            title={`Ver detalle de ${nombreEquipo}`}
+          >
+            <ChevronRight
+              size={19}
+              aria-hidden="true"
+            />
+          </button>
+        )}
+      </td>
     </tr>
   );
 }

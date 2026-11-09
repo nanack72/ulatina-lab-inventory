@@ -146,9 +146,9 @@ const obtenerHistorialUbicacion = async (req, res) => {
   }
 };
 
-// ==========================================
-// HISTORIAL DE ESTADOS
-// ==========================================
+ // ==========================================
+ // HISTORIAL DE ESTADOS
+ // ==========================================
 
 const obtenerHistorialEstados = async (req, res) => {
   try {
@@ -158,9 +158,41 @@ const obtenerHistorialEstados = async (req, res) => {
 
     const resultado = await pool.query(
       `
-      SELECT *
-      FROM public.historial_estado
-      WHERE id_equipo = $1
+      SELECT
+        he.id_historial_estado,
+        he.id_equipo,
+        he.id_usuario,
+        he.id_estado_anterior,
+        he.id_estado_nuevo,
+        he.motivo,
+        he.fecha,
+
+        ea.nombre AS nombre_estado_anterior,
+        en.nombre AS nombre_estado_nuevo,
+        u.nombre_completo AS nombre_usuario,
+
+        CASE
+          WHEN he.id_estado_anterior IS NULL
+            THEN 'asignacion_inicial'
+          ELSE 'cambio_estado'
+        END AS tipo_movimiento
+
+      FROM public.historial_estado AS he
+
+      LEFT JOIN public.estado AS ea
+        ON ea.id_estado = he.id_estado_anterior
+
+      LEFT JOIN public.estado AS en
+        ON en.id_estado = he.id_estado_nuevo
+
+      LEFT JOIN public.usuario AS u
+        ON u.id_usuario = he.id_usuario
+
+      WHERE he.id_equipo = $1
+
+      ORDER BY
+        he.fecha DESC,
+        he.id_historial_estado DESC
       `,
       [Number(req.params.id)]
     );
@@ -196,9 +228,27 @@ const obtenerHistorialCambios = async (req, res) => {
 
     const resultado = await pool.query(
       `
-      SELECT *
-      FROM public.historial_cambio
-      WHERE id_equipo = $1
+      SELECT
+        hc.id_historial_cambio,
+        hc.id_equipo,
+        hc.id_usuario,
+        hc.campo_modificado,
+        hc.valor_anterior,
+        hc.valor_nuevo,
+        hc.fecha,
+
+        u.nombre_completo AS nombre_usuario
+
+      FROM public.historial_cambio AS hc
+
+      LEFT JOIN public.usuario AS u
+        ON u.id_usuario = hc.id_usuario
+
+      WHERE hc.id_equipo = $1
+
+      ORDER BY
+        hc.fecha DESC,
+        hc.id_historial_cambio DESC
       `,
       [Number(req.params.id)]
     );
@@ -211,13 +261,14 @@ const obtenerHistorialCambios = async (req, res) => {
 
   } catch (error) {
     console.error(
-      'Error al consultar historial de cambios:',
+      'Error al consultar historial de modificaciones:',
       error.message
     );
 
     return res.status(500).json({
       success: false,
-      message: 'Error al consultar el historial de cambios',
+      message:
+        'Error al consultar el historial de modificaciones',
     });
   }
 };
