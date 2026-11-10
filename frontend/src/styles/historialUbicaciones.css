@@ -1,0 +1,385 @@
+/* ==========================================
+   HISTORIAL DE UBICACIONES
+   ========================================== */
+
+.hist-ubicacion {
+  --hist-verde: #205c49;
+  --hist-verde-suave: #edf5f1;
+
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #dfe4eb;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #263443;
+  box-sizing: border-box;
+}
+
+.hist-ubicacion *,
+.hist-ubicacion *::before,
+.hist-ubicacion *::after {
+  box-sizing: border-box;
+}
+
+/* ENCABEZADO */
+
+.hist-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 20px 23px;
+  border-bottom: 1px solid #edf0f3;
+}
+
+.hist-titulo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.hist-icono-principal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  background: var(--hist-verde);
+  color: #ffffff;
+}
+
+.hist-titulo h2 {
+  margin: 0;
+  color: #263443;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.hist-titulo p {
+  margin: 6px 0 0;
+  color: #8190a2;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.hist-actualizar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border: 1px solid #d9e5de;
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--hist-verde);
+  cursor: pointer;
+}
+
+.hist-actualizar:hover:not(:disabled) {
+  background: var(--hist-verde-suave);
+}
+
+.hist-actualizar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ESTADOS */
+
+.hist-mensaje,
+.hist-vacio {
+  padding: 30px 23px;
+  color: #75869b;
+  font-size: 13px;
+}
+
+.hist-vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.hist-vacio strong {
+  color: #263443;
+}
+
+.hist-vacio p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.hist-error {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 23px;
+  padding: 14px 16px;
+  border: 1px solid #efcaca;
+  border-radius: 9px;
+  background: #fff5f5;
+  color: #ae3838;
+  font-size: 12px;
+}
+
+.hist-error span {
+  flex: 1;
+}
+
+.hist-error button {
+  border: none;
+  background: transparent;
+  color: #ae3838;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* CONTADOR */
+
+.hist-contador {
+  padding: 15px 23px 0;
+  color: #738497;
+  font-size: 12px;
+}
+
+/* LÍNEA DE TIEMPO */
+
+.hist-linea-tiempo {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 22px 23px 26px 39px;
+}
+
+.hist-linea-tiempo::before {
+  content: '';
+  position: absolute;
+  top: 35px;
+  bottom: 40px;
+  left: 35px;
+  width: 2px;
+  background: #dce9e1;
+}
+
+.hist-movimiento {
+  position: relative;
+  display: flex;
+  gap: 19px;
+  padding: 0 0 25px;
+}
+
+.hist-movimiento:last-child {
+  padding-bottom: 0;
+}
+
+.hist-marcador {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  margin-left: -19px;
+  border: 3px solid #ffffff;
+  border-radius: 50%;
+  background: var(--hist-verde);
+  color: #ffffff;
+}
+
+.hist-contenido {
+  flex: 1;
+  min-width: 0;
+  padding: 16px 18px;
+  border: 1px solid #e2e9e4;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.hist-movimiento:first-child .hist-contenido {
+  border-color: #c6dccf;
+  background: #f9fcfa;
+}
+
+/* TÍTULO Y FECHA */
+
+.hist-movimiento-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 17px;
+}
+
+.hist-movimiento-cabecera h3 {
+  margin: 0;
+  color: #263443;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.hist-movimiento-cabecera time {
+  color: #8290a0;
+  font-size: 11px;
+}
+
+/* ORIGEN Y DESTINO */
+
+.hist-cambio {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.hist-ubicacion-origen,
+.hist-ubicacion-destino {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.hist-ubicacion-origen {
+  background: #f3f5f6;
+}
+
+.hist-ubicacion-destino {
+  background: var(--hist-verde-suave);
+}
+
+.hist-ubicacion-origen span,
+.hist-ubicacion-destino span {
+  color: #8190a2;
+  font-size: 11px;
+}
+
+.hist-ubicacion-origen strong,
+.hist-ubicacion-destino strong {
+  overflow-wrap: anywhere;
+  color: #263443;
+  font-size: 12px;
+}
+
+.hist-ubicacion-destino strong {
+  color: var(--hist-verde);
+}
+
+.hist-ubicacion-origen small,
+.hist-ubicacion-destino small {
+  overflow-wrap: anywhere;
+  color: #708094;
+  font-size: 12px;
+}
+
+.hist-flecha {
+  display: flex;
+  justify-content: center;
+  color: var(--hist-verde);
+}
+
+/* PIE DEL MOVIMIENTO */
+
+.hist-movimiento-pie {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 15px;
+  padding-top: 13px;
+  border-top: 1px solid #edf0f3;
+  color: #8290a0;
+  font-size: 11px;
+}
+
+.hist-movimiento-pie strong {
+  color: #526a60;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 650px) {
+  .hist-encabezado {
+    padding: 17px;
+  }
+
+  .hist-linea-tiempo {
+    padding-right: 12px;
+  }
+
+  .hist-contenido {
+    padding: 13px;
+  }
+
+  .hist-cambio {
+    grid-template-columns: 1fr;
+  }
+
+  .hist-flecha {
+    transform: rotate(90deg);
+  }
+}
+
+/* ==========================================
+   TIPOS DE MOVIMIENTOS 
+   ========================================== */
+
+.hist-tipo-encabezado {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.hist-tipo-etiqueta {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 9px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+/* ASIGNACIÓN INICIAL */
+
+.hist-tipo-etiqueta--asignacion_inicial {
+  background: #edf5f1;
+  color: #205c49;
+}
+
+/* CAMBIO DENTRO DEL MISMO LABORATORIO */
+
+.hist-tipo-etiqueta--cambio_ubicacion {
+  background: #eef2f5;
+  color: #536b7b;
+}
+
+/* TRASLADO ENTRE LABORATORIOS */
+
+.hist-tipo-etiqueta--traslado_laboratorio {
+  background: #e6f2eb;
+  color: #205c49;
+}
+
+.hist-movimiento--traslado_laboratorio
+.hist-contenido {
+  border-left: 3px solid #205c49;
+}
+
+/* RESPONSABLE */
+
+.hist-movimiento-pie strong {
+  color: #205c49;
+  font-weight: 700;
+}

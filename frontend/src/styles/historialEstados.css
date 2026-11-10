@@ -1,0 +1,92 @@
+/* ==========================================
+   HISTORIAL DE ESTADOS
+   ========================================== */
+
+.hist-estados {
+  --hist-verde: #205c49;
+  --hist-verde-suave: #edf5f1;
+
+  margin-top: 24px;
+}
+
+/* TIPOS DE MOVIMIENTO */
+
+.hist-estados .hist-tipo-encabezado {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.hist-estados .hist-estado-etiqueta {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: #edf5f1;
+  color: #205c49;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.hist-estados .hist-estado-cambio .hist-estado-etiqueta {
+  background: #eef2f5;
+  color: #536b7b;
+}
+
+/* ESTADO ANTERIOR Y NUEVO */
+
+.hist-estados .hist-ubicacion-origen,
+.hist-estados .hist-ubicacion-destino {
+  min-height: 75px;
+  justify-content: center;
+}
+
+.hist-estados .hist-ubicacion-origen strong,
+.hist-estados .hist-ubicacion-destino strong {
+  font-size: 13px;
+}
+
+/* MOTIVO DEL CAMBIO */
+
+.hist-estado-motivo {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 1px solid #e5ebe7;
+  border-radius: 8px;
+  background: #fafcfb;
+}
+
+.hist-estado-motivo span {
+  display: block;
+  margin-bottom: 6px;
+  color: #8190a2;
+  font-size: 11px;
+}
+
+.hist-estado-motivo p {
+  margin: 0;
+  color: #3d5262;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+/* RESPONSABLE */
+
+.hist-estados .hist-movimiento-pie strong {
+  color: #205c49;
+  font-weight: 700;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 650px) {
+  .hist-estado-motivo {
+    padding: 11px;
+  }
+
+  .hist-estados .hist-ubicacion-origen,
+  .hist-estados .hist-ubicacion-destino {
+    min-height: auto;
+  }
+}

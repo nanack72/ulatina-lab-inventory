@@ -1,11 +1,16 @@
 const pool = require('../config/database');
 
-// Middleware para autorizar acciones según el rol del usuario (ej: 'Administrador', 'Tecnico', 'Encargado')
-// Se le pasan los roles que tienen permiso para entrar a la ruta.
-// Por ejemplo: permitirRoles('Administrador') o permitirRoles('Administrador', 'Tecnico')
+/**
+ * Middleware para autorizar acciones según el rol del usuario.
+ *
+ * Ejemplo:
+ * permitirRoles('Superadministrador', 'Tecnico')
+ *
+ * La comparación no distingue mayúsculas ni minúsculas.
+ */
 const permitirRoles = (...rolesPermitidos) => {
     return (req, res, next) => {
-        // Nos aseguramos de que antes haya pasado por el middleware de autenticación
+        // Verificar que el usuario esté autenticado
         if (!req.usuario) {
             return res.status(401).json({
                 success: false,
@@ -14,39 +19,61 @@ const permitirRoles = (...rolesPermitidos) => {
         }
 
         const rolUsuario = req.usuario.rol;
-        const rolesNormalizados = rolesPermitidos.map(r => r.toLowerCase().trim());
 
-        // Comprobación flexible (insensible a mayúsculas/minúsculas)
-        if (!rolUsuario || !rolesNormalizados.includes(rolUsuario.toLowerCase().trim())) {
+        const rolesNormalizados = rolesPermitidos.map(
+            (rol) => String(rol).toLowerCase().trim()
+        );
+
+        // Comprobar si el usuario posee un rol autorizado
+        if (
+            !rolUsuario ||
+            !rolesNormalizados.includes(
+                String(rolUsuario).toLowerCase().trim()
+            )
+        ) {
             return res.status(403).json({
                 success: false,
-                message: `Acceso denegado: tu rol (${rolUsuario || 'Sin rol'}) no tiene permisos para realizar esta acción`
+                message: 'Acceso denegado: no tienes permisos para realizar esta acción'
             });
         }
 
-        // Si el rol tiene permiso, dejamos continuar la petición
         next();
     };
 };
 
-// Middleware para asegurar que un usuario solo modifique recursos de su sede asignada.
-// El Administrador tiene permiso global en cualquier sede.
+/**
+ * Verifica que el usuario tenga asignada la sede solicitada.
+ *
+ * El Superadministrador posee acceso global.
+ * Los demás usuarios deben estar asignados a la sede.
+ */
 const validarSedeAsignada = async (req, res, next) => {
+    // No continuar si falta la sesión autenticada
+    if (!req.usuario) {
+        return res.status(401).json({
+            success: false,
+            message: 'Sesión no válida. Inicie sesión nuevamente.'
+        });
+    }
+
     try {
         const idUsuario = req.usuario.idUsuario;
-        const rolUsuario = req.usuario.rol || '';
 
-        // El rol Administrador / SuperAdministrador no tiene restricciones de sede, puede gestionar todo
-        if (
-            rolUsuario.toLowerCase() === 'superadministrador' ||
-            rolUsuario.toLowerCase() === 'administrador' ||
-            rolUsuario.toLowerCase() === 'admin'
-        ) {
+        const rolUsuario = String(
+            req.usuario.rol || ''
+        ).toLowerCase().trim();
+
+        // Únicamente el Superadministrador tiene acceso global
+        if (rolUsuario === 'superadministrador') {
             return next();
         }
 
-        // Buscamos el id de la sede en params, body o query params
-        const idSede = req.params.idSede || req.params.id_sede || req.body.id_sede || req.query.id_sede;
+        // Obtener la sede desde params, body o query
+        const idSede =
+            req.params.idSede ||
+            req.params.id_sede ||
+            req.body?.id_sede ||
+            req.query.id_sede;
 
         if (!idSede) {
             return res.status(400).json({
@@ -55,16 +82,20 @@ const validarSedeAsignada = async (req, res, next) => {
             });
         }
 
-        // Consultamos en la tabla usuario_sede si este usuario está asignado a esa sede
+        // Verificar asignación del usuario a la sede
         const consulta = `
-            SELECT id_sede 
-            FROM public.usuario_sede 
-            WHERE id_usuario = $1 AND id_sede = $2
+            SELECT id_sede
+            FROM public.usuario_sede
+            WHERE id_usuario = $1
+              AND id_sede = $2
             LIMIT 1
         `;
-        const resultado = await pool.query(consulta, [idUsuario, idSede]);
 
-        // Si la consulta viene vacía, no tiene asignada esa sede
+        const resultado = await pool.query(
+            consulta,
+            [idUsuario, idSede]
+        );
+
         if (resultado.rowCount === 0) {
             return res.status(403).json({
                 success: false,
@@ -72,37 +103,52 @@ const validarSedeAsignada = async (req, res, next) => {
             });
         }
 
-        next();
+        return next();
 
     } catch (error) {
-        console.error('Error al validar la sede del usuario:', error.message);
-        res.status(500).json({
+        // Registrar detalles únicamente en el servidor
+        console.error('Error al validar la sede del usuario:', error);
+
+        return res.status(500).json({
             success: false,
-            message: 'Error interno al verificar los permisos de sede',
-            error: error.message
+            message: 'Error interno al verificar los permisos de sede'
         });
     }
 };
 
-// Middleware para asegurar que un usuario solo acceda a laboratorios asignados.
-// Se valida en la tabla usuario_laboratorio vinculada a través de usuario_sede.
-// El Administrador tiene permiso global a todos los laboratorios.
+/**
+ * Verifica que el usuario tenga asignado el laboratorio.
+ *
+ * El Superadministrador posee acceso global.
+ * Los demás usuarios deben tener una asignación válida
+ * en usuario_sede y usuario_laboratorio.
+ */
 const validarLaboratorioAsignado = async (req, res, next) => {
+    if (!req.usuario) {
+        return res.status(401).json({
+            success: false,
+            message: 'Sesión no válida. Inicie sesión nuevamente.'
+        });
+    }
+
     try {
         const idUsuario = req.usuario.idUsuario;
-        const rolUsuario = req.usuario.rol || '';
 
-        // El rol Administrador / SuperAdministrador tiene acceso total a todos los laboratorios
-        if (
-            rolUsuario.toLowerCase() === 'superadministrador' ||
-            rolUsuario.toLowerCase() === 'administrador' ||
-            rolUsuario.toLowerCase() === 'admin'
-        ) {
+        const rolUsuario = String(
+            req.usuario.rol || ''
+        ).toLowerCase().trim();
+
+        // Únicamente el Superadministrador tiene acceso global
+        if (rolUsuario === 'superadministrador') {
             return next();
         }
 
-        // Buscamos el id del laboratorio en params, body o query params
-        const idLaboratorio = req.params.idLaboratorio || req.params.id_laboratorio || req.body.id_laboratorio || req.query.id_laboratorio;
+        // Obtener el laboratorio desde params, body o query
+        const idLaboratorio =
+            req.params.idLaboratorio ||
+            req.params.id_laboratorio ||
+            req.body?.id_laboratorio ||
+            req.query.id_laboratorio;
 
         if (!idLaboratorio) {
             return res.status(400).json({
@@ -111,17 +157,23 @@ const validarLaboratorioAsignado = async (req, res, next) => {
             });
         }
 
-        // Consultamos en usuario_laboratorio a través de usuario_sede
+        // Verificar laboratorio asignado a través de la sede
         const consulta = `
             SELECT ul.id_laboratorio
             FROM public.usuario_laboratorio ul
-            INNER JOIN public.usuario_sede us ON ul.id_usuario_sede = us.id_usuario_sede
-            WHERE us.id_usuario = $1 AND ul.id_laboratorio = $2
+            INNER JOIN public.usuario_sede us
+                ON ul.id_usuario_sede = us.id_usuario_sede
+            WHERE us.id_usuario = $1
+              AND ul.id_laboratorio = $2
+              AND ul.id_sede = us.id_sede
             LIMIT 1
         `;
-        const resultado = await pool.query(consulta, [idUsuario, idLaboratorio]);
 
-        // Si la consulta viene vacía, no tiene asignado ese laboratorio
+        const resultado = await pool.query(
+            consulta,
+            [idUsuario, idLaboratorio]
+        );
+
         if (resultado.rowCount === 0) {
             return res.status(403).json({
                 success: false,
@@ -129,14 +181,18 @@ const validarLaboratorioAsignado = async (req, res, next) => {
             });
         }
 
-        next();
+        return next();
 
     } catch (error) {
-        console.error('Error al validar el laboratorio del usuario:', error.message);
-        res.status(500).json({
+        // Nunca exponer detalles internos de PostgreSQL al cliente
+        console.error(
+            'Error al validar el laboratorio del usuario:',
+            error
+        );
+
+        return res.status(500).json({
             success: false,
-            message: 'Error interno al verificar los permisos de laboratorio',
-            error: error.message
+            message: 'Error interno al verificar los permisos de laboratorio'
         });
     }
 };
