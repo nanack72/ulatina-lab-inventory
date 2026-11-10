@@ -1,6 +1,7 @@
 require('dotenv').config();
 
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const pool = require('./config/database');
 
@@ -12,6 +13,8 @@ const estadosRoutes = require('./routes/estadosRoutes');
 const equiposRoutes = require('./routes/equiposRoutes');
 const mantenimientosRoutes = require('./routes/mantenimientosRoutes');
 const authRoutes = require('./routes/authRoutes');
+const reportesRoutes = require('./routes/reportesRoutes');
+const evidenciasRoutes = require('./routes/evidenciasRoutes');
 
 // Importamos la tarea de limpieza de JWT
 const { iniciarLimpiezaTokens } = require('../jobs/limpiezaTokens');
@@ -29,6 +32,11 @@ app.use('/api/estados', estadosRoutes);
 app.use('/api/equipos', equiposRoutes);
 app.use('/api/mantenimientos', mantenimientosRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/reportes', reportesRoutes);
+app.use('/api/evidencias', evidenciasRoutes);
+
+// Archivos subidos (fotos de evidencias)
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Verificar que Express funciona
 app.get('/api/health', (req, res) => {
