@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import Sidebar from '../components/Sidebar';
+import Inicio from '../pages/Inicio';
 import Inventario from '../pages/Inventario';
 import EquipoDetalle from '../pages/EquipoDetalle';
 import RegistrarEquipo from '../pages/RegistrarEquipo';
@@ -182,6 +183,20 @@ export default function MainLayout({
   }
 
   // ========================================
+  // ACCESOS DESDE LA PANTALLA DE INICIO
+  // ========================================
+
+  function registrarDesdeInicio() {
+    cambiarPagina('inventario');
+    abrirRegistro();
+  }
+
+  function verEquipoDesdeInicio(equipo) {
+    cambiarPagina('inventario');
+    verEquipo(equipo);
+  }
+
+  // ========================================
   // VOLVER AL INVENTARIO
   // ========================================
 
@@ -350,6 +365,21 @@ export default function MainLayout({
               ? abrirCambioEstado
               : undefined
           }
+        />
+      );
+    }
+
+        // INICIO
+    if (paginaActual === 'inicio') {
+      return (
+        <Inicio
+          usuario={usuario}
+          token={token}
+          puedeRegistrar={usuarioPuedeModificar}
+          onRegistrarEquipo={registrarDesdeInicio}
+          onVerEquipo={verEquipoDesdeInicio}
+          onIrA={navegarA}
+          onSesionExpirada={cerrarSesion}
         />
       );
     }
