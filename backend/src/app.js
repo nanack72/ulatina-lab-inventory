@@ -13,6 +13,8 @@ const equiposRoutes = require('./routes/equiposRoutes');
 const mantenimientosRoutes = require('./routes/mantenimientosRoutes');
 const authRoutes = require('./routes/authRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
+const historialGeneralRoutes = require('./routes/historialGeneralRoutes');
+
 
 // Importamos la tarea de limpieza de JWT
 const { iniciarLimpiezaTokens } = require('../jobs/limpiezaTokens');
@@ -31,6 +33,8 @@ app.use('/api/equipos', equiposRoutes);
 app.use('/api/mantenimientos', mantenimientosRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/historial-general', historialGeneralRoutes);
+
 
 // Verificar que Express funciona
 app.get('/api/health', (req, res) => {

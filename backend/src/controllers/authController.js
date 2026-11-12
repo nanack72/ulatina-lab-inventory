@@ -161,8 +161,102 @@ const logout = async (req, res) => {
     }
 };
 
+const cambiarContrasena = async (req, res) => {
+    const idUsuario = req.usuario.idUsuario;
+    const { contrasenaActual, contrasenaNueva } = req.body || {};
+
+    if (
+        typeof contrasenaActual !== 'string' ||
+        typeof contrasenaNueva !== 'string' ||
+        !contrasenaActual ||
+        !contrasenaNueva
+    ) {
+        return res.status(400).json({
+            success: false,
+            message: 'Debe ingresar la contraseña actual y la nueva.'
+        });
+    }
+
+    if (contrasenaNueva.length < 12 || contrasenaNueva.length > 72) {
+        return res.status(400).json({
+            success: false,
+            message: 'La nueva contraseña debe tener entre 12 y 72 caracteres.'
+        });
+    }
+
+    if (contrasenaActual === contrasenaNueva) {
+        return res.status(400).json({
+            success: false,
+            message: 'La nueva contraseña debe ser diferente de la actual.'
+        });
+    }
+
+    try {
+        const resultado = await pool.query(
+            `SELECT contrasena_hash
+             FROM public.usuario
+             WHERE id_usuario = $1 AND activo = true`,
+            [idUsuario]
+        );
+
+        if (resultado.rowCount === 0) {
+            return res.status(401).json({
+                success: false,
+                message: 'La cuenta no está disponible.'
+            });
+        }
+
+        const hashActual = resultado.rows[0].contrasena_hash;
+
+        const esCorrecta = await bcrypt.compare(
+            contrasenaActual,
+            hashActual
+        );
+
+        if (!esCorrecta) {
+            return res.status(400).json({
+                success: false,
+                message: 'La contraseña actual es incorrecta.'
+            });
+        }
+
+        const hashNuevo = await bcrypt.hash(contrasenaNueva, 12);
+
+        const actualizacion = await pool.query(
+            `UPDATE public.usuario
+             SET contrasena_hash = $1
+             WHERE id_usuario = $2
+               AND activo = true
+               AND contrasena_hash = $3
+             RETURNING id_usuario`,
+            [hashNuevo, idUsuario, hashActual]
+        );
+
+        if (actualizacion.rowCount === 0) {
+            return res.status(409).json({
+                success: false,
+                message: 'La contraseña fue modificada durante la operación. Intente nuevamente.'
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: 'Contraseña actualizada correctamente.'
+        });
+
+    } catch (error) {
+        console.error('Error al cambiar contraseña:', error);
+
+        return res.status(500).json({
+            success: false,
+            message: 'No fue posible actualizar la contraseña.'
+        });
+    }
+};
+
 module.exports = {
     login,
     obtenerPerfil,
-    logout
+    logout,
+    cambiarContrasena
 };

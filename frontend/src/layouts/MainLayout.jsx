@@ -8,6 +8,8 @@ import RegistrarEquipo from '../pages/RegistrarEquipo';
 import EditarEquipo from '../pages/EditarEquipo';
 import TrasladarEquipo from '../pages/TrasladarEquipo';
 import CambiarEstadoEquipo from '../pages/CambiarEstadoEquipo';
+import Historial from '../pages/Historial';
+import MiPerfil from '../pages/MiPerfil';
 
 // ==========================================
 // NOMBRES DE LAS PÁGINAS
@@ -382,6 +384,22 @@ export default function MainLayout({
           onSesionExpirada={cerrarSesion}
         />
       );
+    }
+
+    // HISTORIAL GENERAL
+    if (paginaActual === 'historial') {
+      return (
+        <Historial
+          token={token}
+          onVerEquipo={verEquipoDesdeInicio}
+          onSesionExpirada={cerrarSesion}
+        />
+      );
+    }
+
+    // MI PERFIL
+    if (paginaActual === 'perfil') {
+      return <MiPerfil usuario={usuario} token={token} />;
     }
 
     // OTRAS PÁGINAS
