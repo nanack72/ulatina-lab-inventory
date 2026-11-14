@@ -1,10 +1,15 @@
 const pool = require('../config/database');
 
+const {
+  puedeRegistrarInventario,
+  puedeEditarInventario,
+} = require('../utils/permisosInventario');
+
 // =====================================================
 // FUNCIONES AUXILIARES
 // =====================================================
 
-// Verificar identificadores positivos
+// Verificar identificadores positivos.
 const esIdValido = (valor) => {
   return (
     /^[1-9]\d*$/.test(String(valor ?? '')) &&
@@ -12,13 +17,13 @@ const esIdValido = (valor) => {
   );
 };
 
-// Comprobar acceso global
+// Comprobar acceso global.
 const tieneAccesoGlobal = (usuario) => {
-  return usuario?.rol?.toLowerCase().trim() ===
+  return String(usuario?.rol || '').toLowerCase().trim() ===
     'superadministrador';
 };
 
-// Obtener ID del usuario autenticado
+// Obtener ID del usuario autenticado.
 const obtenerIdUsuario = (usuario) => {
   const idUsuario = Number(usuario?.idUsuario);
 
@@ -32,7 +37,7 @@ const obtenerIdUsuario = (usuario) => {
   return idUsuario;
 };
 
-// Agregar restricciones de laboratorio a consultas GET
+// Agregar restricciones de laboratorio a consultas GET.
 const agregarRestriccionAcceso = (
   condiciones,
   valores,
@@ -66,7 +71,7 @@ const agregarRestriccionAcceso = (
   return true;
 };
 
-// Convertir textos opcionales vacíos a NULL
+// Convertir textos opcionales vacíos a NULL.
 const textoOpcional = (valor) => {
   if (
     valor === undefined ||
@@ -81,7 +86,7 @@ const textoOpcional = (valor) => {
     : null;
 };
 
-// Comprobar rol y estado directamente en PostgreSQL
+// Consultar estado, rol y permiso actuales en PostgreSQL.
 const consultarUsuarioActual = async (
   client,
   idUsuario
@@ -90,6 +95,7 @@ const consultarUsuarioActual = async (
     `SELECT
        u.id_usuario,
        u.activo,
+       u.permiso_inventario,
        r.nombre AS rol
      FROM public.usuario u
      INNER JOIN public.rol r
@@ -105,11 +111,12 @@ const consultarUsuarioActual = async (
 
   return {
     activo: resultado.rows[0].activo === true,
-    rol: resultado.rows[0].rol?.toLowerCase().trim()
+    rol: resultado.rows[0].rol?.toLowerCase().trim(),
+    permiso_inventario: resultado.rows[0].permiso_inventario,
   };
 };
 
-// Verificar asignación actual a un laboratorio
+// Verificar asignación actual a un laboratorio.
 const tieneAccesoLaboratorio = async (
   client,
   idUsuario,
@@ -137,14 +144,14 @@ const tieneAccesoLaboratorio = async (
     [
       idLaboratorio,
       idUsuario,
-      esSuperadministrador
+      esSuperadministrador,
     ]
   );
 
   return resultado.rowCount > 0;
 };
 
-// Manejar errores comunes de PostgreSQL
+// Manejar errores comunes de PostgreSQL.
 const responderErrorEscritura = (
   res,
   error,
@@ -154,7 +161,7 @@ const responderErrorEscritura = (
     return res.status(409).json({
       success: false,
       message:
-        'Ya existe un equipo con ese número de serie o placa institucional'
+        'Ya existe un equipo con ese número de serie o placa institucional',
     });
   }
 
@@ -162,7 +169,7 @@ const responderErrorEscritura = (
     return res.status(400).json({
       success: false,
       message:
-        'La categoría, el estado o el laboratorio no existen'
+        'La categoría, el estado o el laboratorio no existen',
     });
   }
 
@@ -170,7 +177,7 @@ const responderErrorEscritura = (
     return res.status(400).json({
       success: false,
       message:
-        'Los datos enviados no cumplen las restricciones del sistema'
+        'Los datos enviados no cumplen las restricciones del sistema',
     });
   }
 
@@ -181,7 +188,7 @@ const responderErrorEscritura = (
 
   return res.status(500).json({
     success: false,
-    message: `Error interno al ${operacion} el equipo`
+    message: `Error interno al ${operacion} el equipo`,
   });
 };
 
@@ -195,24 +202,25 @@ const obtenerEquipos = async (req, res) => {
     const condiciones = [];
     const valores = [];
 
-    if (!agregarRestriccionAcceso(
-      condiciones,
-      valores,
-      req.usuario
-    )) {
+    if (
+      !agregarRestriccionAcceso(
+        condiciones,
+        valores,
+        req.usuario
+      )
+    ) {
       return res.status(403).json({
         success: false,
-        message: 'Usuario sin autorización válida'
+        message: 'Usuario sin autorización válida',
       });
     }
 
-    // Filtros de texto
     const filtrosTexto = {
       nombre: 'e.nombre',
       numero_serie: 'e.numero_serie',
       placa_institucional: 'e.placa_institucional',
       marca: 'e.marca',
-      modelo: 'e.modelo'
+      modelo: 'e.modelo',
     };
 
     for (const [campo, columna] of Object.entries(filtrosTexto)) {
@@ -225,7 +233,7 @@ const obtenerEquipos = async (req, res) => {
         ) {
           return res.status(400).json({
             success: false,
-            message: `El filtro ${campo} no es válido`
+            message: `El filtro ${campo} no es válido`,
           });
         }
 
@@ -237,12 +245,11 @@ const obtenerEquipos = async (req, res) => {
       }
     }
 
-    // Filtros por identificador
     const filtrosId = {
       id_categoria: 'e.id_categoria',
       id_estado: 'e.id_estado',
       id_laboratorio: 'e.id_laboratorio',
-      id_sede: 's.id_sede'
+      id_sede: 's.id_sede',
     };
 
     for (const [campo, columna] of Object.entries(filtrosId)) {
@@ -255,7 +262,7 @@ const obtenerEquipos = async (req, res) => {
         ) {
           return res.status(400).json({
             success: false,
-            message: `El filtro ${campo} debe ser un ID válido`
+            message: `El filtro ${campo} debe ser un ID válido`,
           });
         }
 
@@ -326,9 +333,8 @@ const obtenerEquipos = async (req, res) => {
     return res.status(200).json({
       success: true,
       total: resultado.rowCount,
-      data: resultado.rows
+      data: resultado.rows,
     });
-
   } catch (error) {
     console.error(
       'Error al obtener equipos:',
@@ -337,7 +343,7 @@ const obtenerEquipos = async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      message: 'Error al consultar los equipos'
+      message: 'Error al consultar los equipos',
     });
   }
 };
@@ -354,21 +360,23 @@ const obtenerEquipoPorId = async (req, res) => {
     if (!esIdValido(id)) {
       return res.status(400).json({
         success: false,
-        message: 'El identificador del equipo no es válido'
+        message: 'El identificador del equipo no es válido',
       });
     }
 
     const condiciones = ['e.id_equipo = $1'];
     const valores = [Number(id)];
 
-    if (!agregarRestriccionAcceso(
-      condiciones,
-      valores,
-      req.usuario
-    )) {
+    if (
+      !agregarRestriccionAcceso(
+        condiciones,
+        valores,
+        req.usuario
+      )
+    ) {
       return res.status(403).json({
         success: false,
-        message: 'Usuario sin autorización válida'
+        message: 'Usuario sin autorización válida',
       });
     }
 
@@ -424,15 +432,14 @@ const obtenerEquipoPorId = async (req, res) => {
     if (resultado.rowCount === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Equipo no encontrado o sin acceso autorizado'
+        message: 'Equipo no encontrado o sin acceso autorizado',
       });
     }
 
     return res.status(200).json({
       success: true,
-      data: resultado.rows[0]
+      data: resultado.rows[0],
     });
-
   } catch (error) {
     console.error(
       'Error al obtener equipo por ID:',
@@ -441,7 +448,7 @@ const obtenerEquipoPorId = async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      message: 'Error al consultar el equipo'
+      message: 'Error al consultar el equipo',
     });
   }
 };
@@ -457,7 +464,7 @@ const crearEquipo = async (req, res) => {
   if (!idUsuario) {
     return res.status(401).json({
       success: false,
-      message: 'Usuario no autenticado'
+      message: 'Usuario no autenticado',
     });
   }
 
@@ -473,7 +480,7 @@ const crearEquipo = async (req, res) => {
     ubicacion_detalle,
     id_categoria,
     id_estado,
-    id_laboratorio
+    id_laboratorio,
   } = req.body || {};
 
   if (
@@ -482,7 +489,7 @@ const crearEquipo = async (req, res) => {
   ) {
     return res.status(400).json({
       success: false,
-      message: 'El nombre del equipo es obligatorio'
+      message: 'El nombre del equipo es obligatorio',
     });
   }
 
@@ -494,7 +501,7 @@ const crearEquipo = async (req, res) => {
     return res.status(400).json({
       success: false,
       message:
-        'Categoría, estado y laboratorio deben ser válidos'
+        'Categoría, estado y laboratorio deben ser válidos',
     });
   }
 
@@ -505,7 +512,7 @@ const crearEquipo = async (req, res) => {
     modelo,
     caracteristicas,
     comentarios,
-    ubicacion_detalle
+    ubicacion_detalle,
   };
 
   for (const [campo, valor] of Object.entries(textos)) {
@@ -516,7 +523,7 @@ const crearEquipo = async (req, res) => {
     ) {
       return res.status(400).json({
         success: false,
-        message: `El campo ${campo} debe ser texto`
+        message: `El campo ${campo} debe ser texto`,
       });
     }
   }
@@ -533,7 +540,7 @@ const crearEquipo = async (req, res) => {
   ) {
     return res.status(400).json({
       success: false,
-      message: 'El año del equipo no es válido'
+      message: 'El año del equipo no es válido',
     });
   }
 
@@ -546,7 +553,6 @@ const crearEquipo = async (req, res) => {
     await client.query('BEGIN');
     transaccionIniciada = true;
 
-    // Verificar rol y estado actuales
     const usuario = await consultarUsuarioActual(
       client,
       idUsuario
@@ -558,7 +564,7 @@ const crearEquipo = async (req, res) => {
 
       return res.status(403).json({
         success: false,
-        message: 'Usuario sin autorización válida'
+        message: 'Usuario sin autorización válida',
       });
     }
 
@@ -568,25 +574,21 @@ const crearEquipo = async (req, res) => {
 
       return res.status(403).json({
         success: false,
-        message: 'La cuenta de usuario está inactiva'
+        message: 'La cuenta de usuario está inactiva',
       });
     }
 
-    // Roles permitidos provisionalmente
-    if (
-      !['superadministrador', 'tecnico'].includes(usuario.rol)
-    ) {
+    // Autorizar registro según el permiso individual.
+    if (!puedeRegistrarInventario(usuario)) {
       await client.query('ROLLBACK');
       transaccionIniciada = false;
 
       return res.status(403).json({
         success: false,
-        message:
-          'Tu rol no tiene permisos para registrar equipos'
+        message: 'No tiene permisos para registrar equipos',
       });
     }
 
-    // Verificar acceso al laboratorio
     const tieneAcceso = await tieneAccesoLaboratorio(
       client,
       idUsuario,
@@ -601,11 +603,11 @@ const crearEquipo = async (req, res) => {
       return res.status(403).json({
         success: false,
         message:
-          'Laboratorio inexistente o sin acceso autorizado'
+          'Laboratorio inexistente o sin acceso autorizado',
       });
     }
 
-    // Identificar usuario para los triggers
+    // Identificar al usuario para los triggers.
     await client.query(
       "SELECT set_config('app.usuario_id', $1, true)",
       [String(idUsuario)]
@@ -645,7 +647,7 @@ const crearEquipo = async (req, res) => {
         textoOpcional(ubicacion_detalle),
         Number(id_categoria),
         Number(id_estado),
-        Number(id_laboratorio)
+        Number(id_laboratorio),
       ]
     );
 
@@ -655,9 +657,8 @@ const crearEquipo = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: 'Equipo registrado correctamente',
-      data: resultado.rows[0]
+      data: resultado.rows[0],
     });
-
   } catch (error) {
     if (client && transaccionIniciada) {
       try {
@@ -675,7 +676,6 @@ const crearEquipo = async (req, res) => {
       error,
       'registrar'
     );
-
   } finally {
     if (client) {
       client.release();
@@ -694,21 +694,19 @@ const actualizarEquipo = async (req, res) => {
   if (!idUsuario) {
     return res.status(401).json({
       success: false,
-      message: 'Usuario no autenticado'
+      message: 'Usuario no autenticado',
     });
   }
 
   if (!esIdValido(req.params.id)) {
     return res.status(400).json({
       success: false,
-      message:
-        'El identificador del equipo no es válido'
+      message: 'El identificador del equipo no es válido',
     });
   }
 
   const idEquipo = Number(req.params.id);
 
-  // Solamente se pueden modificar estos campos
   const camposPermitidos = [
     'nombre',
     'numero_serie',
@@ -721,7 +719,7 @@ const actualizarEquipo = async (req, res) => {
     'ubicacion_detalle',
     'id_categoria',
     'id_estado',
-    'id_laboratorio'
+    'id_laboratorio',
   ];
 
   const datos = req.body;
@@ -733,7 +731,7 @@ const actualizarEquipo = async (req, res) => {
   ) {
     return res.status(400).json({
       success: false,
-      message: 'Debe enviar un objeto JSON válido'
+      message: 'Debe enviar un objeto JSON válido',
     });
   }
 
@@ -742,28 +740,26 @@ const actualizarEquipo = async (req, res) => {
   if (camposRecibidos.length === 0) {
     return res.status(400).json({
       success: false,
-      message:
-        'Debe indicar al menos un campo para actualizar'
+      message: 'Debe indicar al menos un campo para actualizar',
     });
   }
 
-  // Evitar que modifiquen columnas no permitidas
   const camposDesconocidos = camposRecibidos.filter(
-    campo => !camposPermitidos.includes(campo)
+    (campo) => !camposPermitidos.includes(campo)
   );
 
   if (camposDesconocidos.length > 0) {
     return res.status(400).json({
       success: false,
       message:
-        `Campos no permitidos: ${camposDesconocidos.join(', ')}`
+        `Campos no permitidos: ${camposDesconocidos.join(', ')}`,
     });
   }
 
   const camposId = [
     'id_categoria',
     'id_estado',
-    'id_laboratorio'
+    'id_laboratorio',
   ];
 
   const camposTexto = [
@@ -774,10 +770,9 @@ const actualizarEquipo = async (req, res) => {
     'modelo',
     'caracteristicas',
     'comentarios',
-    'ubicacion_detalle'
+    'ubicacion_detalle',
   ];
 
-  // Validar IDs
   for (const campo of camposId) {
     if (
       Object.prototype.hasOwnProperty.call(datos, campo) &&
@@ -785,16 +780,13 @@ const actualizarEquipo = async (req, res) => {
     ) {
       return res.status(400).json({
         success: false,
-        message: `El campo ${campo} debe ser un ID válido`
+        message: `El campo ${campo} debe ser un ID válido`,
       });
     }
   }
 
-  // Validar textos
   for (const campo of camposTexto) {
-    if (
-      !Object.prototype.hasOwnProperty.call(datos, campo)
-    ) {
+    if (!Object.prototype.hasOwnProperty.call(datos, campo)) {
       continue;
     }
 
@@ -807,8 +799,7 @@ const actualizarEquipo = async (req, res) => {
       ) {
         return res.status(400).json({
           success: false,
-          message:
-            'El nombre del equipo no puede estar vacío'
+          message: 'El nombre del equipo no puede estar vacío',
         });
       }
     } else if (
@@ -817,16 +808,12 @@ const actualizarEquipo = async (req, res) => {
     ) {
       return res.status(400).json({
         success: false,
-        message:
-          `El campo ${campo} debe ser texto o null`
+        message: `El campo ${campo} debe ser texto o null`,
       });
     }
   }
 
-  // Validar año opcional
-  if (
-    Object.prototype.hasOwnProperty.call(datos, 'anio')
-  ) {
+  if (Object.prototype.hasOwnProperty.call(datos, 'anio')) {
     const anio = datos.anio;
 
     if (
@@ -840,12 +827,11 @@ const actualizarEquipo = async (req, res) => {
     ) {
       return res.status(400).json({
         success: false,
-        message: 'El año del equipo no es válido'
+        message: 'El año del equipo no es válido',
       });
     }
   }
 
-  // Preparar los valores nuevos
   const cambios = {};
 
   for (const campo of camposRecibidos) {
@@ -877,7 +863,6 @@ const actualizarEquipo = async (req, res) => {
     await client.query('BEGIN');
     transaccionIniciada = true;
 
-    // Verificar usuario actual en Neon
     const usuario = await consultarUsuarioActual(
       client,
       idUsuario
@@ -889,7 +874,7 @@ const actualizarEquipo = async (req, res) => {
 
       return res.status(403).json({
         success: false,
-        message: 'Usuario sin autorización válida'
+        message: 'Usuario sin autorización válida',
       });
     }
 
@@ -899,26 +884,21 @@ const actualizarEquipo = async (req, res) => {
 
       return res.status(403).json({
         success: false,
-        message:
-          'La cuenta de usuario está inactiva'
+        message: 'La cuenta de usuario está inactiva',
       });
     }
 
-    // Roles autorizados provisionalmente
-    if (
-      !['superadministrador', 'tecnico'].includes(usuario.rol)
-    ) {
+    // Incluye edición, traslado y cambio de estado.
+    if (!puedeEditarInventario(usuario)) {
       await client.query('ROLLBACK');
       transaccionIniciada = false;
 
       return res.status(403).json({
         success: false,
-        message:
-          'Tu rol no tiene permisos para modificar equipos'
+        message: 'No tiene permisos para modificar equipos',
       });
     }
 
-    // Bloquear el equipo durante la modificación
     const equipoActual = await client.query(
       `SELECT
          id_equipo,
@@ -935,7 +915,7 @@ const actualizarEquipo = async (req, res) => {
 
       return res.status(404).json({
         success: false,
-        message: 'Equipo no encontrado'
+        message: 'Equipo no encontrado',
       });
     }
 
@@ -948,7 +928,6 @@ const actualizarEquipo = async (req, res) => {
     const esSuperadministrador =
       usuario.rol === 'superadministrador';
 
-    // Verificar acceso al laboratorio de origen
     const accesoOrigen = await tieneAccesoLaboratorio(
       client,
       idUsuario,
@@ -963,11 +942,10 @@ const actualizarEquipo = async (req, res) => {
       return res.status(403).json({
         success: false,
         message:
-          'Sin acceso autorizado al laboratorio de origen'
+          'Sin acceso autorizado al laboratorio de origen',
       });
     }
 
-    // Verificar acceso al laboratorio de destino
     const accesoDestino = await tieneAccesoLaboratorio(
       client,
       idUsuario,
@@ -982,17 +960,15 @@ const actualizarEquipo = async (req, res) => {
       return res.status(403).json({
         success: false,
         message:
-          'Laboratorio de destino inexistente o sin acceso'
+          'Laboratorio de destino inexistente o sin acceso',
       });
     }
 
-    // Informar al trigger quién modifica el equipo
     await client.query(
       "SELECT set_config('app.usuario_id', $1, true)",
       [String(idUsuario)]
     );
 
-    // Construir actualización con campos permitidos
     const nombresCampos = Object.keys(cambios);
     const valores = Object.values(cambios);
 
@@ -1020,9 +996,8 @@ const actualizarEquipo = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: 'Equipo actualizado correctamente',
-      data: resultado.rows[0]
+      data: resultado.rows[0],
     });
-
   } catch (error) {
     if (client && transaccionIniciada) {
       try {
@@ -1040,7 +1015,6 @@ const actualizarEquipo = async (req, res) => {
       error,
       'actualizar'
     );
-
   } finally {
     if (client) {
       client.release();
@@ -1056,5 +1030,5 @@ module.exports = {
   obtenerEquipos,
   obtenerEquipoPorId,
   crearEquipo,
-  actualizarEquipo
+  actualizarEquipo,
 };

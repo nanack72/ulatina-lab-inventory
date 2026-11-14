@@ -22,6 +22,21 @@ import '../styles/usuarios.css';
 
 const POR_PAGINA = 5;
 
+const PERMISOS_INVENTARIO = [
+  {
+    valor: 'consulta',
+    nombre: 'Solo consultar',
+  },
+  {
+    valor: 'registro',
+    nombre: 'Consultar y registrar',
+  },
+  {
+    valor: 'edicion',
+    nombre: 'Consultar, registrar y editar',
+  },
+];
+
 function formularioInicial() {
   return {
     nombre_completo: '',
@@ -29,6 +44,7 @@ function formularioInicial() {
     id_rol: '',
     contrasena: '',
     activo: true,
+    permiso_inventario: 'consulta',
     sedes: [],
     laboratorios: [],
   };
@@ -79,7 +95,9 @@ export default function Usuarios({ token, usuarioActual }) {
         if (controlador.signal.aborted) return;
 
         setUsuarios([]);
-        setError(err.message || 'No fue posible cargar los usuarios.');
+        setError(
+          err.message || 'No fue posible cargar los usuarios.'
+        );
       } finally {
         if (!controlador.signal.aborted) {
           setCargando(false);
@@ -103,7 +121,11 @@ export default function Usuarios({ token, usuarioActual }) {
   useEffect(() => {
     if (!mensaje) return;
 
-    const temporizador = setTimeout(() => setMensaje(''), 4000);
+    const temporizador = setTimeout(
+      () => setMensaje(''),
+      4000
+    );
+
     return () => clearTimeout(temporizador);
   }, [mensaje]);
 
@@ -123,6 +145,8 @@ export default function Usuarios({ token, usuarioActual }) {
       id_rol: String(usuario.id_rol),
       contrasena: '',
       activo: usuario.activo,
+      permiso_inventario:
+        usuario.permiso_inventario ?? 'consulta',
       sedes: (usuario.sedes || []).map(Number),
       laboratorios: (usuario.laboratorios || []).map(Number),
     });
@@ -155,7 +179,9 @@ export default function Usuarios({ token, usuarioActual }) {
 
       const laboratoriosPermitidos = new Set(
         opciones.laboratorios
-          .filter((laboratorio) => sedes.includes(laboratorio.id_sede))
+          .filter((laboratorio) =>
+            sedes.includes(laboratorio.id_sede)
+          )
           .map((laboratorio) => laboratorio.id_laboratorio)
       );
 
@@ -173,8 +199,15 @@ export default function Usuarios({ token, usuarioActual }) {
     setFormulario((anterior) => ({
       ...anterior,
       laboratorios: seleccionado
-        ? [...new Set([...anterior.laboratorios, idLaboratorio])]
-        : anterior.laboratorios.filter((id) => id !== idLaboratorio),
+        ? [
+            ...new Set([
+              ...anterior.laboratorios,
+              idLaboratorio,
+            ]),
+          ]
+        : anterior.laboratorios.filter(
+            (id) => id !== idLaboratorio
+          ),
     }));
   }
 
@@ -187,7 +220,9 @@ export default function Usuarios({ token, usuarioActual }) {
     const correo = formulario.correo_institucional.trim();
 
     if (!nombre || !correo) {
-      setErrorFormulario('Ingrese el nombre y el correo del usuario.');
+      setErrorFormulario(
+        'Ingrese el nombre y el correo del usuario.'
+      );
       return;
     }
 
@@ -197,6 +232,25 @@ export default function Usuarios({ token, usuarioActual }) {
 
     if (!rolElegido) {
       setErrorFormulario('Seleccione un rol válido.');
+      return;
+    }
+
+    const esRolSuperadministrador =
+      rolElegido.nombre.trim().toLowerCase() ===
+      'superadministrador';
+
+    const permisoInventario = esRolSuperadministrador
+      ? 'edicion'
+      : formulario.permiso_inventario;
+
+    if (
+      !PERMISOS_INVENTARIO.some(
+        (permiso) => permiso.valor === permisoInventario
+      )
+    ) {
+      setErrorFormulario(
+        'Seleccione un permiso de inventario válido.'
+      );
       return;
     }
 
@@ -223,6 +277,7 @@ export default function Usuarios({ token, usuarioActual }) {
         correo_institucional: correo,
         id_rol: Number(formulario.id_rol),
         activo: formulario.activo,
+        permiso_inventario: permisoInventario,
         sedes: formulario.sedes,
         laboratorios: formulario.laboratorios,
       };
@@ -261,19 +316,29 @@ export default function Usuarios({ token, usuarioActual }) {
       usuario.rol,
       usuario.activo ? 'Activa' : 'Inactiva',
     ].some((valor) =>
-      String(valor ?? '').toLocaleLowerCase('es').includes(termino)
+      String(valor ?? '')
+        .toLocaleLowerCase('es')
+        .includes(termino)
     )
   );
 
   const total = filtrados.length;
-  const totalPaginas = Math.max(1, Math.ceil(total / POR_PAGINA));
+  const totalPaginas = Math.max(
+    1,
+    Math.ceil(total / POR_PAGINA)
+  );
+
   const paginaActual = Math.min(pagina, totalPaginas);
   const inicio = (paginaActual - 1) * POR_PAGINA;
   const fin = Math.min(inicio + POR_PAGINA, total);
-  const visibles = filtrados.slice(inicio, inicio + POR_PAGINA);
+  const visibles = filtrados.slice(
+    inicio,
+    inicio + POR_PAGINA
+  );
 
   const laboratoriosDisponibles = opciones.laboratorios.filter(
-    (laboratorio) => formulario.sedes.includes(laboratorio.id_sede)
+    (laboratorio) =>
+      formulario.sedes.includes(laboratorio.id_sede)
   );
 
   const rolSeleccionado = opciones.roles.find(
@@ -295,7 +360,8 @@ export default function Usuarios({ token, usuarioActual }) {
         <div>
           <h1>Usuarios</h1>
           <p>
-            Administre las cuentas, roles y asignaciones de acceso.
+            Administre las cuentas, roles, permisos de inventario
+            y asignaciones de acceso.
           </p>
         </div>
       </div>
@@ -306,7 +372,10 @@ export default function Usuarios({ token, usuarioActual }) {
         </div>
       )}
 
-      <section className="cfg-tarjeta" aria-label="Usuarios registrados">
+      <section
+        className="cfg-tarjeta"
+        aria-label="Usuarios registrados"
+      >
         <div className="cfg-barra">
           <label className="cfg-busqueda">
             <Search size={17} aria-hidden="true" />
@@ -330,7 +399,9 @@ export default function Usuarios({ token, usuarioActual }) {
               title="Actualizar usuarios"
               aria-label="Actualizar usuarios"
               disabled={cargando}
-              onClick={() => setRecarga((valor) => valor + 1)}
+              onClick={() =>
+                setRecarga((valor) => valor + 1)
+              }
             >
               <RefreshCw size={17} />
             </button>
@@ -348,7 +419,10 @@ export default function Usuarios({ token, usuarioActual }) {
         </div>
 
         {error ? (
-          <div className="cfg-mensaje cfg-error" role="alert">
+          <div
+            className="cfg-mensaje cfg-error"
+            role="alert"
+          >
             <AlertCircle size={19} />
             <span>{error}</span>
           </div>
@@ -373,7 +447,10 @@ export default function Usuarios({ token, usuarioActual }) {
                 <tbody>
                   {visibles.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="cfg-vacio">
+                      <td
+                        colSpan={5}
+                        className="cfg-vacio"
+                      >
                         No se encontraron usuarios.
                       </td>
                     </tr>
@@ -403,7 +480,9 @@ export default function Usuarios({ token, usuarioActual }) {
                               className="cfg-icono"
                               title="Editar usuario"
                               aria-label={`Editar ${usuario.nombre_completo}`}
-                              onClick={() => abrirEdicion(usuario)}
+                              onClick={() =>
+                                abrirEdicion(usuario)
+                              }
                             >
                               <Pencil size={16} />
                             </button>
@@ -430,38 +509,50 @@ export default function Usuarios({ token, usuarioActual }) {
                   type="button"
                   aria-label="Página anterior"
                   disabled={paginaActual <= 1}
-                  onClick={() => setPagina(paginaActual - 1)}
+                  onClick={() =>
+                    setPagina(paginaActual - 1)
+                  }
                 >
                   <ChevronLeft size={15} />
                 </button>
 
-                {generarPaginas(paginaActual, totalPaginas).map(
-                  (numero, indice) =>
-                    numero === '...' ? (
-                      <span key={`puntos-${indice}`}>...</span>
-                    ) : (
-                      <button
-                        key={numero}
-                        type="button"
-                        className={
-                          paginaActual === numero ? 'activa' : ''
-                        }
-                        aria-label={`Ir a la página ${numero}`}
-                        aria-current={
-                          paginaActual === numero ? 'page' : undefined
-                        }
-                        onClick={() => setPagina(numero)}
-                      >
-                        {numero}
-                      </button>
-                    )
+                {generarPaginas(
+                  paginaActual,
+                  totalPaginas
+                ).map((numero, indice) =>
+                  numero === '...' ? (
+                    <span key={`puntos-${indice}`}>
+                      ...
+                    </span>
+                  ) : (
+                    <button
+                      key={numero}
+                      type="button"
+                      className={
+                        paginaActual === numero
+                          ? 'activa'
+                          : ''
+                      }
+                      aria-label={`Ir a la página ${numero}`}
+                      aria-current={
+                        paginaActual === numero
+                          ? 'page'
+                          : undefined
+                      }
+                      onClick={() => setPagina(numero)}
+                    >
+                      {numero}
+                    </button>
+                  )
                 )}
 
                 <button
                   type="button"
                   aria-label="Página siguiente"
                   disabled={paginaActual >= totalPaginas}
-                  onClick={() => setPagina(paginaActual + 1)}
+                  onClick={() =>
+                    setPagina(paginaActual + 1)
+                  }
                 >
                   <ChevronRight size={15} />
                 </button>
@@ -483,11 +574,16 @@ export default function Usuarios({ token, usuarioActual }) {
         {modalAbierto && (
           <>
             <h2 id="usu-modal-titulo">
-              {usuarioEditando ? 'Editar usuario' : 'Registrar usuario'}
+              {usuarioEditando
+                ? 'Editar usuario'
+                : 'Registrar usuario'}
             </h2>
 
             {errorFormulario && (
-              <div className="cfg-mensaje cfg-error" role="alert">
+              <div
+                className="cfg-mensaje cfg-error"
+                role="alert"
+              >
                 {errorFormulario}
               </div>
             )}
@@ -507,7 +603,10 @@ export default function Usuarios({ token, usuarioActual }) {
                     autoComplete="off"
                     value={formulario.nombre_completo}
                     onChange={(e) =>
-                      cambiarCampo('nombre_completo', e.target.value)
+                      cambiarCampo(
+                        'nombre_completo',
+                        e.target.value
+                      )
                     }
                   />
                 </label>
@@ -537,13 +636,21 @@ export default function Usuarios({ token, usuarioActual }) {
                       disabled={editandoCuentaPropia}
                       value={formulario.id_rol}
                       onChange={(e) =>
-                        cambiarCampo('id_rol', e.target.value)
+                        cambiarCampo(
+                          'id_rol',
+                          e.target.value
+                        )
                       }
                     >
-                      <option value="">Seleccione un rol</option>
+                      <option value="">
+                        Seleccione un rol
+                      </option>
 
                       {opciones.roles.map((rol) => (
-                        <option key={rol.id_rol} value={rol.id_rol}>
+                        <option
+                          key={rol.id_rol}
+                          value={rol.id_rol}
+                        >
                           {rol.nombre}
                         </option>
                       ))}
@@ -554,7 +661,11 @@ export default function Usuarios({ token, usuarioActual }) {
                     <span>Estado de la cuenta *</span>
                     <select
                       disabled={editandoCuentaPropia}
-                      value={formulario.activo ? 'activa' : 'inactiva'}
+                      value={
+                        formulario.activo
+                          ? 'activa'
+                          : 'inactiva'
+                      }
                       onChange={(e) =>
                         cambiarCampo(
                           'activo',
@@ -568,10 +679,45 @@ export default function Usuarios({ token, usuarioActual }) {
                   </label>
                 </div>
 
+                <label className="cfg-campo">
+                  <span>Permisos de inventario *</span>
+
+                  <select
+                    required
+                    disabled={esSuperadministrador}
+                    value={
+                      esSuperadministrador
+                        ? 'edicion'
+                        : formulario.permiso_inventario
+                    }
+                    onChange={(e) =>
+                      cambiarCampo(
+                        'permiso_inventario',
+                        e.target.value
+                      )
+                    }
+                  >
+                    {PERMISOS_INVENTARIO.map((permiso) => (
+                      <option
+                        key={permiso.valor}
+                        value={permiso.valor}
+                      >
+                        {permiso.nombre}
+                      </option>
+                    ))}
+                  </select>
+
+                  <small>
+                    {esSuperadministrador
+                      ? 'El Superadministrador conserva acceso completo.'
+                      : 'La edición incluye modificar equipos, trasladarlos y cambiar su estado.'}
+                  </small>
+                </label>
+
                 {editandoCuentaPropia && (
                   <p className="usu-ayuda">
-                    No puede desactivar su propia cuenta ni cambiar
-                    su propio rol desde esta pantalla.
+                    No puede desactivar su propia cuenta ni
+                    cambiar su propio rol desde esta pantalla.
                   </p>
                 )}
 
@@ -586,12 +732,16 @@ export default function Usuarios({ token, usuarioActual }) {
                       autoComplete="new-password"
                       value={formulario.contrasena}
                       onChange={(e) =>
-                        cambiarCampo('contrasena', e.target.value)
+                        cambiarCampo(
+                          'contrasena',
+                          e.target.value
+                        )
                       }
                     />
                     <small>
                       Mínimo 12 caracteres y máximo 72 bytes.
-                      Los caracteres con tildes pueden ocupar más de un byte.
+                      Los caracteres con tildes pueden ocupar
+                      más de un byte.
                     </small>
                   </label>
                 )}
@@ -599,7 +749,8 @@ export default function Usuarios({ token, usuarioActual }) {
                 {esSuperadministrador && (
                   <p className="usu-ayuda">
                     El Superadministrador tiene acceso global.
-                    No necesita asignaciones para acceder a los laboratorios.
+                    No necesita asignaciones para acceder
+                    a los laboratorios.
                   </p>
                 )}
 
@@ -645,38 +796,41 @@ export default function Usuarios({ token, usuarioActual }) {
                     </p>
                   ) : laboratoriosDisponibles.length === 0 ? (
                     <p className="usu-ayuda">
-                      Las sedes seleccionadas no tienen laboratorios.
+                      Las sedes seleccionadas no tienen
+                      laboratorios.
                     </p>
                   ) : (
                     <div className="usu-lista-opciones">
-                      {laboratoriosDisponibles.map((laboratorio) => (
-                        <label
-                          key={laboratorio.id_laboratorio}
-                          className="usu-opcion"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={formulario.laboratorios.includes(
-                              laboratorio.id_laboratorio
-                            )}
-                            onChange={(e) =>
-                              cambiarLaboratorio(
-                                laboratorio.id_laboratorio,
-                                e.target.checked
-                              )
-                            }
-                          />
+                      {laboratoriosDisponibles.map(
+                        (laboratorio) => (
+                          <label
+                            key={laboratorio.id_laboratorio}
+                            className="usu-opcion"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={formulario.laboratorios.includes(
+                                laboratorio.id_laboratorio
+                              )}
+                              onChange={(e) =>
+                                cambiarLaboratorio(
+                                  laboratorio.id_laboratorio,
+                                  e.target.checked
+                                )
+                              }
+                            />
 
-                          <span>
-                            {laboratorio.nombre}
-                            <small>
-                              {laboratorio.nombre_sede}
-                              {' · '}
-                              {laboratorio.codigo}
-                            </small>
-                          </span>
-                        </label>
-                      ))}
+                            <span>
+                              {laboratorio.nombre}
+                              <small>
+                                {laboratorio.nombre_sede}
+                                {' · '}
+                                {laboratorio.codigo}
+                              </small>
+                            </span>
+                          </label>
+                        )
+                      )}
                     </div>
                   )}
                 </fieldset>

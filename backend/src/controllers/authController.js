@@ -3,12 +3,16 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const pool = require('../config/database');
 
-// Procesa el inicio de sesión del usuario
+// Procesa el inicio de sesión del usuario.
 const login = async (req, res) => {
-    const { correo, contrasena } = req.body;
+    const { correo, contrasena } = req.body || {};
 
-    // Validamos que vengan ambos campos
-    if (!correo || !contrasena) {
+    if (
+        typeof correo !== 'string' ||
+        typeof contrasena !== 'string' ||
+        !correo.trim() ||
+        !contrasena
+    ) {
         return res.status(400).json({
             success: false,
             message: 'Debe ingresar correo y contraseña'
@@ -16,7 +20,7 @@ const login = async (req, res) => {
     }
 
     try {
-        // Buscamos el usuario junto con el nombre de su rol
+        // Obtener los datos actuales del usuario y su permiso.
         const query = `
             SELECT
                 u.id_usuario,
@@ -25,16 +29,19 @@ const login = async (req, res) => {
                 u.correo_institucional,
                 u.contrasena_hash,
                 u.activo,
+                u.permiso_inventario,
                 r.nombre AS rol
             FROM public.usuario u
-            INNER JOIN public.rol r ON u.id_rol = r.id_rol
+            INNER JOIN public.rol r
+                ON u.id_rol = r.id_rol
             WHERE LOWER(u.correo_institucional) = LOWER($1)
             LIMIT 1
         `;
 
-        const resultado = await pool.query(query, [correo.trim()]);
+        const resultado = await pool.query(query, [
+            correo.trim()
+        ]);
 
-        // Si no existe el correo
         if (resultado.rowCount === 0) {
             return res.status(401).json({
                 success: false,
@@ -44,7 +51,6 @@ const login = async (req, res) => {
 
         const usuario = resultado.rows[0];
 
-        // Validamos si la cuenta está activa
         if (!usuario.activo) {
             return res.status(403).json({
                 success: false,
@@ -52,7 +58,6 @@ const login = async (req, res) => {
             });
         }
 
-        // Comparamos la contraseña con el hash de la BD
         const contrasenaValida = await bcrypt.compare(
             contrasena,
             usuario.contrasena_hash
@@ -65,7 +70,6 @@ const login = async (req, res) => {
             });
         }
 
-        // Validamos la clave utilizada para firmar los JWT
         if (!process.env.JWT_SECRET) {
             console.error(
                 'ERROR CRÍTICO: JWT_SECRET no está configurado.'
@@ -77,7 +81,7 @@ const login = async (req, res) => {
             });
         }
 
-        // Generamos un JWT con identificador único (jti)
+        // El permiso se consulta en PostgreSQL mediante authMiddleware.
         const token = jwt.sign(
             {
                 idUsuario: usuario.id_usuario,
@@ -94,8 +98,7 @@ const login = async (req, res) => {
             }
         );
 
-        // Devolvemos el token y los datos básicos del usuario
-        // Nunca enviamos el hash de la contraseña
+        // Nunca devolver el hash de la contraseña.
         return res.json({
             success: true,
             message: 'Inicio de sesión exitoso',
@@ -104,15 +107,13 @@ const login = async (req, res) => {
                 idUsuario: usuario.id_usuario,
                 nombre: usuario.nombre_completo,
                 correo: usuario.correo_institucional,
-                rol: usuario.rol
+                rol: usuario.rol,
+                permiso_inventario: usuario.permiso_inventario
             }
         });
-
     } catch (error) {
-        // Registramos el detalle solo en el servidor
         console.error('Error en login:', error);
 
-        // No exponemos información técnica al cliente
         return res.status(500).json({
             success: false,
             message: 'Error interno del servidor al procesar el login'
@@ -120,21 +121,19 @@ const login = async (req, res) => {
     }
 };
 
-// Devuelve los datos del usuario autenticado
+// Devuelve los datos cargados por authMiddleware.
 const obtenerPerfil = (req, res) => {
-    // req.usuario viene cargado por authMiddleware
     return res.json({
         success: true,
         usuario: req.usuario
     });
 };
 
+// Cierra la sesión revocando el token.
 const logout = async (req, res) => {
     const { idUsuario, jti, exp } = req.usuario;
 
     try {
-        // Registramos el token como revocado.
-        // ON CONFLICT permite repetir la operación sin error.
         await pool.query(
             `
             INSERT INTO public.token_revocado
@@ -150,7 +149,6 @@ const logout = async (req, res) => {
             success: true,
             message: 'Sesión cerrada correctamente'
         });
-
     } catch (error) {
         console.error('Error al cerrar sesión:', error);
 
@@ -161,6 +159,7 @@ const logout = async (req, res) => {
     }
 };
 
+// Cambia la contraseña de la cuenta autenticada.
 const cambiarContrasena = async (req, res) => {
     const idUsuario = req.usuario.idUsuario;
     const { contrasenaActual, contrasenaNueva } = req.body || {};
@@ -177,10 +176,14 @@ const cambiarContrasena = async (req, res) => {
         });
     }
 
-    if (contrasenaNueva.length < 12 || contrasenaNueva.length > 72) {
+    if (
+        contrasenaNueva.length < 12 ||
+        Buffer.byteLength(contrasenaNueva, 'utf8') > 72
+    ) {
         return res.status(400).json({
             success: false,
-            message: 'La nueva contraseña debe tener entre 12 y 72 caracteres.'
+            message:
+                'La nueva contraseña debe tener al menos 12 caracteres y no superar 72 bytes.'
         });
     }
 
@@ -193,9 +196,12 @@ const cambiarContrasena = async (req, res) => {
 
     try {
         const resultado = await pool.query(
-            `SELECT contrasena_hash
-             FROM public.usuario
-             WHERE id_usuario = $1 AND activo = true`,
+            `
+            SELECT contrasena_hash
+            FROM public.usuario
+            WHERE id_usuario = $1
+              AND activo = true
+            `,
             [idUsuario]
         );
 
@@ -220,22 +226,28 @@ const cambiarContrasena = async (req, res) => {
             });
         }
 
-        const hashNuevo = await bcrypt.hash(contrasenaNueva, 12);
+        const hashNuevo = await bcrypt.hash(
+            contrasenaNueva,
+            12
+        );
 
         const actualizacion = await pool.query(
-            `UPDATE public.usuario
-             SET contrasena_hash = $1
-             WHERE id_usuario = $2
-               AND activo = true
-               AND contrasena_hash = $3
-             RETURNING id_usuario`,
+            `
+            UPDATE public.usuario
+            SET contrasena_hash = $1
+            WHERE id_usuario = $2
+              AND activo = true
+              AND contrasena_hash = $3
+            RETURNING id_usuario
+            `,
             [hashNuevo, idUsuario, hashActual]
         );
 
         if (actualizacion.rowCount === 0) {
             return res.status(409).json({
                 success: false,
-                message: 'La contraseña fue modificada durante la operación. Intente nuevamente.'
+                message:
+                    'La contraseña fue modificada durante la operación. Intente nuevamente.'
             });
         }
 
@@ -243,7 +255,6 @@ const cambiarContrasena = async (req, res) => {
             success: true,
             message: 'Contraseña actualizada correctamente.'
         });
-
     } catch (error) {
         console.error('Error al cambiar contraseña:', error);
 

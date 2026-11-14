@@ -12,6 +12,12 @@ router.use(
   permitirRoles('Superadministrador')
 );
 
+const PERMISOS_INVENTARIO = [
+  'consulta',
+  'registro',
+  'edicion',
+];
+
 const esId = (valor) =>
   Number.isSafeInteger(valor) &&
   valor > 0 &&
@@ -57,6 +63,19 @@ function responderError(res, error) {
   });
 }
 
+async function revertirTransaccion(cliente, transaccion) {
+  if (!cliente || !transaccion) return;
+
+  try {
+    await cliente.query('ROLLBACK');
+  } catch (error) {
+    console.error(
+      'Error al revertir la transacción de usuarios:',
+      error
+    );
+  }
+}
+
 function validarDatos(body, creando) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) {
     throw errorSolicitud('Debe enviar los datos del usuario.');
@@ -82,7 +101,9 @@ function validarDatos(body, creando) {
     correo.length > 150 ||
     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)
   ) {
-    throw errorSolicitud('Ingrese un correo válido de hasta 150 caracteres.');
+    throw errorSolicitud(
+      'Ingrese un correo válido de hasta 150 caracteres.'
+    );
   }
 
   if (!esId(body.id_rol)) {
@@ -93,8 +114,19 @@ function validarDatos(body, creando) {
     throw errorSolicitud('Debe indicar si la cuenta estará activa.');
   }
 
-  if (!Array.isArray(body.sedes) || !Array.isArray(body.laboratorios)) {
-    throw errorSolicitud('Debe enviar las sedes y laboratorios seleccionados.');
+  if (!PERMISOS_INVENTARIO.includes(body.permiso_inventario)) {
+    throw errorSolicitud(
+      'Seleccione un permiso de inventario válido.'
+    );
+  }
+
+  if (
+    !Array.isArray(body.sedes) ||
+    !Array.isArray(body.laboratorios)
+  ) {
+    throw errorSolicitud(
+      'Debe enviar las sedes y laboratorios seleccionados.'
+    );
   }
 
   if (
@@ -124,12 +156,13 @@ function validarDatos(body, creando) {
     correo,
     idRol: body.id_rol,
     activo: body.activo,
+    permisoInventario: body.permiso_inventario,
     sedes,
     laboratorios,
   };
 }
 
-// Validar que los catálogos y asignaciones realmente existan.
+// Comprobar que el rol y las asignaciones existan.
 async function validarReferencias(cliente, datos) {
   const rol = await cliente.query(
     'SELECT id_rol, nombre FROM public.rol WHERE id_rol = $1',
@@ -150,7 +183,9 @@ async function validarReferencias(cliente, datos) {
   );
 
   if (sedes.rowCount !== datos.sedes.length) {
-    throw errorSolicitud('Una de las sedes seleccionadas no existe.');
+    throw errorSolicitud(
+      'Una de las sedes seleccionadas no existe.'
+    );
   }
 
   const laboratorios = await cliente.query(
@@ -163,7 +198,9 @@ async function validarReferencias(cliente, datos) {
   );
 
   if (laboratorios.rowCount !== datos.laboratorios.length) {
-    throw errorSolicitud('Uno de los laboratorios seleccionados no existe.');
+    throw errorSolicitud(
+      'Uno de los laboratorios seleccionados no existe.'
+    );
   }
 
   for (const laboratorio of laboratorios.rows) {
@@ -180,9 +217,14 @@ async function validarReferencias(cliente, datos) {
   };
 }
 
-// Mantener las asignaciones existentes y modificar solamente las necesarias.
-async function guardarAsignaciones(cliente, idUsuario, datos, laboratorios) {
-  // Primero eliminar las asignaciones de laboratorios retiradas.
+// Conservar las asignaciones existentes que no cambiaron.
+async function guardarAsignaciones(
+  cliente,
+  idUsuario,
+  datos,
+  laboratorios
+) {
+  // Primero retirar los laboratorios desmarcados.
   await cliente.query(
     `
       DELETE FROM public.usuario_laboratorio ul
@@ -197,7 +239,7 @@ async function guardarAsignaciones(cliente, idUsuario, datos, laboratorios) {
     [idUsuario, datos.laboratorios, datos.sedes]
   );
 
-  // Después eliminar las sedes retiradas.
+  // Después retirar las sedes desmarcadas.
   await cliente.query(
     `
       DELETE FROM public.usuario_sede
@@ -210,7 +252,10 @@ async function guardarAsignaciones(cliente, idUsuario, datos, laboratorios) {
   for (const idSede of datos.sedes) {
     await cliente.query(
       `
-        INSERT INTO public.usuario_sede (id_usuario, id_sede)
+        INSERT INTO public.usuario_sede (
+          id_usuario,
+          id_sede
+        )
         VALUES ($1, $2)
         ON CONFLICT (id_usuario, id_sede) DO NOTHING
       `,
@@ -243,7 +288,8 @@ async function guardarAsignaciones(cliente, idUsuario, datos, laboratorios) {
           id_sede
         )
         VALUES ($1, $2, $3)
-        ON CONFLICT (id_usuario_sede, id_laboratorio) DO NOTHING
+        ON CONFLICT (id_usuario_sede, id_laboratorio)
+        DO NOTHING
       `,
       [
         sedePorId.get(laboratorio.id_sede),
@@ -254,7 +300,7 @@ async function guardarAsignaciones(cliente, idUsuario, datos, laboratorios) {
   }
 }
 
-// Opciones para formularios de usuarios.
+// GET /api/admin/usuarios/opciones
 router.get('/opciones', async (req, res) => {
   try {
     const [roles, sedes, laboratorios] = await Promise.all([
@@ -276,7 +322,8 @@ router.get('/opciones', async (req, res) => {
           l.nombre,
           s.nombre AS nombre_sede
         FROM public.laboratorio l
-        INNER JOIN public.sede s ON s.id_sede = l.id_sede
+        INNER JOIN public.sede s
+          ON s.id_sede = l.id_sede
         ORDER BY s.nombre, l.nombre
       `),
     ]);
@@ -294,7 +341,8 @@ router.get('/opciones', async (req, res) => {
   }
 });
 
-// Listado. Nunca devolver contrasena_hash.
+// GET /api/admin/usuarios
+// Nunca devolver contrasena_hash.
 router.get('/', async (req, res) => {
   try {
     const resultado = await pool.query(`
@@ -304,6 +352,7 @@ router.get('/', async (req, res) => {
         u.nombre_completo,
         u.correo_institucional,
         u.activo,
+        u.permiso_inventario,
         u.fecha_creacion,
         r.nombre AS rol,
         ARRAY(
@@ -321,7 +370,8 @@ router.get('/', async (req, res) => {
           ORDER BY ul.id_laboratorio
         ) AS laboratorios
       FROM public.usuario u
-      INNER JOIN public.rol r ON r.id_rol = u.id_rol
+      INNER JOIN public.rol r
+        ON r.id_rol = u.id_rol
       ORDER BY u.fecha_creacion DESC, u.id_usuario DESC
     `);
 
@@ -334,7 +384,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Crear usuario con sus asignaciones en una sola transacción.
+// POST /api/admin/usuarios
 router.post('/', async (req, res) => {
   let cliente;
   let transaccion = false;
@@ -344,11 +394,14 @@ router.post('/', async (req, res) => {
     const hash = await bcrypt.hash(req.body.contrasena, 12);
 
     cliente = await pool.connect();
+
     await cliente.query('BEGIN');
     transaccion = true;
 
-    // Serializar las modificaciones administrativas de usuarios.
-    await cliente.query('SELECT pg_advisory_xact_lock(2026, 1101)');
+    // Serializar las modificaciones administrativas.
+    await cliente.query(
+      'SELECT pg_advisory_xact_lock(2026, 1101)'
+    );
 
     const referencias = await validarReferencias(cliente, datos);
 
@@ -362,8 +415,16 @@ router.post('/', async (req, res) => {
     );
 
     if (duplicado.rowCount > 0) {
-      throw errorSolicitud('Ya existe un usuario con ese correo.', 409);
+      throw errorSolicitud(
+        'Ya existe un usuario con ese correo.',
+        409
+      );
     }
+
+    const permisoInventario =
+      esSuperadministrador(referencias.rol.nombre)
+        ? 'edicion'
+        : datos.permisoInventario;
 
     const resultado = await cliente.query(
       `
@@ -372,12 +433,20 @@ router.post('/', async (req, res) => {
           nombre_completo,
           correo_institucional,
           contrasena_hash,
-          activo
+          activo,
+          permiso_inventario
         )
-        VALUES ($1, $2, $3, $4, $5)
+        VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING id_usuario
       `,
-      [datos.idRol, datos.nombre, datos.correo, hash, datos.activo]
+      [
+        datos.idRol,
+        datos.nombre,
+        datos.correo,
+        hash,
+        datos.activo,
+        permisoInventario,
+      ]
     );
 
     const idUsuario = resultado.rows[0].id_usuario;
@@ -395,20 +464,20 @@ router.post('/', async (req, res) => {
     return res.status(201).json({
       success: true,
       message: 'Usuario registrado correctamente.',
-      data: { id_usuario: idUsuario },
+      data: {
+        id_usuario: idUsuario,
+      },
     });
   } catch (error) {
-    if (cliente && transaccion) {
-      await cliente.query('ROLLBACK');
-    }
-
+    await revertirTransaccion(cliente, transaccion);
     return responderError(res, error);
   } finally {
     cliente?.release();
   }
 });
 
-// Editar datos, rol, estado y asignaciones.
+// PUT /api/admin/usuarios/:id
+// Actualiza datos, permiso y asignaciones.
 // La contraseña no se modifica desde este endpoint.
 router.put('/:id', async (req, res) => {
   let cliente;
@@ -418,16 +487,21 @@ router.put('/:id', async (req, res) => {
     const idUsuario = Number(req.params.id);
 
     if (!esId(idUsuario)) {
-      throw errorSolicitud('Identificador de usuario no válido.');
+      throw errorSolicitud(
+        'Identificador de usuario no válido.'
+      );
     }
 
     const datos = validarDatos(req.body, false);
 
     cliente = await pool.connect();
+
     await cliente.query('BEGIN');
     transaccion = true;
 
-    await cliente.query('SELECT pg_advisory_xact_lock(2026, 1101)');
+    await cliente.query(
+      'SELECT pg_advisory_xact_lock(2026, 1101)'
+    );
 
     const actual = await cliente.query(
       `
@@ -436,7 +510,8 @@ router.put('/:id', async (req, res) => {
           u.activo,
           r.nombre AS rol
         FROM public.usuario u
-        INNER JOIN public.rol r ON r.id_rol = u.id_rol
+        INNER JOIN public.rol r
+          ON r.id_rol = u.id_rol
         WHERE u.id_usuario = $1
         FOR UPDATE OF u
       `,
@@ -448,11 +523,12 @@ router.put('/:id', async (req, res) => {
     }
 
     const referencias = await validarReferencias(cliente, datos);
-    const nuevoEsSuper = esSuperadministrador(referencias.rol.nombre);
+    const nuevoEsSuper =
+      esSuperadministrador(referencias.rol.nombre);
 
-    // Evitar que el administrador se quite su propio acceso.
+    // Impedir que el administrador se quite su propio acceso.
     if (
-      idUsuario === req.usuario.idUsuario &&
+      idUsuario === Number(req.usuario.idUsuario) &&
       (!datos.activo || !nuevoEsSuper)
     ) {
       throw errorSolicitud(
@@ -463,7 +539,7 @@ router.put('/:id', async (req, res) => {
 
     const usuarioActual = actual.rows[0];
 
-    // Nunca dejar el sistema sin un Superadministrador activo.
+    // Conservar al menos un Superadministrador activo.
     if (
       usuarioActual.activo &&
       esSuperadministrador(usuarioActual.rol) &&
@@ -473,7 +549,8 @@ router.put('/:id', async (req, res) => {
         `
           SELECT u.id_usuario
           FROM public.usuario u
-          INNER JOIN public.rol r ON r.id_rol = u.id_rol
+          INNER JOIN public.rol r
+            ON r.id_rol = u.id_rol
           WHERE u.activo = true
             AND LOWER(TRIM(r.nombre)) = 'superadministrador'
             AND u.id_usuario <> $1
@@ -501,7 +578,10 @@ router.put('/:id', async (req, res) => {
     );
 
     if (duplicado.rowCount > 0) {
-      throw errorSolicitud('Ya existe un usuario con ese correo.', 409);
+      throw errorSolicitud(
+        'Ya existe un usuario con ese correo.',
+        409
+      );
     }
 
     await cliente.query(
@@ -511,14 +591,16 @@ router.put('/:id', async (req, res) => {
           id_rol = $1,
           nombre_completo = $2,
           correo_institucional = $3,
-          activo = $4
-        WHERE id_usuario = $5
+          activo = $4,
+          permiso_inventario = $5
+        WHERE id_usuario = $6
       `,
       [
         datos.idRol,
         datos.nombre,
         datos.correo,
         datos.activo,
+        nuevoEsSuper ? 'edicion' : datos.permisoInventario,
         idUsuario,
       ]
     );
@@ -538,10 +620,7 @@ router.put('/:id', async (req, res) => {
       message: 'Usuario actualizado correctamente.',
     });
   } catch (error) {
-    if (cliente && transaccion) {
-      await cliente.query('ROLLBACK');
-    }
-
+    await revertirTransaccion(cliente, transaccion);
     return responderError(res, error);
   } finally {
     cliente?.release();

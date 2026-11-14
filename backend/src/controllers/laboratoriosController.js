@@ -1,9 +1,12 @@
 const pool = require('../config/database');
 
-// GET /api/laboratorios
-// Devuelve únicamente los laboratorios autorizados
-// para el usuario autenticado.
+const {
+  puedeRegistrarInventario,
+} = require('../utils/permisosInventario');
 
+// GET /api/laboratorios
+// Devuelve los laboratorios autorizados para los
+// formularios de registro y edición de inventario.
 const obtenerLaboratorios = async (req, res) => {
   try {
     const usuario = req.usuario;
@@ -11,16 +14,19 @@ const obtenerLaboratorios = async (req, res) => {
     if (!usuario || !usuario.idUsuario) {
       return res.status(401).json({
         success: false,
-        message: 'Usuario no autenticado'
+        message: 'Usuario no autenticado',
       });
     }
 
     const idUsuario = Number(usuario.idUsuario);
 
-    if (!Number.isSafeInteger(idUsuario) || idUsuario <= 0) {
+    if (
+      !Number.isSafeInteger(idUsuario) ||
+      idUsuario <= 0
+    ) {
       return res.status(401).json({
         success: false,
-        message: 'Sesión de usuario no válida'
+        message: 'Sesión de usuario no válida',
       });
     }
 
@@ -31,11 +37,13 @@ const obtenerLaboratorios = async (req, res) => {
     const esSuperAdministrador =
       rol === 'superadministrador';
 
-    // Solo estos roles pueden registrar equipos.
-    if (!['superadministrador', 'tecnico'].includes(rol)) {
+    // Registro y edición pueden cargar los laboratorios.
+    // El permiso de edición incluye el de registro.
+    if (!puedeRegistrarInventario(usuario)) {
       return res.status(403).json({
         success: false,
-        message: 'Tu rol no tiene permisos para registrar equipos'
+        message:
+          'No tiene permisos para utilizar los formularios de inventario.',
       });
     }
 
@@ -67,15 +75,14 @@ const obtenerLaboratorios = async (req, res) => {
 
     const resultado = await pool.query(consulta, [
       idUsuario,
-      esSuperAdministrador
+      esSuperAdministrador,
     ]);
 
     return res.status(200).json({
       success: true,
       total: resultado.rowCount,
-      data: resultado.rows
+      data: resultado.rows,
     });
-
   } catch (error) {
     console.error(
       'Error al obtener laboratorios:',
@@ -84,7 +91,7 @@ const obtenerLaboratorios = async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      message: 'Error al consultar los laboratorios'
+      message: 'Error al consultar los laboratorios',
     });
   }
 };

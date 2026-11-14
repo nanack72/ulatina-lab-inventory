@@ -1,10 +1,8 @@
 const jwt = require('jsonwebtoken');
 const pool = require('../config/database');
 
-// Middleware para proteger rutas y validar la sesión
+// Proteger rutas y validar la sesión actual.
 const verificarToken = async (req, res, next) => {
-
-    // Verificamos que exista la clave JWT
     if (!process.env.JWT_SECRET) {
         console.error('ERROR: JWT_SECRET no está configurado');
 
@@ -14,47 +12,47 @@ const verificarToken = async (req, res, next) => {
         });
     }
 
-    // Obtenemos el encabezado de autorización
     const authHeader = req.headers['authorization'];
 
-    if (!authHeader) {
+    if (typeof authHeader !== 'string' || !authHeader.trim()) {
         return res.status(401).json({
             success: false,
             message: 'Acceso denegado: falta el token de autenticación'
         });
     }
 
-    // Extraemos el token Bearer
     const token = authHeader.startsWith('Bearer ')
         ? authHeader.slice(7).trim()
         : authHeader.trim();
 
     let decoded;
 
-    // 1. Verificar firma, algoritmo y vencimiento del JWT
+    // 1. Verificar firma, algoritmo y vencimiento del JWT.
     try {
         decoded = jwt.verify(
             token,
             process.env.JWT_SECRET,
             { algorithms: ['HS256'] }
         );
-    } catch (error) {
+    } catch {
         return res.status(401).json({
             success: false,
             message: 'Token inválido o expirado. Inicie sesión nuevamente.'
         });
     }
 
-    // 2. Comprobar que tenga un jti UUID válido
+    // 2. Comprobar los datos obligatorios de la sesión.
     const formatoUUID =
         /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
     if (
-        !decoded.jti ||
+        !decoded ||
+        typeof decoded !== 'object' ||
         typeof decoded.jti !== 'string' ||
         !formatoUUID.test(decoded.jti) ||
-        !Number.isInteger(decoded.idUsuario) ||
-        !Number.isInteger(decoded.exp)
+        !Number.isSafeInteger(decoded.idUsuario) ||
+        decoded.idUsuario <= 0 ||
+        !Number.isSafeInteger(decoded.exp)
     ) {
         return res.status(401).json({
             success: false,
@@ -62,7 +60,7 @@ const verificarToken = async (req, res, next) => {
         });
     }
 
-    // 3. Consultar revocación y estado actual del usuario
+    // 3. Consultar revocación, estado, rol y permiso actuales.
     try {
         const query = `
             SELECT
@@ -71,6 +69,7 @@ const verificarToken = async (req, res, next) => {
                 u.nombre_completo,
                 u.correo_institucional,
                 u.activo,
+                u.permiso_inventario,
                 r.nombre AS rol,
                 EXISTS (
                     SELECT 1
@@ -89,7 +88,6 @@ const verificarToken = async (req, res, next) => {
             decoded.jti
         ]);
 
-        // Usuario eliminado o inexistente
         if (resultado.rowCount === 0) {
             return res.status(401).json({
                 success: false,
@@ -99,7 +97,6 @@ const verificarToken = async (req, res, next) => {
 
         const usuario = resultado.rows[0];
 
-        // Usuario desactivado
         if (!usuario.activo) {
             return res.status(401).json({
                 success: false,
@@ -107,7 +104,6 @@ const verificarToken = async (req, res, next) => {
             });
         }
 
-        // Token revocado
         if (usuario.revocado) {
             return res.status(401).json({
                 success: false,
@@ -115,22 +111,19 @@ const verificarToken = async (req, res, next) => {
             });
         }
 
-        // 4. Cargar el usuario con su rol ACTUAL
+        // Los permisos se obtienen de la base de datos,
+        // no de valores enviados por el frontend.
         req.usuario = {
             idUsuario: usuario.id_usuario,
             idRol: usuario.id_rol,
             nombre: usuario.nombre_completo,
             correo: usuario.correo_institucional,
             rol: usuario.rol,
+            permiso_inventario: usuario.permiso_inventario,
             jti: decoded.jti,
             exp: decoded.exp
         };
-
-        // Todo correcto: permitir continuar
-        return next();
-
     } catch (error) {
-        // Si PostgreSQL falla, NO permitimos el acceso
         console.error('Error al validar sesión:', error);
 
         return res.status(500).json({
@@ -138,6 +131,8 @@ const verificarToken = async (req, res, next) => {
             message: 'No fue posible validar la sesión.'
         });
     }
+
+    return next();
 };
 
 module.exports = { verificarToken };
