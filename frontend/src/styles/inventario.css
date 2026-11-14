@@ -315,15 +315,21 @@
 
 .inv-tabla tbody tr td:first-child {
   padding-left: 15px;
-  border-left: 4px solid var(--inv-verde);
+  /* Transparente para que la fila no se mueva al aparecer la línea */
+  border-left: 4px solid transparent;
+  transition:
+    background-color 0.2s ease,
+    border-left-color 0.2s ease;
 }
 
 .inv-tabla tbody tr:hover td {
   background: var(--inv-suave);
 }
 
-.inv-tabla tbody tr:hover td:first-child {
-  border-left-color: var(--inv-hover);
+/* La línea verde solo aparece al pasar el mouse o al navegar con teclado */
+.inv-tabla tbody tr:hover td:first-child,
+.inv-tabla tbody tr:focus-within td:first-child {
+  border-left-color: var(--inv-verde);
 }
 
 /* 8. CONTENIDO DE LAS CELDAS */

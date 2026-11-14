@@ -10,6 +10,8 @@ import TrasladarEquipo from '../pages/TrasladarEquipo';
 import CambiarEstadoEquipo from '../pages/CambiarEstadoEquipo';
 import Historial from '../pages/Historial';
 import MiPerfil from '../pages/MiPerfil';
+import Configuracion from '../pages/Configuracion';
+import Usuarios from '../pages/Usuarios';
 
 // ==========================================
 // NOMBRES DE LAS PÁGINAS
@@ -400,6 +402,37 @@ export default function MainLayout({
     // MI PERFIL
     if (paginaActual === 'perfil') {
       return <MiPerfil usuario={usuario} token={token} />;
+    }
+
+    // ADMINISTRACIÓN DE USUARIOS
+    if (paginaActual === 'usuarios') {
+      if (rol !== 'superadministrador') {
+        return (
+          <div role="alert">
+            No tiene permisos para administrar usuarios.
+          </div>
+        );
+      }
+
+      return (
+        <Usuarios
+          token={token}
+          usuarioActual={usuario}
+        />
+      );
+    }
+
+        // CONFIGURACIÓN
+    if (paginaActual === 'configuracion') {
+      if (rol !== 'superadministrador') {
+        return (
+          <div role="alert">
+            No tiene permisos para acceder a Configuración.
+          </div>
+        );
+      }
+
+      return <Configuracion token={token} />;
     }
 
     // OTRAS PÁGINAS

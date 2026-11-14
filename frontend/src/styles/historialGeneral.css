@@ -449,35 +449,94 @@
 
 .hg-paginacion {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   flex-wrap: wrap;
-  gap: 12px;
-  padding: 20px 2px;
-  color: #8190a2;
-  font-size: 12px;
+  gap: 14px;
+  min-height: 60px;
+  margin-top: 14px;
+  padding: 12px 19px;
+  border: 1px solid #d9e4dd;
+  border-radius: 12px;
+  background: #fff;
 }
 
-.hg-paginacion > div {
+.hg-paginacion p {
+  margin: 0;
+  color: #71877a;
+  font-size: 11px;
+}
+
+.hg-controles-paginacion {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 5px;
 }
 
-.hg-paginacion button {
-  display: grid;
-  place-items: center;
-  padding: 7px;
-  background: white;
-  color: #205c49;
-  border: 1px solid #dfe6e2;
-  border-radius: 7px;
+.hg-controles-paginacion button,
+.hg-puntos {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 29px;
+  height: 29px;
+  padding: 0 7px;
+  border: 1px solid #d9e4dd;
+  border-radius: 6px;
+  background: #fff;
+  color: #476a58;
+  font: inherit;
+  font-size: 11px;
+}
+
+.hg-controles-paginacion button {
   cursor: pointer;
 }
 
-.hg-paginacion button:disabled {
+.hg-controles-paginacion button:hover:not(:disabled) {
+  background: #edf5f1;
+  border-color: #b8d5c7;
+  color: #205c49;
+}
+
+.hg-controles-paginacion button.hg-pagina-activa {
+  border-color: #205c49;
+  background: #205c49;
+  color: #fff;
+}
+
+.hg-controles-paginacion button:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+.hg-controles-paginacion button:focus-visible {
+  outline: 2px solid #205c49;
+  outline-offset: 2px;
+}
+
+.hg-puntos {
+  border-color: transparent;
+  background: transparent;
+  pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .hg-paginacion {
+    padding: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hg-pagina .hg-paginacion {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .hg-controles-paginacion {
+    max-width: 100%;
+    flex-wrap: wrap;
+  }
 }
 
 /* DISEÑO RESPONSIVO */

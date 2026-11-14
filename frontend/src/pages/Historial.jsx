@@ -15,7 +15,10 @@ import {
 } from 'lucide-react';
 
 import { obtenerHistorialGeneral } from '../services/historialGeneralService';
+import { generarPaginas } from '../utils/inventario';
 import '../styles/historialGeneral.css';
+
+const MOVIMIENTOS_POR_PAGINA = 5;
 
 const TIPOS = [
   { valor: 'todos', texto: 'Todos' },
@@ -59,8 +62,7 @@ function nombreAccion(accion) {
 
   if (accion.startsWith('Modificación:')) {
     const campo = accion.replace('Modificación:', '').trim();
-    const nombre = CAMPOS[campo] ||
-      campo.replaceAll('_', ' ');
+    const nombre = CAMPOS[campo] || campo.replaceAll('_', ' ');
 
     return `Modificación de ${nombre.toLowerCase()}`;
   }
@@ -91,7 +93,12 @@ function mostrarValor(valor) {
   return String(valor);
 }
 
-function Movimiento({ registro, expandido, onExpandir, onVerEquipo }) {
+function Movimiento({
+  registro,
+  expandido,
+  onExpandir,
+  onVerEquipo,
+}) {
   const configuracion = CONFIGURACION[registro.tipo] || {
     icono: History,
     nombre: 'Movimiento',
@@ -158,7 +165,12 @@ function Movimiento({ registro, expandido, onExpandir, onVerEquipo }) {
       <div className="hg-registro-valores">
         <div className="hg-valor hg-valor-anterior">
           <small>Valor anterior</small>
-          <p className={expandido ? 'hg-texto-completo' : 'hg-texto-corto'}>
+
+          <p
+            className={
+              expandido ? 'hg-texto-completo' : 'hg-texto-corto'
+            }
+          >
             {anterior}
           </p>
         </div>
@@ -169,7 +181,12 @@ function Movimiento({ registro, expandido, onExpandir, onVerEquipo }) {
 
         <div className="hg-valor hg-valor-nuevo">
           <small>Valor nuevo</small>
-          <p className={expandido ? 'hg-texto-completo' : 'hg-texto-corto'}>
+
+          <p
+            className={
+              expandido ? 'hg-texto-completo' : 'hg-texto-corto'
+            }
+          >
             {nuevo}
           </p>
         </div>
@@ -183,6 +200,7 @@ function Movimiento({ registro, expandido, onExpandir, onVerEquipo }) {
           aria-expanded={expandido}
         >
           {expandido ? 'Ocultar detalles' : 'Ver detalles'}
+
           <ChevronDown
             size={16}
             className={expandido ? 'hg-chevron-abierto' : ''}
@@ -270,13 +288,20 @@ export default function Historial({
     onSesionExpirada,
   ]);
 
-  const totalPaginas = Math.max(1, Math.ceil(total / 20));
+  const totalPaginas = Math.max(
+    1,
+    Math.ceil(total / MOVIMIENTOS_POR_PAGINA)
+  );
+
+  const inicio = (pagina - 1) * MOVIMIENTOS_POR_PAGINA;
+  const fin = Math.min(inicio + MOVIMIENTOS_POR_PAGINA, total);
 
   return (
     <section className="hg-pagina">
       <div className="hg-encabezado">
         <div>
           <h1>Historial</h1>
+
           <p>
             Consulte la trazabilidad de los equipos tecnológicos
             y sus movimientos registrados.
@@ -312,17 +337,20 @@ export default function Historial({
       <div className="hg-filtros">
         <label className="hg-busqueda">
           <Search size={17} />
+
           <input
             type="search"
             value={textoBusqueda}
             onChange={(e) => setTextoBusqueda(e.target.value)}
             placeholder="Buscar equipo, placa o usuario..."
+            aria-label="Buscar equipo, placa o usuario"
           />
         </label>
 
         <div className="hg-fechas">
           <label>
             <span>Desde</span>
+
             <input
               type="date"
               value={desde}
@@ -336,6 +364,7 @@ export default function Historial({
 
           <label>
             <span>Hasta</span>
+
             <input
               type="date"
               value={hasta}
@@ -351,6 +380,7 @@ export default function Historial({
             type="button"
             className="hg-actualizar"
             title="Actualizar historial"
+            aria-label="Actualizar historial"
             onClick={() => setRecarga((valor) => valor + 1)}
           >
             <RefreshCw size={18} />
@@ -364,7 +394,7 @@ export default function Historial({
           {error}
         </div>
       ) : cargando ? (
-        <div className="hg-mensaje">
+        <div className="hg-mensaje" role="status">
           Cargando movimientos...
         </div>
       ) : registros.length === 0 ? (
@@ -393,31 +423,67 @@ export default function Historial({
         </div>
       )}
 
-      <div className="hg-paginacion">
-        <span>{total} movimientos encontrados</span>
+      {!cargando && !error && (
+        <div className="hg-paginacion">
+          <p>
+            {total === 0
+              ? 'Mostrando 0 movimientos'
+              : `Mostrando ${inicio + 1}–${fin} de ${total.toLocaleString(
+                  'es-CR'
+                )} movimientos`}
+          </p>
 
-        <div>
-          <button
-            type="button"
-            disabled={pagina <= 1 || cargando}
-            onClick={() => setPagina((actual) => actual - 1)}
-            aria-label="Página anterior"
+          <nav
+            className="hg-controles-paginacion"
+            aria-label="Paginación del historial general"
           >
-            <ChevronLeft size={17} />
-          </button>
+            <button
+              type="button"
+              disabled={pagina <= 1}
+              onClick={() => setPagina((actual) => actual - 1)}
+              aria-label="Página anterior"
+            >
+              <ChevronLeft size={15} />
+            </button>
 
-          <span>Página {pagina} de {totalPaginas}</span>
+            {generarPaginas(pagina, totalPaginas).map(
+              (numero, indice) =>
+                numero === '...' ? (
+                  <span
+                    className="hg-puntos"
+                    key={`puntos-${indice}`}
+                  >
+                    ...
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    key={numero}
+                    className={
+                      pagina === numero ? 'hg-pagina-activa' : ''
+                    }
+                    aria-label={`Ir a la página ${numero}`}
+                    aria-current={
+                      pagina === numero ? 'page' : undefined
+                    }
+                    onClick={() => setPagina(numero)}
+                  >
+                    {numero}
+                  </button>
+                )
+            )}
 
-          <button
-            type="button"
-            disabled={pagina >= totalPaginas || cargando}
-            onClick={() => setPagina((actual) => actual + 1)}
-            aria-label="Página siguiente"
-          >
-            <ChevronRight size={17} />
-          </button>
+            <button
+              type="button"
+              disabled={pagina >= totalPaginas}
+              onClick={() => setPagina((actual) => actual + 1)}
+              aria-label="Página siguiente"
+            >
+              <ChevronRight size={15} />
+            </button>
+          </nav>
         </div>
-      </div>
+      )}
     </section>
   );
 }

@@ -3,7 +3,6 @@ import {
   UserRound,
   Mail,
   Shield,
-  Building2,
   LockKeyhole,
   CheckCircle2,
   X,
@@ -86,16 +85,6 @@ useEffect(() => {
               Rol asignado
             </label>
             <div>{rol}</div>
-          </div>
-
-          <div className="perfil-campo">
-            <label>
-              <Building2 size={16} />
-              Estado de la cuenta
-            </label>
-            <div>
-              {usuario?.estado || 'Consultar al administrador'}
-            </div>
           </div>
         </div>
       </section>

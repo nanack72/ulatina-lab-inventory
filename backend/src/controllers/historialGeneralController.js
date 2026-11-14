@@ -49,7 +49,7 @@ async function obtenerHistorialGeneral(req, res) {
       });
     }
 
-    const limite = 20;
+    const limite = 5;
     const offset = (pagina - 1) * limite;
 
     const consulta = `
