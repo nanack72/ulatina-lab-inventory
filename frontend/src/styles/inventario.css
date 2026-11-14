@@ -651,3 +651,33 @@
   outline: 2px solid #205c49;
   outline-offset: 2px;
 }
+
+.inv-boton-importar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 41px;
+  padding: 0 16px;
+  border: 1px solid #205c49;
+  border-radius: 8px;
+  background: #fff;
+  color: #205c49;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.inv-boton-importar:hover {
+  background: #edf5f1;
+}
+
+.inv-boton-importar:focus-visible {
+  outline: 2px solid #205c49;
+  outline-offset: 3px;
+}
+
+.inv-acciones {
+  flex-wrap: wrap;
+}
