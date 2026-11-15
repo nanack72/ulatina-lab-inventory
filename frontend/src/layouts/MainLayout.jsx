@@ -8,6 +8,10 @@ import RegistrarEquipo from '../pages/RegistrarEquipo';
 import EditarEquipo from '../pages/EditarEquipo';
 import TrasladarEquipo from '../pages/TrasladarEquipo';
 import CambiarEstadoEquipo from '../pages/CambiarEstadoEquipo';
+import Historial from '../pages/Historial';
+import MiPerfil from '../pages/MiPerfil';
+import Configuracion from '../pages/Configuracion';
+import Usuarios from '../pages/Usuarios';
 
 // ==========================================
 // NOMBRES DE LAS PÁGINAS
@@ -26,7 +30,7 @@ const nombresPaginas = {
 };
 
 // ==========================================
-// NORMALIZAR ROL
+// FUNCIONES AUXILIARES
 // ==========================================
 
 function normalizarRol(rol) {
@@ -88,12 +92,18 @@ export default function MainLayout({
   // ========================================
 
   const rol = normalizarRol(usuario?.rol);
+  const esSuperadministrador = rol === 'superadministrador';
 
-  // El backend es quien autoriza realmente
-  // las operaciones mediante JWT.
+  // El backend valida los permisos actuales en cada operación.
+  const usuarioPuedeRegistrar =
+    esSuperadministrador ||
+    ['registro', 'edicion'].includes(
+      usuario?.permiso_inventario
+    );
+
   const usuarioPuedeModificar =
-    rol === 'superadministrador' ||
-    rol === 'tecnico';
+    esSuperadministrador ||
+    usuario?.permiso_inventario === 'edicion';
 
   const nombrePagina =
     nombresPaginas[paginaActual] || 'Inicio';
@@ -128,7 +138,7 @@ export default function MainLayout({
   // ========================================
 
   function abrirRegistro() {
-    if (!usuarioPuedeModificar) return;
+    if (!usuarioPuedeRegistrar) return;
 
     cerrarPantallasInventario();
     setRegistrandoEquipo(true);
@@ -183,17 +193,24 @@ export default function MainLayout({
   }
 
   // ========================================
-  // ACCESOS DESDE LA PANTALLA DE INICIO
+  // ACCESOS DESDE INICIO
   // ========================================
 
   function registrarDesdeInicio() {
+    if (!usuarioPuedeRegistrar) return;
+
     cambiarPagina('inventario');
     abrirRegistro();
   }
 
   function verEquipoDesdeInicio(equipo) {
+    const id = obtenerIdEquipo(equipo);
+
+    if (id === null) return;
+
     cambiarPagina('inventario');
-    verEquipo(equipo);
+    cerrarPantallasInventario();
+    setEquipoSeleccionado(id);
   }
 
   // ========================================
@@ -205,8 +222,7 @@ export default function MainLayout({
   }
 
   function guardarCompletado() {
-    // Al volver a montar Inventario,
-    // se consultan de nuevo los equipos.
+    // Inventario se vuelve a montar y consulta los equipos.
     volverAlInventario();
   }
 
@@ -225,19 +241,19 @@ export default function MainLayout({
 
   function obtenerTitulo() {
     if (paginaActual === 'inventario') {
-      if (registrandoEquipo) {
+      if (registrandoEquipo && usuarioPuedeRegistrar) {
         return 'Registrar equipo';
       }
 
-      if (editandoEquipo) {
+      if (editandoEquipo && usuarioPuedeModificar) {
         return 'Editar equipo';
       }
 
-      if (trasladandoEquipo) {
+      if (trasladandoEquipo && usuarioPuedeModificar) {
         return 'Trasladar equipo';
       }
 
-      if (cambiandoEstado) {
+      if (cambiandoEstado && usuarioPuedeModificar) {
         return 'Cambiar estado del equipo';
       }
 
@@ -255,9 +271,8 @@ export default function MainLayout({
 
   function renderizarContenido() {
     if (paginaActual === 'inventario') {
-
       // REGISTRO
-      if (registrandoEquipo) {
+      if (registrandoEquipo && usuarioPuedeRegistrar) {
         return (
           <RegistrarEquipo
             token={token}
@@ -270,6 +285,7 @@ export default function MainLayout({
       // CAMBIO DE ESTADO
       if (
         cambiandoEstado &&
+        usuarioPuedeModificar &&
         equipoSeleccionado !== null
       ) {
         return (
@@ -286,6 +302,7 @@ export default function MainLayout({
       // TRASLADO
       if (
         trasladandoEquipo &&
+        usuarioPuedeModificar &&
         equipoSeleccionado !== null
       ) {
         return (
@@ -302,6 +319,7 @@ export default function MainLayout({
       // EDICIÓN
       if (
         editandoEquipo &&
+        usuarioPuedeModificar &&
         equipoSeleccionado !== null
       ) {
         return (
@@ -342,13 +360,12 @@ export default function MainLayout({
         );
       }
 
-
       // LISTADO DE INVENTARIO
       return (
         <Inventario
           token={token}
           onVerEquipo={verEquipo}
-          puedeRegistrar={usuarioPuedeModificar}
+          puedeRegistrar={usuarioPuedeRegistrar}
           onRegistrarEquipo={abrirRegistro}
           onEditarEquipo={
             usuarioPuedeModificar
@@ -369,13 +386,13 @@ export default function MainLayout({
       );
     }
 
-        // INICIO
+    // INICIO
     if (paginaActual === 'inicio') {
       return (
         <Inicio
           usuario={usuario}
           token={token}
-          puedeRegistrar={usuarioPuedeModificar}
+          puedeRegistrar={usuarioPuedeRegistrar}
           onRegistrarEquipo={registrarDesdeInicio}
           onVerEquipo={verEquipoDesdeInicio}
           onIrA={navegarA}
@@ -384,28 +401,76 @@ export default function MainLayout({
       );
     }
 
+    // HISTORIAL GENERAL
+    if (paginaActual === 'historial') {
+      return (
+        <Historial
+          token={token}
+          onVerEquipo={verEquipoDesdeInicio}
+          onSesionExpirada={cerrarSesion}
+        />
+      );
+    }
+
+    // MI PERFIL
+    if (paginaActual === 'perfil') {
+      return (
+        <MiPerfil
+          usuario={usuario}
+          token={token}
+        />
+      );
+    }
+
+    // ADMINISTRACIÓN DE USUARIOS
+    if (paginaActual === 'usuarios') {
+      if (!esSuperadministrador) {
+        return (
+          <div role="alert">
+            No tiene permisos para administrar usuarios.
+          </div>
+        );
+      }
+
+      return (
+        <Usuarios
+          token={token}
+          usuarioActual={usuario}
+        />
+      );
+    }
+
+    // CONFIGURACIÓN
+    if (paginaActual === 'configuracion') {
+      if (!esSuperadministrador) {
+        return (
+          <div role="alert">
+            No tiene permisos para acceder a Configuración.
+          </div>
+        );
+      }
+
+      return <Configuracion token={token} />;
+    }
+
     // OTRAS PÁGINAS
     return (
       <>
         <h1>{nombrePagina}</h1>
-
         <p>
-          {paginaActual === 'inicio'
-            ? `Bienvenido al sistema, ${usuario?.nombre || 'usuario'}.`
-            : `Estamos preparando la sección de ${nombrePagina.toLowerCase()}.`}
+          Estamos preparando la sección de{' '}
+          {nombrePagina.toLowerCase()}.
         </p>
       </>
     );
   }
 
   // ========================================
-  // ESTRUCTURA GENERAL DEL SISTEMA
+  // ESTRUCTURA GENERAL
   // ========================================
 
   return (
     <div className="main-layout">
-
-      {/* SIDEBAR */}
       <Sidebar
         paginaActual={paginaActual}
         cambiarPagina={navegarA}
@@ -413,9 +478,7 @@ export default function MainLayout({
         cerrarSesion={cerrarSesion}
       />
 
-      {/* CONTENIDO PRINCIPAL */}
       <main className="main-content">
-
         <header className="main-header">
           <div>
             <span className="main-breadcrumb">
@@ -426,10 +489,6 @@ export default function MainLayout({
           </div>
 
           <div className="main-user">
-            <strong>
-              {usuario?.nombre || 'Usuario'}
-            </strong>
-
             <span>
               {typeof usuario?.rol === 'string'
                 ? usuario.rol
@@ -441,7 +500,6 @@ export default function MainLayout({
         <section className="main-page">
           {renderizarContenido()}
         </section>
-
       </main>
     </div>
   );

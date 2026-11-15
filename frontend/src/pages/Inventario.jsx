@@ -6,11 +6,13 @@ import {
   RefreshCw,
   AlertCircle,
   X,
+  Upload,
 } from 'lucide-react';
 
 import FiltroSelect from '../components/inventario/FiltroSelect';
 import FilaEquipo from '../components/inventario/FilaEquipo';
 import Paginacion from '../components/inventario/Paginacion';
+import ImportarEquipos from '../components/inventario/ImportarEquipos';
 
 import { useEquipos } from '../hooks/useEquipos';
 
@@ -56,6 +58,8 @@ export default function Inventario({
   );
 
   const [pagina, setPagina] = useState(1);
+
+  const [mostrarImportacion, setMostrarImportacion] = useState(false);
 
   // ========================================
   // FILTROS Y NAVEGACIÓN
@@ -225,6 +229,17 @@ export default function Inventario({
               aria-hidden="true"
             />
           </button>
+
+          {puedeRegistrar && (
+            <button
+              type="button"
+              className="inv-boton-importar"
+              onClick={() => setMostrarImportacion(true)}
+            >
+              <Upload size={17} aria-hidden="true" />
+              <span>Importar equipos</span>
+            </button>
+          )}
 
           {/* REGISTRAR EQUIPO */}
           {mostrarRegistrar && (
@@ -459,6 +474,18 @@ export default function Inventario({
         )}
 
       </section>
+
+      {mostrarImportacion && (
+        <ImportarEquipos
+          abierto={true}
+          token={token}
+          onCerrar={() => setMostrarImportacion(false)}
+          onImportados={() => {
+            setPagina(1);
+            recargar();
+          }}
+        />
+      )}
     </div>
   );
 }
