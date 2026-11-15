@@ -418,7 +418,7 @@ export default function EditarEquipo({
             <div className="registro-botones">
               <button
                 type="button"
-                className="registro-cancelar"
+                className="btn btn-lg btn-secundario"
                 onClick={onCancelar}
                 disabled={guardando}
               >
@@ -427,7 +427,7 @@ export default function EditarEquipo({
 
               <button
                 type="submit"
-                className="registro-guardar"
+                className="btn btn-lg btn-primario"
                 disabled={guardando}
               >
                 <Save size={17} />

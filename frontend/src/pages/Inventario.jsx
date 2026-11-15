@@ -218,7 +218,7 @@ export default function Inventario({
           {/* ACTUALIZAR INVENTARIO */}
           <button
             type="button"
-            className="inv-boton-actualizar"
+            className="btn btn-lg btn-icono"
             onClick={recargar}
             disabled={cargando}
             title="Actualizar equipos"
@@ -233,7 +233,7 @@ export default function Inventario({
           {puedeRegistrar && (
             <button
               type="button"
-              className="inv-boton-importar"
+              className="btn btn-lg btn-contorno"
               onClick={() => setMostrarImportacion(true)}
             >
               <Upload size={17} aria-hidden="true" />
@@ -245,7 +245,7 @@ export default function Inventario({
           {mostrarRegistrar && (
             <button
               type="button"
-              className="inv-boton-registrar"
+              className="btn btn-lg btn-primario inv-boton-registrar"
               onClick={onRegistrarEquipo}
             >
               <Plus

@@ -8,7 +8,7 @@
   min-height: 100vh;
   width: 100%;
   font-family: 'Inter', Arial, sans-serif;
-  background: #ffffff;
+  background: var(--blanco);
 }
 
 /* ==========================================
@@ -18,7 +18,7 @@
 .login-institutional {
   position: relative;
   overflow: hidden;
-  color: #ffffff;
+  color: var(--blanco);
   background:
     radial-gradient(
       circle at 80% 20%,
@@ -81,7 +81,7 @@
 
 .login-presentation h1 {
   margin: 0 0 20px;
-  color: #ffffff;
+  color: var(--blanco);
   font-size: clamp(30px, 3vw, 45px);
   font-weight: 750;
   line-height: 1.2;
@@ -113,7 +113,7 @@
   justify-content: center;
   position: relative;
   padding: 60px 65px;
-  background: #ffffff;
+  background: var(--blanco);
 }
 
 .login-form-container {
@@ -138,7 +138,7 @@
 
 .login-heading h1 {
   margin: 0 0 10px;
-  color: #172c28;
+  color: var(--texto-fuerte);
   font-size: 36px;
   font-weight: 750;
   letter-spacing: -1px;
@@ -174,8 +174,8 @@
   min-height: 54px;
   padding: 0 15px;
   border: 1px solid #dce5e0;
-  border-radius: 10px;
-  background: #ffffff;
+  border-radius: var(--radio-sm);
+  background: var(--blanco);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
@@ -280,9 +280,9 @@
   width: 100%;
   min-height: 54px;
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radio-sm);
   background: #137757;
-  color: #ffffff;
+  color: var(--blanco);
   font-family: inherit;
   font-size: 15px;
   font-weight: 700;
@@ -362,7 +362,7 @@
   margin: -10px 0 20px;
   padding: 13px 15px;
   border: 1px solid #f1c5c5;
-  border-radius: 9px;
+  border-radius: var(--radio-sm);
   background: #fff2f2;
   color: #a52b2b;
   font-size: 13px;

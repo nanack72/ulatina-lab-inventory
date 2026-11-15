@@ -145,7 +145,7 @@ export default function CambiarContrasena({
           <div className="cc-acciones">
             <button
               type="button"
-              className="cc-cancelar"
+              className="btn btn-secundario"
               onClick={onCerrar}
               disabled={cargando}
             >
@@ -154,7 +154,7 @@ export default function CambiarContrasena({
 
             <button
               type="submit"
-              className="cc-guardar"
+              className="btn btn-primario"
               disabled={cargando}
             >
               {cargando ? 'Guardando...' : 'Guardar contraseña'}

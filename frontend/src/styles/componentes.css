@@ -1,0 +1,102 @@
+/* ======================================================
+   COMPONENTES COMPARTIDOS
+   Uso:  <button className="btn btn-primario">Guardar</button>
+   Variantes: btn-primario | btn-secundario | btn-contorno
+              btn-peligro  | btn-icono (cuadrado, solo ícono)
+   Tamaño grande (botones de encabezado): agregar btn-lg
+   ====================================================== */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-shrink: 0;
+  height: var(--alto-md);
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: var(--radio-sm);
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-lg {
+  height: var(--alto-lg);
+  padding: 0 19px;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--verde);
+  outline-offset: 2px;
+}
+
+/* Primario: acción principal (fondo verde) */
+.btn-primario {
+  border-color: var(--verde);
+  background: var(--verde);
+  color: var(--blanco);
+}
+
+.btn-primario:hover:not(:disabled) {
+  border-color: var(--verde-hover);
+  background: var(--verde-hover);
+}
+
+/* Secundario: acción neutra (fondo blanco) */
+.btn-secundario {
+  border-color: var(--borde);
+  background: var(--blanco);
+  color: var(--texto);
+}
+
+.btn-secundario:hover:not(:disabled) {
+  background: var(--verde-suave);
+}
+
+/* Contorno: acción alternativa con borde verde */
+.btn-contorno {
+  border-color: var(--verde);
+  background: var(--blanco);
+  color: var(--verde);
+}
+
+.btn-contorno:hover:not(:disabled) {
+  background: var(--verde-suave);
+}
+
+/* Peligro */
+.btn-peligro {
+  border-color: var(--peligro);
+  background: var(--peligro);
+  color: var(--blanco);
+}
+
+.btn-peligro:hover:not(:disabled) {
+  filter: brightness(0.92);
+}
+
+/* Icono: cuadrado, para "actualizar", "cerrar", etc. */
+.btn-icono {
+  width: var(--alto-md);
+  padding: 0;
+  border-color: var(--borde);
+  background: var(--blanco);
+  color: var(--verde);
+}
+
+.btn-icono:hover:not(:disabled) {
+  background: var(--verde-suave);
+}
+
+.btn-icono.btn-lg {
+  width: var(--alto-lg);
+}

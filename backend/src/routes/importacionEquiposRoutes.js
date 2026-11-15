@@ -229,7 +229,13 @@ function buscarEncabezados(hoja) {
     const columnas = new Map();
 
     fila.eachCell((celda, columna) => {
-      const nombre = normalizar(celda.text);
+      // Los títulos superiores tienen celdas combinadas.
+      // No son encabezados de los equipos.
+      if (celda.isMerged || celda.value == null) {
+        return;
+      }
+
+      const nombre = normalizar(textoCelda(celda));
 
       if (nombre) {
         columnas.set(nombre, columna);

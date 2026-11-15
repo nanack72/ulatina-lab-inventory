@@ -98,6 +98,7 @@ useEffect(() => {
 
           <button
             type="button"
+            className="btn btn-primario"
             onClick={() => {
               setMensaje('');
               setMostrarCambio(true);

@@ -14,11 +14,11 @@
   max-width: 480px;
   max-height: 90vh;
   overflow-y: auto;
-  background: #ffffff;
+  background: var(--blanco);
   border-radius: 14px;
   padding: 26px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.16);
-  color: #263443;
+  color: var(--texto);
 }
 
 .cc-encabezado,
@@ -34,7 +34,7 @@
 
 .cc-titulo {
   gap: 10px;
-  color: #205c49;
+  color: var(--verde);
 }
 
 .cc-titulo h2 {
@@ -46,11 +46,11 @@
   border: none;
   background: transparent;
   cursor: pointer;
-  color: #64748b;
+  color: var(--texto-suave);
 }
 
 .cc-descripcion {
-  color: #64748b;
+  color: var(--texto-suave);
   font-size: 13px;
   line-height: 1.6;
   margin: 18px 0 22px;
@@ -68,13 +68,13 @@
 }
 
 .cc-modal input {
-  border: 1px solid #dfe6e2;
-  border-radius: 8px;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-sm);
   padding: 12px;
   font: inherit;
   font-size: 14px;
   margin-bottom: 19px;
-  outline-color: #205c49;
+  outline-color: var(--verde);
   width: 100%;
   box-sizing: border-box;
 }
@@ -85,16 +85,16 @@
   gap: 8px;
   background: transparent;
   border: none;
-  color: #205c49;
+  color: var(--verde);
   cursor: pointer;
   font-size: 13px;
   width: fit-content;
 }
 
 .cc-error {
-  color: #b42318;
+  color: var(--peligro);
   background: #fef3f2;
-  border-radius: 8px;
+  border-radius: var(--radio-sm);
   padding: 12px;
   font-size: 13px;
 }
@@ -106,21 +106,9 @@
 }
 
 .cc-acciones button {
-  border-radius: 8px;
+  border-radius: var(--radio-sm);
   padding: 11px 15px;
   cursor: pointer;
-}
-
-.cc-cancelar {
-  background: #ffffff;
-  border: 1px solid #dfe6e2;
-  color: #263443;
-}
-
-.cc-guardar {
-  background: #205c49;
-  color: white;
-  border: 1px solid #205c49;
 }
 
 .cc-acciones button:disabled {

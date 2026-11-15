@@ -328,7 +328,7 @@ export default function Configuracion({ token }) {
           <div className="cfg-acciones">
             <button
               type="button"
-              className="cfg-actualizar"
+              className="btn btn-icono"
               aria-label="Actualizar catálogo"
               title="Actualizar catálogo"
               disabled={cargando}
@@ -339,7 +339,7 @@ export default function Configuracion({ token }) {
 
             <button
               type="button"
-              className="cfg-primario"
+              className="btn btn-primario"
               disabled={cargando || Boolean(error)}
               onClick={() => abrirFormulario()}
             >
@@ -511,7 +511,7 @@ export default function Configuracion({ token }) {
                 <div className="cfg-modal-acciones">
                   <button
                     type="button"
-                    className="cfg-secundario"
+                    className="btn btn-secundario"
                     disabled={guardando}
                     onClick={cerrarModal}
                     autoFocus
@@ -521,7 +521,7 @@ export default function Configuracion({ token }) {
 
                   <button
                     type="button"
-                    className="cfg-peligro"
+                    className="btn btn-peligro"
                     disabled={guardando}
                     onClick={eliminar}
                   >
@@ -595,7 +595,7 @@ export default function Configuracion({ token }) {
                 <div className="cfg-modal-acciones">
                   <button
                     type="button"
-                    className="cfg-secundario"
+                    className="btn btn-secundario"
                     disabled={guardando}
                     onClick={cerrarModal}
                   >
@@ -604,7 +604,7 @@ export default function Configuracion({ token }) {
 
                   <button
                     type="submit"
-                    className="cfg-primario"
+                    className="btn btn-primario"
                     disabled={guardando}
                   >
                     {guardando ? 'Guardando...' : 'Guardar'}

@@ -242,7 +242,7 @@ export default function HistorialUbicaciones({
 
         <button
           type="button"
-          className="hist-actualizar"
+          className="btn btn-icono"
           onClick={actualizarHistorial}
           disabled={cargando}
           title="Actualizar historial"

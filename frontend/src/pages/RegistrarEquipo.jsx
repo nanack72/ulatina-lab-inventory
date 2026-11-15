@@ -551,7 +551,7 @@ export default function RegistrarEquipo({
             <div className="registro-botones">
               <button
                 type="button"
-                className="registro-cancelar"
+                className="btn btn-lg btn-secundario"
                 onClick={onCancelar}
                 disabled={guardando}
               >
@@ -560,7 +560,7 @@ export default function RegistrarEquipo({
 
               <button
                 type="submit"
-                className="registro-guardar"
+                className="btn btn-lg btn-primario"
                 disabled={guardando || cargandoCatalogos || !!error && categorias.length === 0}
               >
                 <Save size={17} />

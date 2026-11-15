@@ -2,11 +2,6 @@
    CAMBIO DE ESTADO DE EQUIPOS
    ========================================== */
 
-.cambio-estado-pagina {
-  --cambio-verde: #205c49;
-  --cambio-suave: #edf5f1;
-}
-
 /* INFORMACIÓN DEL EQUIPO */
 
 .cambio-estado-equipo {
@@ -23,12 +18,12 @@
 }
 
 .cambio-estado-equipo span {
-  color: #8190a2;
+  color: var(--texto-suave);
   font-size: 12px;
 }
 
 .cambio-estado-equipo strong {
-  color: #263443;
+  color: var(--texto);
   font-size: 14px;
   overflow-wrap: anywhere;
 }
@@ -52,18 +47,18 @@
   gap: 12px;
   min-width: 0;
   padding: 20px;
-  border-radius: 9px;
+  border-radius: var(--radio-sm);
   background: #f2f5f6;
 }
 
 .cambio-estado-etiqueta {
-  color: #8190a2;
+  color: var(--texto-suave);
   font-size: 12px;
   font-weight: 600;
 }
 
 .cambio-estado-actual strong {
-  color: #263443;
+  color: var(--texto);
   font-size: 15px;
   overflow-wrap: anywhere;
 }
@@ -71,15 +66,15 @@
 .cambio-estado-flecha {
   display: flex;
   justify-content: center;
-  color: var(--cambio-verde);
+  color: var(--verde);
 }
 
 .cambio-estado-nuevo {
   min-width: 0;
   padding: 20px;
   border: 1px solid #d5e7dd;
-  border-radius: 9px;
-  background: var(--cambio-suave);
+  border-radius: var(--radio-sm);
+  background: var(--verde-suave);
 }
 
 .cambio-estado-nuevo select {
@@ -87,15 +82,15 @@
   margin-top: 10px;
   padding: 12px 13px;
   border: 1px solid #d1e0d7;
-  border-radius: 8px;
-  background: #ffffff;
-  color: #263443;
+  border-radius: var(--radio-sm);
+  background: var(--blanco);
+  color: var(--texto);
   font-family: inherit;
   font-size: 13px;
 }
 
 .cambio-estado-nuevo select:focus {
-  outline: 2px solid #205c49;
+  outline: 2px solid var(--verde);
   outline-offset: 2px;
 }
 
@@ -114,9 +109,9 @@
   gap: 10px;
   margin-top: 20px;
   padding: 16px;
-  border-left: 4px solid var(--cambio-verde);
-  border-radius: 8px;
-  background: var(--cambio-suave);
+  border-left: 4px solid var(--verde);
+  border-radius: var(--radio-sm);
+  background: var(--verde-suave);
   color: #315e4a;
 }
 
@@ -140,15 +135,15 @@
   margin-top: 20px;
   padding: 23px;
   border: 1px solid #bdd6c8;
-  border-radius: 12px;
-  background: #ffffff;
+  border-radius: var(--radio-md);
+  background: var(--blanco);
 }
 
 .cambio-estado-confirmacion-titulo {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: var(--cambio-verde);
+  color: var(--verde);
 }
 
 .cambio-estado-confirmacion-titulo h2 {
@@ -170,14 +165,14 @@
   flex-wrap: wrap;
   gap: 16px;
   padding: 18px;
-  border-radius: 9px;
+  border-radius: var(--radio-sm);
   background: #f4f8f5;
   color: #526a60;
   font-size: 13px;
 }
 
 .cambio-estado-resumen strong {
-  color: var(--cambio-verde);
+  color: var(--verde);
 }
 
 .cambio-estado-confirmacion-botones {

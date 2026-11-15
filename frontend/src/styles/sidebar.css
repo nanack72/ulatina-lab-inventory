@@ -3,7 +3,7 @@
 ========================================== */
 
 .sidebar {
-  --sb-acento: #ffffff;
+  --sb-acento: var(--blanco);
   --sb-texto: #e8f2ed;
   --sb-suave: #b9d9c8;
 
@@ -28,7 +28,7 @@
       transparent 45%
     ),
     linear-gradient(160deg, #1a6e55 0%, #0f4c3c 55%, #0b3d31 100%);
-  color: #ffffff;
+  color: var(--blanco);
   font-family: 'Inter', Arial, sans-serif;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
@@ -122,7 +122,7 @@
   min-height: 46px;
   padding: 6px 12px 6px 8px;
   border: none;
-  border-radius: 12px;
+  border-radius: var(--radio-md);
   background: transparent;
   color: var(--sb-texto);
   font-family: inherit;
@@ -143,7 +143,7 @@
   flex-shrink: 0;
   width: 34px;
   height: 34px;
-  border-radius: 10px;
+  border-radius: var(--radio-sm);
   background: rgba(255, 255, 255, 0.07);
   transition: background 0.2s ease, color 0.2s ease;
 }
@@ -157,7 +157,7 @@
 
 .sidebar-link:hover {
   background: rgba(255, 255, 255, 0.09);
-  color: #ffffff;
+  color: var(--blanco);
   transform: translateX(2px);
 }
 
@@ -174,7 +174,7 @@
     rgba(255, 255, 255, 0.21),
     rgba(255, 255, 255, 0.07)
   );
-  color: #ffffff;
+  color: var(--blanco);
   font-weight: 700;
   transform: none;
 }
@@ -228,7 +228,7 @@
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.07);
-  color: #ffffff;
+  color: var(--blanco);
   font-family: inherit;
   text-align: left;
   cursor: pointer;
@@ -253,7 +253,7 @@
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background: #ffffff;
+  background: var(--blanco);
   color: #0f4c3c;
   font-size: 13px;
   font-weight: 800;
@@ -420,7 +420,7 @@
   min-height: 80px;
   padding: 18px 35px;
   border-bottom: 1px solid #e4e8e7;
-  background: #ffffff;
+  background: var(--blanco);
   color: #243630;
   font-size: 14px;
 }
@@ -447,7 +447,7 @@
 
 .main-page h1 {
   margin: 0 0 12px;
-  color: #172c28;
+  color: var(--texto-fuerte);
   font-size: 28px;
 }
 

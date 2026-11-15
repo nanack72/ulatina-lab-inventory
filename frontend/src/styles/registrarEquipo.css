@@ -3,9 +3,6 @@
    ========================================== */
 
 .registro-pagina {
-  --registro-verde: #205c49;
-  --registro-verde-hover: #184938;
-  --registro-verde-suave: #edf5f1;
 
   width: 100%;
   min-width: 0;
@@ -13,7 +10,7 @@
   flex-direction: column;
   gap: 22px;
   padding: 4px 0 30px;
-  color: #263443;
+  color: var(--texto);
   font-family: inherit;
   box-sizing: border-box;
 }
@@ -34,7 +31,7 @@
   padding: 9px 0;
   border: none;
   background: transparent;
-  color: var(--registro-verde);
+  color: var(--verde);
   font-family: inherit;
   font-size: 13px;
   font-weight: 600;
@@ -42,21 +39,21 @@
 }
 
 .registro-volver:hover {
-  color: var(--registro-verde-hover);
+  color: var(--verde-hover);
 }
 
 /* ENCABEZADO */
 
 .registro-encabezado h1 {
   margin: 0;
-  color: #202d3d;
+  color: var(--texto-fuerte);
   font-size: 26px;
   font-weight: 700;
 }
 
 .registro-encabezado p {
   margin: 8px 0 0;
-  color: #8190a2;
+  color: var(--texto-suave);
   font-size: 13px;
 }
 
@@ -73,9 +70,9 @@
 .registro-tarjeta {
   min-width: 0;
   overflow: hidden;
-  background: #ffffff;
-  border: 1px solid #dfe4eb;
-  border-radius: 12px;
+  background: var(--blanco);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-md);
 }
 
 .registro-tarjeta-titulo {
@@ -88,7 +85,7 @@
 
 .registro-tarjeta-titulo h2 {
   margin: 0;
-  color: #263443;
+  color: var(--texto);
   font-size: 15px;
   font-weight: 700;
 }
@@ -100,9 +97,9 @@
   width: 35px;
   height: 35px;
   flex-shrink: 0;
-  border-radius: 9px;
-  background: var(--registro-verde);
-  color: #ffffff;
+  border-radius: var(--radio-sm);
+  background: var(--verde);
+  color: var(--blanco);
 }
 
 .registro-tarjeta-contenido {
@@ -145,10 +142,10 @@
   min-width: 0;
   padding: 12px 13px;
   border: 1px solid #d9e3de;
-  border-radius: 8px;
+  border-radius: var(--radio-sm);
   outline: none;
-  background: #ffffff;
-  color: #263443;
+  background: var(--blanco);
+  color: var(--texto);
   font-family: inherit;
   font-size: 13px;
   line-height: 1.5;
@@ -165,8 +162,8 @@
 .registro-campo input:focus,
 .registro-campo select:focus,
 .registro-campo textarea:focus {
-  border-color: #2d765e;
-  box-shadow: 0 0 0 3px rgba(32, 92, 73, 0.1);
+  border-color: var(--verde-medio);
+  box-shadow: var(--sombra-foco);
 }
 
 .registro-campo textarea {
@@ -192,7 +189,7 @@
   gap: 11px;
   padding: 15px 17px;
   border: 1px solid;
-  border-radius: 9px;
+  border-radius: var(--radio-sm);
   font-size: 13px;
 }
 
@@ -203,9 +200,9 @@
 }
 
 .registro-alerta-exito {
-  background: #edf5f1;
+  background: var(--verde-suave);
   border-color: #b8d5c7;
-  color: #205c49;
+  color: var(--verde);
 }
 
 .registro-alerta svg {
@@ -214,9 +211,9 @@
 
 .registro-cargando {
   padding: 26px;
-  border: 1px solid #dfe4eb;
-  border-radius: 10px;
-  background: #ffffff;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-sm);
+  background: var(--blanco);
   color: #75869b;
   font-size: 13px;
 }
@@ -231,9 +228,9 @@
   gap: 18px;
   margin-top: 22px;
   padding: 20px 22px;
-  border: 1px solid #dfe4eb;
-  border-radius: 12px;
-  background: #ffffff;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-md);
+  background: var(--blanco);
 }
 
 .registro-acciones > span {
@@ -245,48 +242,6 @@
   display: flex;
   align-items: center;
   gap: 11px;
-}
-
-.registro-cancelar,
-.registro-guardar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 9px;
-  min-height: 42px;
-  padding: 0 19px;
-  border-radius: 8px;
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.registro-cancelar {
-  border: 1px solid #dce4e0;
-  background: #ffffff;
-  color: #526a60;
-}
-
-.registro-cancelar:hover {
-  background: #f4f7f5;
-}
-
-.registro-guardar {
-  border: 1px solid var(--registro-verde);
-  background: var(--registro-verde);
-  color: #ffffff;
-}
-
-.registro-guardar:hover:not(:disabled) {
-  background: var(--registro-verde-hover);
-}
-
-.registro-cancelar:disabled,
-.registro-guardar:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
 }
 
 /* RESPONSIVE */
@@ -334,9 +289,9 @@
 .registro-aviso {
   margin: 0;
   padding: 15px 17px;
-  border-left: 4px solid #205c49;
-  border-radius: 8px;
-  background: #edf5f1;
+  border-left: 4px solid var(--verde);
+  border-radius: var(--radio-sm);
+  background: var(--verde-suave);
   color: #315e4a;
   font-size: 13px;
   line-height: 1.7;

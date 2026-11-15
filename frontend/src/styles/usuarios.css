@@ -16,7 +16,7 @@
   justify-content: center;
   padding: 5px 10px;
   border: 1px solid transparent;
-  border-radius: 999px;
+  border-radius: var(--radio-pildora);
   font-size: 10px;
   font-weight: 600;
   white-space: nowrap;
@@ -31,7 +31,7 @@
 .usu-estado-inactivo {
   border-color: #f3cece;
   background: #fdeaea;
-  color: #b42318;
+  color: var(--peligro);
 }
 
 .usu-dialogo {
@@ -46,7 +46,7 @@
 
 .usu-ayuda {
   margin: 0;
-  color: #718096;
+  color: var(--texto-suave);
   font-size: 12px;
   line-height: 1.6;
 }
@@ -55,13 +55,13 @@
   min-width: 0;
   margin: 0;
   padding: 14px;
-  border: 1px solid #d9e4dd;
-  border-radius: 9px;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-sm);
 }
 
 .usu-asignaciones legend {
   padding: 0 6px;
-  color: #205c49;
+  color: var(--verde);
   font-size: 12px;
   font-weight: 600;
 }
@@ -79,7 +79,7 @@
   align-items: flex-start;
   gap: 9px;
   padding: 5px 2px;
-  color: #263443;
+  color: var(--texto);
   font-size: 12px;
   line-height: 1.5;
   cursor: pointer;
@@ -88,7 +88,7 @@
 .usu-opcion input {
   flex-shrink: 0;
   margin-top: 3px;
-  accent-color: #205c49;
+  accent-color: var(--verde);
 }
 
 .usu-opcion span {
@@ -99,7 +99,7 @@
 .usu-opcion small {
   display: block;
   margin-top: 3px;
-  color: #718096;
+  color: var(--texto-suave);
   font-size: 11px;
 }
 

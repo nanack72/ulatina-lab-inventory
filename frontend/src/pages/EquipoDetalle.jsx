@@ -372,7 +372,7 @@ export default function EquipoDetalle({
               {typeof onEditar === 'function' && (
                 <button
                   type="button"
-                  className="detalle-boton-editar"
+                  className="btn btn-primario"
                   onClick={() => onEditar(equipo)}
                 >
                   <Pencil size={15} />

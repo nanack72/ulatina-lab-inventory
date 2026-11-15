@@ -378,7 +378,7 @@ export default function Historial({
 
           <button
             type="button"
-            className="hg-actualizar"
+            className="btn btn-icono"
             title="Actualizar historial"
             aria-label="Actualizar historial"
             onClick={() => setRecarga((valor) => valor + 1)}

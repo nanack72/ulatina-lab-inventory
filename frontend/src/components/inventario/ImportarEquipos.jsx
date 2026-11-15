@@ -730,7 +730,7 @@ useEffect(() => {
       <div className="imp-acciones">
         <button
           type="button"
-          className="imp-secundario"
+          className="btn btn-secundario"
           disabled={ocupado}
           onClick={cerrar}
         >
@@ -740,7 +740,7 @@ useEffect(() => {
         {paso === 'archivo' && (
           <button
             type="button"
-            className="imp-primario"
+            className="btn btn-primario"
             disabled={ocupado || !archivo}
             onClick={leerArchivo}
           >
@@ -752,7 +752,7 @@ useEffect(() => {
         {paso === 'revision' && (
           <button
             type="button"
-            className="imp-primario"
+            className="btn btn-primario"
             disabled={ocupado || seleccionadas.length === 0}
             onClick={confirmar}
           >
@@ -765,7 +765,7 @@ useEffect(() => {
         {paso === 'resultado' && filas.length > 0 && (
           <button
             type="button"
-            className="imp-primario"
+            className="btn btn-primario"
             onClick={() => {
               setError('');
               setPaso('revision');
