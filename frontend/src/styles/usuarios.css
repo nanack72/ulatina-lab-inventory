@@ -1,0 +1,110 @@
+/* USUARIOS */
+
+.usu-tabla {
+  min-width: 760px;
+}
+
+.usu-tabla th:last-child,
+.usu-tabla td:last-child {
+  width: 110px;
+  min-width: 110px;
+}
+
+.usu-estado {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 10px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.usu-estado-activo {
+  border-color: #c5e5b4;
+  background: #e1f3d9;
+  color: #42751f;
+}
+
+.usu-estado-inactivo {
+  border-color: #f3cece;
+  background: #fdeaea;
+  color: #b42318;
+}
+
+.usu-dialogo {
+  width: min(640px, calc(100% - 32px));
+}
+
+.usu-dos-columnas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.usu-ayuda {
+  margin: 0;
+  color: #718096;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.usu-asignaciones {
+  min-width: 0;
+  margin: 0;
+  padding: 14px;
+  border: 1px solid #d9e4dd;
+  border-radius: 9px;
+}
+
+.usu-asignaciones legend {
+  padding: 0 6px;
+  color: #205c49;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.usu-lista-opciones {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.usu-opcion {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 5px 2px;
+  color: #263443;
+  font-size: 12px;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.usu-opcion input {
+  flex-shrink: 0;
+  margin-top: 3px;
+  accent-color: #205c49;
+}
+
+.usu-opcion span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.usu-opcion small {
+  display: block;
+  margin-top: 3px;
+  color: #718096;
+  font-size: 11px;
+}
+
+@media (max-width: 480px) {
+  .usu-dos-columnas {
+    grid-template-columns: 1fr;
+  }
+}

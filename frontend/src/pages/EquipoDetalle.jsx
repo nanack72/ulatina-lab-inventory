@@ -76,14 +76,18 @@ function nombreSede(valor) {
 // CAMPO DE INFORMACIÓN
 // ==========================================
 
-function Campo({ etiqueta, valor }) {
+function Campo({ etiqueta, valor, texto = false }) {
   return (
     <div className="detalle-campo">
       <span className="detalle-campo-etiqueta">
         {etiqueta}
       </span>
 
-      <span className="detalle-campo-valor">
+      <span
+        className={`detalle-campo-valor ${
+          texto ? 'detalle-campo-valor--texto' : ''
+        }`}
+      >
         {valor || 'No registrado'}
       </span>
     </div>
@@ -125,6 +129,7 @@ export default function EquipoDetalle({
   onCambiarEstado,
   onSesionExpirada,
 }) {
+
   // ========================================
   // CONSULTAR EQUIPO CON EL HOOK
   // ========================================
@@ -530,6 +535,7 @@ export default function EquipoDetalle({
                     <Campo
                       etiqueta="Características"
                       valor={caracteristicas}
+                      texto
                     />
                   </div>
 
@@ -542,6 +548,7 @@ export default function EquipoDetalle({
                   <Campo
                     etiqueta="Comentarios"
                     valor={comentarios}
+                    texto
                   />
                 </Tarjeta>
 

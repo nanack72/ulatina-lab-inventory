@@ -311,6 +311,11 @@
   overflow-wrap: anywhere;
 }
 
+.detalle-campo-valor--texto {
+  font-weight: 400;
+  line-height: 1.7;
+}
+
 .detalle-caracteristicas {
   padding-top: 4px;
 }
