@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCircle, Clock, XCircle, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Clock, XCircle, ShieldAlert, Flame } from 'lucide-react';
 import {
   formatearFechaIncidencia,
   COLORES_PRIORIDAD,
@@ -66,10 +66,14 @@ export default function TablaIncidencias({
                       borderColor: estiloPrio.borde
                     }}
                   >
-                    <span
-                      className="inci-punto-prioridad"
-                      style={{ backgroundColor: estiloPrio.punto }}
-                    />
+                    {item.prioridad === 'Crítica' || item.prioridad === 'Critica' ? (
+                      <Flame size={13} className="inci-icono-fuego" />
+                    ) : (
+                      <span
+                        className="inci-punto-prioridad"
+                        style={{ backgroundColor: estiloPrio.punto }}
+                      />
+                    )}
                     {item.prioridad}
                   </span>
                 </td>
