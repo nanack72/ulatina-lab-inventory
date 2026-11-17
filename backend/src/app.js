@@ -20,6 +20,7 @@ const historialGeneralRoutes = require('./routes/historialGeneralRoutes');
 const configuracionRoutes = require('./routes/configuracionRoutes');
 const usuariosRoutes = require('./routes/usuariosRoutes');
 const importacionEquiposRoutes = require('./routes/importacionEquiposRoutes');
+const incidenciasRoutes = require('./routes/incidenciasRoutes');
 
 // Importamos la tarea de limpieza de JWT
 const { iniciarLimpiezaTokens } = require('../jobs/limpiezaTokens');
@@ -48,6 +49,7 @@ app.use('/api/historial-general', historialGeneralRoutes);
 app.use('/api/admin/configuracion', configuracionRoutes);
 app.use('/api/admin/usuarios', usuariosRoutes);
 app.use('/api/importacion-equipos', importacionEquiposRoutes);
+app.use('/api/incidencias', incidenciasRoutes);
 
 // Archivos subidos (fotos de evidencias)
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
