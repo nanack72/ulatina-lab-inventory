@@ -24,11 +24,12 @@ const { iniciarLimpiezaTokens } = require('../jobs/limpiezaTokens');
 const app = express();
 
 app.use(cors());
-app.use(express.json());
+// Aplicar el límite especial antes del parser general de 100 kB.
 app.use(
   '/api/importacion-equipos/confirmar',
   express.json({ limit: '2mb' })
 );
+app.use(express.json());
 
 // Rutas de la API
 app.use('/api/sedes', sedesRoutes);
@@ -76,6 +77,25 @@ app.get('/api/health/db', async (req, res) => {
             message: 'No se pudo conectar con PostgreSQL'
         });
     }
+});
+
+// Los errores de lectura del cuerpo también deben devolver JSON a la interfaz.
+app.use((error, req, res, next) => {
+    if (error.type === 'entity.too.large') {
+        return res.status(413).json({
+            success: false,
+            message: 'La solicitud supera el tamaño permitido. Reduzca el lote e intente nuevamente.'
+        });
+    }
+
+    if (error.type === 'entity.parse.failed') {
+        return res.status(400).json({
+            success: false,
+            message: 'El cuerpo de la solicitud no contiene JSON válido.'
+        });
+    }
+
+    return next(error);
 });
 
 const PORT = process.env.PORT || 3000;
