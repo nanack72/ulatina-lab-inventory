@@ -56,3 +56,30 @@ export async function consultarMantenimientosPorLaboratorio(
 
   return resultado;
 }
+
+/**
+ * Descarga el archivo de reporte consolidado en formato Excel.
+ */
+export async function descargarReporteExcel(token) {
+  const respuesta = await fetch(`${API_URL}/exportar-excel`, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  if (!respuesta.ok) {
+    throw new Error('No se pudo generar el reporte en Excel');
+  }
+
+  const texto = await respuesta.text();
+  const blob = new Blob([texto], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  });
+  const url = window.URL.createObjectURL(blob);
+  const enlace = document.createElement('a');
+  enlace.href = url;
+  enlace.download = 'reporte_inventario_ulatina.xlsx';
+  document.body.appendChild(enlace);
+  enlace.click();
+  document.body.removeChild(enlace);
+}
