@@ -12,7 +12,7 @@ export default function ModalReportarIncidencia({
   const [idEquipo, setIdEquipo] = useState('');
   const [titulo, setTitulo] = useState('');
   const [descripcionFalla, setDescripcionFalla] = useState('');
-  const [prioridad, setPrioridad] = useState('media'); // Error B inicial: minúsculas
+  const [prioridad, setPrioridad] = useState('Media');
 
   const [guardando, setGuardando] = useState(false);
   const [errorFormulario, setErrorFormulario] = useState(null);
@@ -146,11 +146,10 @@ export default function ModalReportarIncidencia({
                 value={prioridad}
                 onChange={(e) => setPrioridad(e.target.value)}
               >
-                {/* Opciones con valores en minúsculas (Error B) */}
-                <option value="critica">Crítica (Impide uso del laboratorio)</option>
-                <option value="alta">Alta (Falla severa de hardware)</option>
-                <option value="media">Media (Problema funcional parcial)</option>
-                <option value="baja">Baja (Detalle cosmético o menor)</option>
+                <option value="Crítica">Crítica (Impide uso del laboratorio)</option>
+                <option value="Alta">Alta (Falla severa de hardware)</option>
+                <option value="Media">Media (Problema funcional parcial)</option>
+                <option value="Baja">Baja (Detalle cosmético o menor)</option>
               </select>
             </div>
           </div>
