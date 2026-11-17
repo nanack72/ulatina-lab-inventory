@@ -1,8 +1,9 @@
 const pool = require('../config/database');
 const { verificarAccesoEquipo } = require('../utils/accesoEquipos');
 
-const PRIORIDADES_VALIDAS = ['Baja', 'Media', 'Alta', 'Crítica', 'Critica'];
-const ESTADOS_VALIDOS = ['Abierta', 'En Revisión', 'En Revision', 'Resuelta', 'Descartada'];
+// Valores canónicos con tilde
+const PRIORIDADES_VALIDAS = ['Baja', 'Media', 'Alta', 'Crítica'];
+const ESTADOS_VALIDOS = ['Abierta', 'En Revisión', 'Resuelta', 'Descartada'];
 
 const normalizar = (texto) =>
   String(texto ?? '')
@@ -11,9 +12,13 @@ const normalizar = (texto) =>
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '');
 
+const esIdValido = (valor) =>
+  /^[1-9]\d*$/.test(String(valor ?? '').trim()) &&
+  Number.isSafeInteger(Number(valor));
+
 const esUsuarioAdmin = (rol) =>
   ['superadministrador', 'administrador', 'admin', 'coordinador', 'director'].includes(
-    (rol || '').toLowerCase().trim()
+    normalizar(rol)
   );
 
 /**
@@ -31,16 +36,40 @@ const crearIncidencia = async (req, res) => {
       });
     }
 
+    if (!esIdValido(id_equipo)) {
+      return res.status(400).json({
+        success: false,
+        message: 'El identificador del equipo (id_equipo) debe ser un entero positivo válido'
+      });
+    }
+
+    const tituloLimpio = titulo.trim();
+    if (tituloLimpio.length > 150) {
+      return res.status(400).json({
+        success: false,
+        message: 'El título de la incidencia no puede exceder los 150 caracteres'
+      });
+    }
+
     const prioridadValida = PRIORIDADES_VALIDAS.find(
       (p) => normalizar(p) === normalizar(prioridad || 'Media')
-    ) || 'Media';
+    );
+
+    if (!prioridadValida) {
+      return res.status(400).json({
+        success: false,
+        message: "La prioridad debe ser 'Baja', 'Media', 'Alta' o 'Crítica'"
+      });
+    }
+
+    const equipoId = Number(id_equipo);
 
     // Verificar que el equipo exista
     const equipoRes = await pool.query(
       `SELECT id_equipo, id_laboratorio, nombre
        FROM public.equipo
        WHERE id_equipo = $1`,
-      [Number(id_equipo)]
+      [equipoId]
     );
 
     if (equipoRes.rowCount === 0) {
@@ -52,7 +81,7 @@ const crearIncidencia = async (req, res) => {
 
     // Si es técnico, validar asignación al laboratorio
     if (!esUsuarioAdmin(req.usuario.rol)) {
-      const acceso = await verificarAccesoEquipo(Number(id_equipo), req.usuario);
+      const acceso = await verificarAccesoEquipo(equipoId, req.usuario);
       if (!acceso) {
         return res.status(403).json({
           success: false,
@@ -68,9 +97,9 @@ const crearIncidencia = async (req, res) => {
        RETURNING id_incidencia, id_equipo, id_usuario_reporta, titulo,
                  descripcion_falla, prioridad, estado_incidencia, fecha_reporte`,
       [
-        Number(id_equipo),
+        equipoId,
         Number(req.usuario.idUsuario),
-        titulo.trim(),
+        tituloLimpio,
         descripcion_falla.trim(),
         prioridadValida
       ]
@@ -118,27 +147,40 @@ const obtenerIncidencias = async (req, res) => {
       `);
     }
 
-    if (id_laboratorio) {
+    if (id_laboratorio !== undefined && id_laboratorio !== '') {
+      if (!esIdValido(id_laboratorio)) {
+        return res.status(400).json({
+          success: false,
+          message: 'El filtro id_laboratorio debe ser un entero positivo válido'
+        });
+      }
       valores.push(Number(id_laboratorio));
       condiciones.push(`l.id_laboratorio = $${valores.length}`);
     }
 
-    if (estado) {
-      valores.push(estado);
+    if (estado && estado.trim()) {
+      const estadoCanonico = ESTADOS_VALIDOS.find(
+        (e) => normalizar(e) === normalizar(estado)
+      ) || estado.trim();
+      valores.push(estadoCanonico);
       condiciones.push(`ir.estado_incidencia = $${valores.length}`);
     }
 
-    if (prioridad) {
-      valores.push(prioridad);
+    if (prioridad && prioridad.trim()) {
+      const prioCanonica = PRIORIDADES_VALIDAS.find(
+        (p) => normalizar(p) === normalizar(prioridad)
+      ) || prioridad.trim();
+      valores.push(prioCanonica);
       condiciones.push(`ir.prioridad = $${valores.length}`);
     }
 
     if (busqueda && busqueda.trim()) {
-      valores.push(`%${busqueda.trim()}%`);
+      const terminoSeguro = busqueda.trim().replace(/[\\%_]/g, '\\$&');
+      valores.push(`%${terminoSeguro}%`);
       condiciones.push(`(
-        ir.titulo ILIKE $${valores.length} OR
-        e.nombre ILIKE $${valores.length} OR
-        e.placa_institucional ILIKE $${valores.length}
+        ir.titulo ILIKE $${valores.length} ESCAPE '\\' OR
+        e.nombre ILIKE $${valores.length} ESCAPE '\\' OR
+        e.placa_institucional ILIKE $${valores.length} ESCAPE '\\'
       )`);
     }
 
@@ -198,10 +240,10 @@ const actualizarEstadoIncidencia = async (req, res) => {
     const { id } = req.params;
     const { nuevo_estado } = req.body;
 
-    if (!id || !nuevo_estado) {
+    if (!esIdValido(id) || !nuevo_estado) {
       return res.status(400).json({
         success: false,
-        message: 'El id de la incidencia y el nuevo_estado son requeridos'
+        message: 'El id válido de la incidencia y el nuevo_estado son requeridos'
       });
     }
 
@@ -216,20 +258,44 @@ const actualizarEstadoIncidencia = async (req, res) => {
       });
     }
 
-    const resultado = await pool.query(
-      `UPDATE public.incidencia_reporte
-       SET estado_incidencia = $1
-       WHERE id_incidencia = $2
-       RETURNING id_incidencia, id_equipo, titulo, estado_incidencia`,
-      [estadoValido, Number(id)]
+    const idIncidencia = Number(id);
+
+    // 1. Verificar existencia de la incidencia y obtener su id_equipo
+    const incidenciaExistente = await pool.query(
+      `SELECT id_incidencia, id_equipo
+       FROM public.incidencia_reporte
+       WHERE id_incidencia = $1`,
+      [idIncidencia]
     );
 
-    if (resultado.rowCount === 0) {
+    if (incidenciaExistente.rowCount === 0) {
       return res.status(404).json({
         success: false,
         message: 'Incidencia técnica no encontrada'
       });
     }
+
+    // 2. Validar RBAC por laboratorio para usuarios técnicos (previene IDOR)
+    if (!esUsuarioAdmin(req.usuario.rol)) {
+      const tieneAcceso = await verificarAccesoEquipo(
+        incidenciaExistente.rows[0].id_equipo,
+        req.usuario
+      );
+      if (!tieneAcceso) {
+        return res.status(403).json({
+          success: false,
+          message: 'Acceso denegado: no tienes permisos sobre el laboratorio de este equipo'
+        });
+      }
+    }
+
+    const resultado = await pool.query(
+      `UPDATE public.incidencia_reporte
+       SET estado_incidencia = $1
+       WHERE id_incidencia = $2
+       RETURNING id_incidencia, id_equipo, titulo, estado_incidencia`,
+      [estadoValido, idIncidencia]
+    );
 
     return res.status(200).json({
       success: true,

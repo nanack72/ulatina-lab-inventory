@@ -361,11 +361,17 @@ const obtenerMantenimientos = async (req, res) => {
         const {
             id_equipo,
             tipo,
+            tipo_mantenimiento,
             estado,
+            estado_mantenimiento,
+            busqueda,
             fecha_desde,
             fecha_hasta,
             id_sede
         } = req.query;
+
+        const tipoEfectivo = tipo || tipo_mantenimiento;
+        const estadoEfectivo = estado || estado_mantenimiento;
 
         const esAdmin = esUsuarioAdministrador(req.usuario.rol);
         const idUsuario = req.usuario.idUsuario;
@@ -454,21 +460,35 @@ const obtenerMantenimientos = async (req, res) => {
         }
 
         // Filtro por tipo
-        if (tipo && tipo.trim()) {
+        if (tipoEfectivo && tipoEfectivo.trim()) {
             condiciones.push(
                 `LOWER(bm.tipo_mantenimiento) = LOWER($${paramIndex++})`
             );
 
-            params.push(tipo.trim());
+            params.push(tipoEfectivo.trim());
         }
 
         // Filtro por estado de mantenimiento
-        if (estado && estado.trim()) {
+        if (estadoEfectivo && estadoEfectivo.trim()) {
             condiciones.push(
                 `LOWER(bm.estado_mantenimiento) = LOWER($${paramIndex++})`
             );
 
-            params.push(estado.trim());
+            params.push(estadoEfectivo.trim());
+        }
+
+        // Filtro por búsqueda de texto
+        if (busqueda && busqueda.trim()) {
+            const termino = `%${busqueda.trim()}%`;
+            condiciones.push(`(
+                e.nombre ILIKE $${paramIndex} OR
+                e.placa_institucional ILIKE $${paramIndex} OR
+                e.numero_serie ILIKE $${paramIndex} OR
+                bm.motivo_falla ILIKE $${paramIndex} OR
+                bm.descripcion_trabajo ILIKE $${paramIndex}
+            )`);
+            params.push(termino);
+            paramIndex++;
         }
 
         // Filtro por fecha inicial

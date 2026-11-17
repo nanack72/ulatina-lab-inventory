@@ -19,11 +19,21 @@ const { permitirRoles } = require('../middlewares/permisosMiddleware');
  * Las operaciones de mutación (POST, PATCH) están restringidas a roles 'Administrador' y 'Tecnico'.
  */
 
+const ROLES_OPERATIVOS = [
+  'SuperAdministrador',
+  'Superadministrador',
+  'Administrador',
+  'Coordinador',
+  'Director',
+  'Tecnico',
+  'Técnico'
+];
+
 // 1. POST /api/mantenimientos -> Registrar mantenimiento preventivo/correctivo
 router.post(
   '/',
   verificarToken,
-  permitirRoles('SuperAdministrador', 'Administrador', 'Tecnico'),
+  permitirRoles(...ROLES_OPERATIVOS),
   crearMantenimiento
 );
 
@@ -53,7 +63,7 @@ router.get(
 router.patch(
   '/:id/estado',
   verificarToken,
-  permitirRoles('SuperAdministrador', 'Administrador', 'Tecnico'),
+  permitirRoles(...ROLES_OPERATIVOS),
   actualizarEstadoMantenimiento
 );
 
