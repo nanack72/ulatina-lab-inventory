@@ -29,7 +29,7 @@ export default function Reportes({ token, usuario }) {
   const [error, setError] = useState(null);
   const [datos, setDatos] = useState(null);
   const [descargando, setDescargando] = useState(false);
-  const [busquedaLab, setBusquedaLab] = useState('');
+  const [labSeleccionado, setLabSeleccionado] = useState('');
 
   useEffect(() => {
     let cancelado = false;
@@ -183,14 +183,20 @@ export default function Reportes({ token, usuario }) {
           <section className="reportes-seccion-tabla">
             <div className="reportes-tabla-cabecera">
               <h2 className="reportes-subtitulo-seccion">Distribución de Equipos por Laboratorio</h2>
-              <div className="reportes-buscador-contenedor">
-                <input
-                  type="text"
-                  className="reportes-input-busqueda"
-                  placeholder="Buscar laboratorio por nombre o código..."
-                  value={busquedaLab}
-                  onChange={(e) => setBusquedaLab(e.target.value)}
-                />
+              <div className="reportes-filtro-contenedor">
+                <select
+                  className="reportes-select-filtro"
+                  value={labSeleccionado}
+                  onChange={(e) => setLabSeleccionado(e.target.value)}
+                  aria-label="Filtrar por laboratorio"
+                >
+                  <option value="">Todos los laboratorios ({laboratorios.length})</option>
+                  {laboratorios.map((lab) => (
+                    <option key={lab.id_laboratorio} value={lab.id_laboratorio}>
+                      {lab.codigo} — {lab.nombre}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
             <div className="reportes-tabla-contenedor">
@@ -206,12 +212,8 @@ export default function Reportes({ token, usuario }) {
                 <tbody>
                   {laboratorios
                     .filter((lab) => {
-                      const termino = busquedaLab.toLowerCase().trim();
-                      if (!termino) return true;
-                      return (
-                        lab.nombre.toLowerCase().includes(termino) ||
-                        lab.codigo.toLowerCase().includes(termino)
-                      );
+                      if (!labSeleccionado) return true;
+                      return String(lab.id_laboratorio) === String(labSeleccionado);
                     })
                     .map((lab) => {
                     const porcentaje = calcularPorcentajeSeguro(lab.cantidad_equipos, total);
