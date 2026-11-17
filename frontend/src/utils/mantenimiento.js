@@ -40,16 +40,23 @@ export const COLORES_TIPO_MANTENIMIENTO = {
 };
 
 /**
- * Formateo inicial de fecha de intervención.
- * (Presenta desfase de día al no normalizar zona horaria de UTC a hora local).
+ * Formatea la fecha y hora de la intervención ajustada a la zona horaria de Costa Rica.
+ * Corrige el desfase de día provocado por la conversión de cadenas UTC sin zona explícita.
  */
 export function formatearFechaMantenimiento(fechaIso) {
   if (!fechaIso) return 'N/D';
   const fecha = new Date(fechaIso);
   if (isNaN(fecha.getTime())) return 'N/D';
 
-  // Naive toLocaleDateString que causa desfase de un día por timezone
-  return fecha.toLocaleDateString('es-CR');
+  return new Intl.DateTimeFormat('es-CR', {
+    timeZone: 'America/Costa_Rica',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  }).format(fecha);
 }
 
 export function formatearHoras(horas) {
