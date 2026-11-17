@@ -24,6 +24,8 @@ import {
   calcularPorcentajeSeguro
 } from '../utils/reportes';
 
+import '../styles/reportes.css';
+
 export default function Reportes({ token, usuario }) {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
