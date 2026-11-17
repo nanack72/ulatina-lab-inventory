@@ -7,7 +7,6 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "node --test",
     "start": "node src/app.js",
     "dev": "node --watch src/app.js",
     "test": "node --test tests/**/*.test.js",
