@@ -29,6 +29,7 @@ export default function Reportes({ token, usuario }) {
   const [error, setError] = useState(null);
   const [datos, setDatos] = useState(null);
   const [descargando, setDescargando] = useState(false);
+  const [busquedaLab, setBusquedaLab] = useState('');
 
   useEffect(() => {
     let cancelado = false;
@@ -180,7 +181,18 @@ export default function Reportes({ token, usuario }) {
 
           {/* Tabla de Distribución por Laboratorio */}
           <section className="reportes-seccion-tabla">
-            <h2 className="reportes-subtitulo-seccion">Distribución de Equipos por Laboratorio</h2>
+            <div className="reportes-tabla-cabecera">
+              <h2 className="reportes-subtitulo-seccion">Distribución de Equipos por Laboratorio</h2>
+              <div className="reportes-buscador-contenedor">
+                <input
+                  type="text"
+                  className="reportes-input-busqueda"
+                  placeholder="Buscar laboratorio por nombre o código..."
+                  value={busquedaLab}
+                  onChange={(e) => setBusquedaLab(e.target.value)}
+                />
+              </div>
+            </div>
             <div className="reportes-tabla-contenedor">
               <table className="reportes-tabla">
                 <thead>
@@ -192,7 +204,16 @@ export default function Reportes({ token, usuario }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {laboratorios.map((lab) => {
+                  {laboratorios
+                    .filter((lab) => {
+                      const termino = busquedaLab.toLowerCase().trim();
+                      if (!termino) return true;
+                      return (
+                        lab.nombre.toLowerCase().includes(termino) ||
+                        lab.codigo.toLowerCase().includes(termino)
+                      );
+                    })
+                    .map((lab) => {
                     const porcentaje = calcularPorcentajeSeguro(lab.cantidad_equipos, total);
                     return (
                       <tr key={lab.id_laboratorio}>
