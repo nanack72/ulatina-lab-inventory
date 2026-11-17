@@ -58,7 +58,8 @@ export async function consultarMantenimientosPorLaboratorio(
 }
 
 /**
- * Descarga el archivo de reporte consolidado en formato Excel.
+ * Descarga el archivo de reporte consolidado en formato Excel (.xlsx).
+ * Procesa la respuesta binaria como Blob y genera la descarga nativa.
  */
 export async function descargarReporteExcel(token) {
   const respuesta = await fetch(`${API_URL}/exportar-excel`, {
@@ -68,18 +69,35 @@ export async function descargarReporteExcel(token) {
   });
 
   if (!respuesta.ok) {
-    throw new Error('No se pudo generar el reporte en Excel');
+    const errorJson = await respuesta.json().catch(() => null);
+    throw new Error(
+      errorJson?.message || 'No fue posible generar el reporte consolidado en Excel'
+    );
   }
 
-  const texto = await respuesta.text();
-  const blob = new Blob([texto], {
-    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-  });
-  const url = window.URL.createObjectURL(blob);
+  // Se obtiene el stream binario como Blob para evitar corrupción de codificación
+  const blob = await respuesta.blob();
+
+  // Resolver nombre de archivo sugerido por la cabecera o asignar predeterminado
+  const disposicion = respuesta.headers.get('content-disposition');
+  let nombreArchivo = 'reporte_inventario_ulatina.xlsx';
+  if (disposicion && disposicion.includes('filename=')) {
+    const coincidencia = disposicion.match(/filename="?([^";]+)"?/);
+    if (coincidencia && coincidencia[1]) {
+      nombreArchivo = coincidencia[1].trim();
+    }
+  }
+
+  const urlDescarga = window.URL.createObjectURL(blob);
   const enlace = document.createElement('a');
-  enlace.href = url;
-  enlace.download = 'reporte_inventario_ulatina.xlsx';
+  enlace.href = urlDescarga;
+  enlace.download = nombreArchivo;
   document.body.appendChild(enlace);
   enlace.click();
-  document.body.removeChild(enlace);
+
+  // Limpieza del objeto temporal en memoria
+  setTimeout(() => {
+    document.body.removeChild(enlace);
+    window.URL.revokeObjectURL(urlDescarga);
+  }, 100);
 }
