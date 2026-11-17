@@ -12,6 +12,7 @@ import Historial from '../pages/Historial';
 import MiPerfil from '../pages/MiPerfil';
 import Configuracion from '../pages/Configuracion';
 import Usuarios from '../pages/Usuarios';
+import Reportes from '../pages/Reportes';
 
 // ==========================================
 // NOMBRES DE LAS PÁGINAS
@@ -451,6 +452,11 @@ export default function MainLayout({
       }
 
       return <Configuracion token={token} />;
+    }
+
+    // REPORTES
+    if (paginaActual === 'reportes') {
+      return <Reportes token={token} usuario={usuario} />;
     }
 
     // OTRAS PÁGINAS
