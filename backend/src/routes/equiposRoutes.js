@@ -1,6 +1,6 @@
-
 const express = require('express');
 const router = express.Router();
+const { obtenerPaginaInventario } = require('../controllers/inventarioPaginadoController');
 
 // ==========================================
 // CONTROLADOR DE EQUIPOS
@@ -42,6 +42,8 @@ router.use(verificarToken);
 // ==========================================
 
 router.get('/', obtenerEquipos);
+// Antes de /:id: la consulta completa se conserva para Inicio.
+router.get('/pagina', obtenerPaginaInventario);
 
 // ==========================================
 // 2. REGISTRAR UN EQUIPO

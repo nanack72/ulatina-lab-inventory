@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import {
   Search,
@@ -14,15 +14,12 @@ import FilaEquipo from '../components/inventario/FilaEquipo';
 import Paginacion from '../components/inventario/Paginacion';
 import ImportarEquipos from '../components/inventario/ImportarEquipos';
 
-import { useEquipos } from '../hooks/useEquipos';
+import { useInventarioPaginado } from '../hooks/useInventarioPaginado';
 
 import {
-  EQUIPOS_POR_PAGINA,
+
   FILTROS_INICIALES,
   FILTROS_SELECT,
-  filtrarEquipos,
-  normalizar,
-  opcionesUnicas,
 } from '../utils/inventario';
 
 import '../styles/inventario.css';
@@ -39,17 +36,6 @@ export default function Inventario({
   onSesionExpirada,
 }) {
   // ========================================
-  // CONSULTAR EQUIPOS
-  // ========================================
-
-  const {
-    equipos,
-    cargando,
-    error,
-    recargar,
-  } = useEquipos(token, onSesionExpirada);
-
-  // ========================================
   // ESTADOS DEL INVENTARIO
   // ========================================
 
@@ -58,6 +44,18 @@ export default function Inventario({
   );
 
   const [pagina, setPagina] = useState(1);
+
+  const { equipos: equiposPagina, total, totalAutorizados, paginaActual, opciones,
+    cargando, error, recargar } = useInventarioPaginado(token, filtros, pagina, onSesionExpirada);
+
+  const tablaRef = useRef(null);
+  const enfocarPaginaRef = useRef(false);
+  useEffect(() => {
+    if (!cargando && enfocarPaginaRef.current) {
+      enfocarPaginaRef.current = false;
+      if (!error) tablaRef.current?.focus();
+    }
+  }, [cargando, error]);
 
   const [mostrarImportacion, setMostrarImportacion] = useState(false);
 
@@ -83,50 +81,10 @@ export default function Inventario({
   }
 
   function cambiarPagina(numero) {
+    if (numero === paginaActual) return;
+    enfocarPaginaRef.current = true;
     setPagina(numero);
   }
-
-  // ========================================
-  // OPCIONES PARA LOS FILTROS
-  // ========================================
-
-  const opciones = useMemo(() => {
-    const equiposSede = filtros.sede
-      ? equipos.filter(
-          (equipo) =>
-            normalizar(equipo.sede) ===
-            normalizar(filtros.sede)
-        )
-      : equipos;
-
-    return {
-      sede: opcionesUnicas(equipos, 'sede'),
-
-      laboratorio: opcionesUnicas(
-        equiposSede,
-        'laboratorio'
-      ),
-
-      categoria: opcionesUnicas(
-        equipos,
-        'categoria'
-      ),
-
-      estado: opcionesUnicas(
-        equipos,
-        'estado'
-      ),
-    };
-  }, [equipos, filtros.sede]);
-
-  // ========================================
-  // EQUIPOS FILTRADOS
-  // ========================================
-
-  const equiposFiltrados = useMemo(
-    () => filtrarEquipos(equipos, filtros),
-    [equipos, filtros]
-  );
 
   // ========================================
   // FILTROS ACTIVOS
@@ -151,30 +109,6 @@ export default function Inventario({
   ];
 
   // ========================================
-  // PAGINACIÓN
-  // ========================================
-
-  const totalPaginas = Math.max(
-    1,
-    Math.ceil(
-      equiposFiltrados.length / EQUIPOS_POR_PAGINA
-    )
-  );
-
-  const paginaActual = Math.min(
-    pagina,
-    totalPaginas
-  );
-
-  const inicio =
-    (paginaActual - 1) * EQUIPOS_POR_PAGINA;
-
-  const equiposPagina = equiposFiltrados.slice(
-    inicio,
-    inicio + EQUIPOS_POR_PAGINA
-  );
-
-  // ========================================
   // PERMISOS Y ACCESO AL DETALLE
   // ========================================
 
@@ -182,7 +116,7 @@ export default function Inventario({
     puedeRegistrar &&
     typeof onRegistrarEquipo === 'function';
 
-  // useEquipos entrega equipos adaptados para
+  // La consulta entrega equipos adaptados para
   // la tabla y conserva el registro original.
   const abrirDetalle =
     typeof onVerEquipo === 'function'
@@ -404,9 +338,10 @@ export default function Inventario({
         {!cargando && !error && (
           <>
 
-            <div className="inv-tabla-contenedor">
+            <div ref={tablaRef} className="inv-tabla-contenedor" tabIndex={0} role="region" aria-label="Tabla del inventario">
 
               <table className="inv-tabla">
+                <caption className="inv-sr-only">Equipos del inventario autorizado</caption>
 
                 {/* ENCABEZADOS */}
                 <thead>
@@ -441,7 +376,7 @@ export default function Inventario({
                         colSpan={7}
                         className="inv-tabla-vacia"
                       >
-                        {equipos.length === 0
+                        {totalAutorizados === 0
                           ? 'No hay equipos disponibles para tu usuario.'
                           : 'No se encontraron equipos con los filtros seleccionados.'}
                       </td>
@@ -466,7 +401,7 @@ export default function Inventario({
 
             <Paginacion
               pagina={paginaActual}
-              total={equiposFiltrados.length}
+              total={total}
               onCambiar={cambiarPagina}
             />
 

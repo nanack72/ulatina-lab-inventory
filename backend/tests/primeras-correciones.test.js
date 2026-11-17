@@ -36,7 +36,7 @@ function cargarApp() {
   };
   vm.runInNewContext(
     `${readFileSync(archivo, 'utf8')}\nmodule.exports = app;`,
-    { require: requirePrueba, module: modulo, process, console },
+    { require: requirePrueba, module: modulo, process, console, __dirname: path.dirname(archivo) },
     { filename: archivo }
   );
   return modulo.exports;
