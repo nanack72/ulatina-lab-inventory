@@ -20,7 +20,8 @@ import {
 import {
   COLORES_ESTADOS,
   ETIQUETAS_ESTADOS,
-  formatearNumero
+  formatearNumero,
+  calcularPorcentajeSeguro
 } from '../utils/reportes';
 
 export default function Reportes({ token, usuario }) {
@@ -192,8 +193,7 @@ export default function Reportes({ token, usuario }) {
                 </thead>
                 <tbody>
                   {laboratorios.map((lab) => {
-                    // Cálculo inicial sin validación de división por cero
-                    const porcentaje = Math.round((lab.cantidad_equipos / total) * 100);
+                    const porcentaje = calcularPorcentajeSeguro(lab.cantidad_equipos, total);
                     return (
                       <tr key={lab.id_laboratorio}>
                         <td className="reportes-codigo-lab">{lab.codigo}</td>

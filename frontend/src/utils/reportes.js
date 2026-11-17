@@ -30,3 +30,13 @@ export function formatearFechaReporte(fechaIso) {
     year: 'numeric'
   }).format(fecha);
 }
+
+/**
+ * Calcula porcentaje de forma segura evitando división entre cero o valores NaN.
+ */
+export function calcularPorcentajeSeguro(cantidad, total) {
+  const num = Number(cantidad) || 0;
+  const den = Number(total) || 0;
+  if (den <= 0) return 0;
+  return Math.min(100, Math.max(0, Math.round((num / den) * 100)));
+}
