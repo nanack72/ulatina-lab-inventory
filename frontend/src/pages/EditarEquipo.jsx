@@ -14,6 +14,8 @@ import {
   actualizarEquipo,
 } from '../services/equiposService';
 
+import { Campo, Seccion } from '../components/inventario/FormularioEquipo';
+
 import '../styles/registrarEquipo.css';
 
 // Convierte valores nulos a texto vacío para los inputs.
@@ -21,37 +23,6 @@ function texto(valor) {
   return valor === null || valor === undefined
     ? ''
     : String(valor);
-}
-
-function Campo({ etiqueta, requerido = false, children }) {
-  return (
-    <label className="registro-campo">
-      <span className="registro-etiqueta">
-        {etiqueta}
-        {requerido && (
-          <span className="registro-requerido"> *</span>
-        )}
-      </span>
-      {children}
-    </label>
-  );
-}
-
-function Seccion({ titulo, icono: Icono, children }) {
-  return (
-    <section className="registro-tarjeta">
-      <div className="registro-tarjeta-titulo">
-        <span className="registro-tarjeta-icono">
-          <Icono size={18} />
-        </span>
-        <h2>{titulo}</h2>
-      </div>
-
-      <div className="registro-tarjeta-contenido">
-        {children}
-      </div>
-    </section>
-  );
 }
 
 export default function EditarEquipo({
@@ -303,9 +274,10 @@ export default function EditarEquipo({
               icono={Monitor}
             >
               <div className="registro-campos-grid">
-                <Campo etiqueta="Nombre del equipo" requerido>
+                <Campo etiqueta="Nombre del equipo" requerido htmlFor="editar-nombre">
                   <input
                     type="text"
+                    id="editar-nombre"
                     name="nombre"
                     value={formulario.nombre}
                     onChange={actualizarCampo}
@@ -314,18 +286,20 @@ export default function EditarEquipo({
                   />
                 </Campo>
 
-                <Campo etiqueta="Placa institucional">
+                <Campo etiqueta="Placa institucional" htmlFor="editar-placa_institucional">
                   <input
                     type="text"
+                    id="editar-placa_institucional"
                     name="placa_institucional"
                     value={formulario.placa_institucional}
                     onChange={actualizarCampo}
                   />
                 </Campo>
 
-                <Campo etiqueta="Número de serie">
+                <Campo etiqueta="Número de serie" htmlFor="editar-numero_serie">
                   <input
                     type="text"
+                    id="editar-numero_serie"
                     name="numero_serie"
                     value={formulario.numero_serie}
                     onChange={actualizarCampo}
@@ -339,27 +313,30 @@ export default function EditarEquipo({
               icono={Cpu}
             >
               <div className="registro-campos-grid">
-                <Campo etiqueta="Marca">
+                <Campo etiqueta="Marca" htmlFor="editar-marca">
                   <input
                     type="text"
+                    id="editar-marca"
                     name="marca"
                     value={formulario.marca}
                     onChange={actualizarCampo}
                   />
                 </Campo>
 
-                <Campo etiqueta="Modelo">
+                <Campo etiqueta="Modelo" htmlFor="editar-modelo">
                   <input
                     type="text"
+                    id="editar-modelo"
                     name="modelo"
                     value={formulario.modelo}
                     onChange={actualizarCampo}
                   />
                 </Campo>
 
-                <Campo etiqueta="Año">
+                <Campo etiqueta="Año" htmlFor="editar-anio">
                   <input
                     type="number"
+                    id="editar-anio"
                     name="anio"
                     value={formulario.anio}
                     onChange={actualizarCampo}
@@ -369,8 +346,9 @@ export default function EditarEquipo({
                   />
                 </Campo>
 
-                <Campo etiqueta="Características">
+                <Campo etiqueta="Características" htmlFor="editar-caracteristicas">
                   <textarea
+                    id="editar-caracteristicas"
                     name="caracteristicas"
                     value={formulario.caracteristicas}
                     onChange={actualizarCampo}
@@ -385,9 +363,10 @@ export default function EditarEquipo({
               titulo="Comentarios y observaciones"
               icono={FileText}
             >
-              <Campo etiqueta="Comentarios">
+              <Campo etiqueta="Comentarios" htmlFor="editar-comentarios">
                 <textarea
-                  name="comentarios"
+                  id="editar-comentarios"
+                    name="comentarios"
                   value={formulario.comentarios}
                   onChange={actualizarCampo}
                   rows={5}
