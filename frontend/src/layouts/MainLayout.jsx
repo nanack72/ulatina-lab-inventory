@@ -13,6 +13,7 @@ import MiPerfil from '../pages/MiPerfil';
 import Configuracion from '../pages/Configuracion';
 import Usuarios from '../pages/Usuarios';
 import Reportes from '../pages/Reportes';
+import Mantenimiento from '../pages/Mantenimiento';
 
 // ==========================================
 // NOMBRES DE LAS PÁGINAS
@@ -457,6 +458,11 @@ export default function MainLayout({
     // REPORTES
     if (paginaActual === 'reportes') {
       return <Reportes token={token} usuario={usuario} />;
+    }
+
+    // MANTENIMIENTO
+    if (paginaActual === 'mantenimiento') {
+      return <Mantenimiento token={token} usuario={usuario} />;
     }
 
     // OTRAS PÁGINAS

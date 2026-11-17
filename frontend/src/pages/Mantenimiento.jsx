@@ -194,7 +194,7 @@ export default function Mantenimiento({ token, usuario }) {
                 type="button"
                 className="mant-btn-pag"
                 disabled={pagina >= totalPaginas || cargando}
-                onClick={() => setPagina((p) => p + 1))}
+                onClick={() => setPagina((p) => p + 1)}
                 aria-label="Página siguiente"
               >
                 <span>Siguiente</span>
