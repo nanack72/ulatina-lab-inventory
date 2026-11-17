@@ -1,6 +1,7 @@
 require('dotenv').config();
 
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const pool = require('./config/database');
 
@@ -12,6 +13,8 @@ const estadosRoutes = require('./routes/estadosRoutes');
 const equiposRoutes = require('./routes/equiposRoutes');
 const mantenimientosRoutes = require('./routes/mantenimientosRoutes');
 const authRoutes = require('./routes/authRoutes');
+const reportesRoutes = require('./routes/reportesRoutes');
+const evidenciasRoutes = require('./routes/evidenciasRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const historialGeneralRoutes = require('./routes/historialGeneralRoutes');
 const configuracionRoutes = require('./routes/configuracionRoutes');
@@ -39,11 +42,16 @@ app.use('/api/estados', estadosRoutes);
 app.use('/api/equipos', equiposRoutes);
 app.use('/api/mantenimientos', mantenimientosRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/reportes', reportesRoutes);
+app.use('/api/evidencias', evidenciasRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/historial-general', historialGeneralRoutes);
 app.use('/api/admin/configuracion', configuracionRoutes);
 app.use('/api/admin/usuarios', usuariosRoutes);
 app.use('/api/importacion-equipos', importacionEquiposRoutes);
+
+// Archivos subidos (fotos de evidencias)
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Verificar que Express funciona
 app.get('/api/health', (req, res) => {
