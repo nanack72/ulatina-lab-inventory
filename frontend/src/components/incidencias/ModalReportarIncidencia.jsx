@@ -54,7 +54,7 @@ export default function ModalReportarIncidencia({
       setIdEquipo('');
       setTitulo('');
       setDescripcionFalla('');
-      setPrioridad('media');
+      setPrioridad('Media');
 
       alGuardarExitoso();
     } catch (err) {

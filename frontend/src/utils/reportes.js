@@ -25,6 +25,7 @@ export function formatearFechaReporte(fechaIso) {
   if (isNaN(fecha.getTime())) return 'N/D';
 
   return new Intl.DateTimeFormat('es-CR', {
+    timeZone: 'America/Costa_Rica',
     day: '2-digit',
     month: '2-digit',
     year: 'numeric'

@@ -234,6 +234,7 @@
 }
 
 .inci-tabla th {
+  display: table-cell;
   padding: 0.75rem 1rem;
   background-color: #f8fafc;
   font-size: 0.75rem;
@@ -245,6 +246,7 @@
 }
 
 .inci-tabla td {
+  display: table-cell;
   padding: 0.875rem 1rem;
   border-bottom: 1px solid #f1f5f9;
   font-size: 0.875rem;

@@ -36,13 +36,13 @@ export default function TablaIncidencias({
       <table className="inci-tabla">
         <thead>
           <tr>
-            <th>Prioridad</th>
-            <th>Incidencia / Falla</th>
-            <th>Activo Tecnológico</th>
-            <th>Laboratorio</th>
-            <th>Estado</th>
-            <th>Reportado Por</th>
-            <th>Fecha</th>
+            <th scope="col">Prioridad</th>
+            <th scope="col">Incidencia / Falla</th>
+            <th scope="col">Activo Tecnológico</th>
+            <th scope="col">Laboratorio</th>
+            <th scope="col">Estado</th>
+            <th scope="col">Reportado Por</th>
+            <th scope="col">Fecha</th>
           </tr>
         </thead>
         <tbody>
@@ -112,6 +112,7 @@ export default function TablaIncidencias({
                     onChange={(e) =>
                       alCambiarEstado(item.id_incidencia, e.target.value)
                     }
+                    aria-label={`Estado de la incidencia ${item.titulo}`}
                     title="Actualizar estado de atención"
                   >
                     {ESTADOS_INCIDENCIA.map((est) => (

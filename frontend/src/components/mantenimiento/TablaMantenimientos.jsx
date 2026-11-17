@@ -36,15 +36,15 @@ export default function TablaMantenimientos({
       <table className="mant-tabla">
         <thead>
           <tr>
-            <th>Fecha</th>
-            <th>Placa / Serie</th>
-            <th>Equipo</th>
-            <th>Laboratorio</th>
-            <th>Tipo</th>
-            <th>Estado</th>
-            <th>Técnico</th>
-            <th>Horas</th>
-            <th className="mant-col-acciones">Acciones</th>
+            <th scope="col">Fecha</th>
+            <th scope="col">Placa / Serie</th>
+            <th scope="col">Equipo</th>
+            <th scope="col">Laboratorio</th>
+            <th scope="col">Tipo</th>
+            <th scope="col">Estado</th>
+            <th scope="col">Técnico</th>
+            <th scope="col">Horas</th>
+            <th scope="col" className="mant-col-acciones">Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -78,7 +78,9 @@ export default function TablaMantenimientos({
                 </td>
                 <td className="mant-celda-lab">
                   <span className="mant-codigo-lab">{item.codigo_laboratorio}</span>
-                  <span className="mant-nombre-lab-sub">{item.laboratorio}</span>
+                  <span className="mant-nombre-lab-sub">
+                    {item.nombre_laboratorio || item.laboratorio}
+                  </span>
                 </td>
                 <td>
                   <span
@@ -104,7 +106,9 @@ export default function TablaMantenimientos({
                     {item.estado_mantenimiento}
                   </span>
                 </td>
-                <td className="mant-celda-tecnico">{item.tecnico}</td>
+                <td className="mant-celda-tecnico">
+                  {item.nombre_tecnico || item.tecnico}
+                </td>
                 <td className="mant-celda-horas">
                   {formatearHoras(item.horas_invertidas)}
                 </td>

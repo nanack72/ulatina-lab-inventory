@@ -5,7 +5,7 @@ export const TIPOS_MANTENIMIENTO = ['Preventivo', 'Correctivo'];
 export const ESTADOS_MANTENIMIENTO = [
   'En Proceso',
   'Completado',
-  'Cancelado'
+  'Pendiente Repuesto'
 ];
 
 export const COLORES_ESTADO_MANTENIMIENTO = {
@@ -19,7 +19,7 @@ export const COLORES_ESTADO_MANTENIMIENTO = {
     texto: '#047857',
     borde: '#a7f3d0'
   },
-  'Cancelado': {
+  'Pendiente Repuesto': {
     fondo: '#fee2e2',
     texto: '#b91c1c',
     borde: '#fecaca'
