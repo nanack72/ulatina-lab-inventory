@@ -1,0 +1,552 @@
+/* ========================================================
+   ESTILOS DEL MÓDULO DE INCIDENCIAS TÉCNICAS
+   Sistema de Inventario PES - Universidad Latina de C.R.
+   ======================================================== */
+
+.inci-contenedor {
+  padding: 1.5rem 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* ENCABEZADO */
+.inci-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.inci-encabezado-texto {
+  flex: 1;
+}
+
+.inci-titulo {
+  font-size: 1.625rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 0.25rem 0;
+  letter-spacing: -0.02em;
+}
+
+.inci-subtitulo {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0;
+  max-width: 720px;
+  line-height: 1.4;
+}
+
+.inci-btn-nuevo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #0f2d59;
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.625rem 1.125rem;
+  border-radius: 0.5rem;
+  border: 1px solid #0a1f3d;
+  cursor: pointer;
+  transition: all 0.18s ease-in-out;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.inci-btn-nuevo:hover {
+  background-color: #17407a;
+  transform: translateY(-1px);
+}
+
+/* ALERTAS */
+.inci-alerta-error {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  background-color: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+}
+
+/* GRID DE KPIS */
+.inci-kpis-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 1.75rem;
+}
+
+.inci-kpi-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
+}
+
+.inci-kpi-icono {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.625rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.inci-kpi-icono--fuego {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+.inci-kpi-icono--rojo {
+  background-color: #ffedd5;
+  color: #ea580c;
+}
+
+.inci-kpi-icono--azul {
+  background-color: #e0f2fe;
+  color: #0369a1;
+}
+
+.inci-kpi-icono--verde {
+  background-color: #d1fae5;
+  color: #047857;
+}
+
+.inci-kpi-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.inci-kpi-etiqueta {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.125rem;
+}
+
+.inci-kpi-valor {
+  font-size: 1.625rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.inci-kpi-detalle {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-top: 0.125rem;
+}
+
+/* BARRA DE FILTROS */
+.inci-filtros-barra {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.inci-buscador-wrap {
+  flex: 1;
+  min-width: 280px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.inci-icono-buscar {
+  position: absolute;
+  left: 0.875rem;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.inci-input-busqueda {
+  width: 100%;
+  padding: 0.5625rem 1rem 0.5625rem 2.375rem;
+  font-size: 0.875rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  background-color: #ffffff;
+  color: #1e293b;
+  outline: none;
+}
+
+.inci-input-busqueda:focus {
+  border-color: #0f2d59;
+  box-shadow: 0 0 0 2px rgba(15, 45, 89, 0.12);
+}
+
+.inci-selectores-filtros {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.inci-select {
+  padding: 0.5625rem 0.875rem;
+  font-size: 0.875rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  background-color: #ffffff;
+  color: #334155;
+  outline: none;
+  min-width: 170px;
+}
+
+.inci-select:focus {
+  border-color: #0f2d59;
+  box-shadow: 0 0 0 2px rgba(15, 45, 89, 0.12);
+}
+
+/* TABLA DE INCIDENCIAS */
+.inci-seccion-tabla {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.inci-tabla-contenedor {
+  overflow-x: auto;
+}
+
+.inci-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.inci-tabla th {
+  padding: 0.75rem 1rem;
+  background-color: #f8fafc;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.inci-tabla td {
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.875rem;
+  color: #334155;
+  vertical-align: middle;
+}
+
+.inci-tabla tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+.inci-badge-prioridad {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.2rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.inci-punto-prioridad {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 9999px;
+}
+
+.inci-icono-fuego {
+  color: #dc2626;
+}
+
+.inci-celda-detalle {
+  max-width: 340px;
+}
+
+.inci-titulo-falla {
+  display: block;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 0.2rem;
+}
+
+.inci-desc-falla {
+  font-size: 0.8125rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.inci-celda-equipo {
+  display: flex;
+  flex-direction: column;
+}
+
+.inci-nombre-equipo {
+  font-weight: 500;
+  color: #0f172a;
+}
+
+.inci-placa-equipo {
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: #0f2d59;
+  font-weight: 600;
+}
+
+.inci-celda-lab {
+  display: flex;
+  flex-direction: column;
+}
+
+.inci-codigo-lab {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 0.8125rem;
+}
+
+.inci-nombre-lab {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.inci-select-estado {
+  padding: 0.25rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 0.375rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  outline: none;
+}
+
+.inci-celda-usuario {
+  font-size: 0.8125rem;
+  color: #475569;
+  white-space: nowrap;
+}
+
+.inci-celda-fecha {
+  font-size: 0.8125rem;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+/* ESTADOS DE CARGA Y VACÍO */
+.inci-tabla-cargando,
+.inci-tabla-vacia {
+  padding: 3.5rem 1rem;
+  text-align: center;
+  color: #64748b;
+}
+
+.inci-icono-vacio {
+  color: #94a3b8;
+  margin-bottom: 0.5rem;
+}
+
+.inci-spinner {
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 3px solid #e2e8f0;
+  border-top-color: #0f2d59;
+  border-radius: 50%;
+  animation: girarInci 0.8s linear infinite;
+  margin: 0 auto 0.75rem auto;
+}
+
+@keyframes girarInci {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* MODAL DE INCIDENCIAS */
+.inci-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 1rem;
+}
+
+.inci-modal-contenido {
+  background: #ffffff;
+  border-radius: 0.75rem;
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.inci-modal-cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.inci-modal-titulo {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 0.25rem 0;
+}
+
+.inci-modal-subtitulo {
+  font-size: 0.8125rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.inci-modal-cerrar {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.375rem;
+}
+
+.inci-modal-cerrar:hover {
+  color: #0f172a;
+  background-color: #f1f5f9;
+}
+
+.inci-formulario {
+  padding: 1.5rem;
+}
+
+.inci-campo {
+  margin-bottom: 1.125rem;
+}
+
+.inci-label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 0.375rem;
+}
+
+.inci-requerido {
+  color: #dc2626;
+}
+
+.inci-input,
+.inci-textarea {
+  width: 100%;
+  padding: 0.5625rem 0.875rem;
+  font-size: 0.875rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  background-color: #ffffff;
+  color: #1e293b;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.inci-input:focus,
+.inci-textarea:focus {
+  border-color: #0f2d59;
+  box-shadow: 0 0 0 2px rgba(15, 45, 89, 0.12);
+}
+
+.inci-grid-dos-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.inci-modal-pie {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.inci-btn-secundario {
+  padding: 0.5625rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #475569;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.inci-btn-primario {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5625rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: #0f2d59;
+  border: 1px solid #0a1f3d;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.inci-btn-primario:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.inci-spinner-btn {
+  animation: girarInci 1s linear infinite;
+}
+
+/* RESPONSIVO */
+@media (max-width: 768px) {
+  .inci-contenedor {
+    padding: 1rem;
+  }
+
+  .inci-encabezado {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .inci-btn-nuevo {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .inci-grid-dos-cols {
+    grid-template-columns: 1fr;
+  }
+}
