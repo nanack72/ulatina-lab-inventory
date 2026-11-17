@@ -339,10 +339,15 @@
 }
 
 .reportes-barra-celda {
+  min-width: 160px;
+  vertical-align: middle;
+}
+
+.reportes-barra-contenedor {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  min-width: 160px;
+  width: 100%;
 }
 
 .reportes-barra-fondo {

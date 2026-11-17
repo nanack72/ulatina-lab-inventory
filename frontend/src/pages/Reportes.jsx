@@ -236,13 +236,15 @@ export default function Reportes({ token, usuario }) {
                         <td className="reportes-nombre-lab">{lab.nombre}</td>
                         <td className="reportes-conteo-lab">{lab.cantidad_equipos}</td>
                         <td className="reportes-barra-celda">
-                          <div className="reportes-barra-fondo">
-                            <div
-                              className="reportes-barra-progreso"
-                              style={{ width: `${porcentaje}%` }}
-                            />
+                          <div className="reportes-barra-contenedor">
+                            <div className="reportes-barra-fondo">
+                              <div
+                                className="reportes-barra-progreso"
+                                style={{ width: `${porcentaje}%` }}
+                              />
+                            </div>
+                            <span className="reportes-barra-texto">{porcentaje}%</span>
                           </div>
-                          <span className="reportes-barra-texto">{porcentaje}%</span>
                         </td>
                       </tr>
                     );

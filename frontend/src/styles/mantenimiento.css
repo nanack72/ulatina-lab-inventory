@@ -189,19 +189,22 @@
 }
 
 .mant-celda-lab {
-  display: flex;
-  flex-direction: column;
+  vertical-align: middle;
 }
 
 .mant-codigo-lab {
+  display: block;
   font-weight: 600;
   color: #1e293b;
   font-size: 0.8125rem;
+  line-height: 1.25;
 }
 
 .mant-nombre-lab-sub {
+  display: block;
   font-size: 0.75rem;
   color: #64748b;
+  margin-top: 0.15rem;
 }
 
 .mant-badge-tipo,
