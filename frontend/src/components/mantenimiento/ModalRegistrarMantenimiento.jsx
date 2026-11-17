@@ -183,23 +183,42 @@ export default function ModalRegistrarMantenimiento({
             </select>
           </div>
 
-          {/* Tipo de Mantenimiento */}
-          <div className="mant-campo">
-            <label htmlFor="mant-select-tipo" className="mant-label">
-              Tipo de Mantenimiento <span className="mant-requerido">*</span>
-            </label>
-            <select
-              id="mant-select-tipo"
-              className="mant-input"
-              value={tipoMantenimiento}
-              onChange={(e) => setTipoMantenimiento(e.target.value)}
-            >
-              {TIPOS_MANTENIMIENTO.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
+          {/* Tipo de Mantenimiento y Horas Invertidas en fila de dos columnas */}
+          <div className="mant-grid-dos-cols">
+            <div className="mant-campo">
+              <label htmlFor="mant-select-tipo" className="mant-label">
+                Tipo de Mantenimiento <span className="mant-requerido">*</span>
+              </label>
+              <select
+                id="mant-select-tipo"
+                className="mant-input"
+                value={tipoMantenimiento}
+                onChange={(e) => setTipoMantenimiento(e.target.value)}
+              >
+                {TIPOS_MANTENIMIENTO.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="mant-campo">
+              <label htmlFor="mant-horas" className="mant-label">
+                Horas Invertidas <span className="mant-requerido">*</span>
+              </label>
+              <input
+                id="mant-horas"
+                type="number"
+                step="0.5"
+                min="0.5"
+                max="100"
+                className="mant-input"
+                value={horasInvertidas}
+                onChange={(e) => setHorasInvertidas(e.target.value)}
+                required
+              />
+            </div>
           </div>
 
           {tipoMantenimiento === 'Correctivo' && (
@@ -231,23 +250,6 @@ export default function ModalRegistrarMantenimiento({
               value={descripcionTrabajo}
               onChange={(e) => setDescripcionTrabajo(e.target.value)}
               required
-            />
-          </div>
-
-          {/* Horas Invertidas (inicialmente aquí antes de moverlo) */}
-          <div className="mant-campo">
-            <label htmlFor="mant-horas" className="mant-label">
-              Horas Invertidas
-            </label>
-            <input
-              id="mant-horas"
-              type="number"
-              step="0.5"
-              min="0.5"
-              max="100"
-              className="mant-input"
-              value={horasInvertidas}
-              onChange={(e) => setHorasInvertidas(e.target.value)}
             />
           </div>
 
