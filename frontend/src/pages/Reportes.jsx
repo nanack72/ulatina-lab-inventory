@@ -81,11 +81,22 @@ export default function Reportes({ token, usuario }) {
   return (
     <div className="reportes-contenedor">
       <header className="reportes-encabezado">
-        <div>
+        <div className="reportes-encabezado-texto">
           <h1 className="reportes-titulo">Reportería y Estadísticas</h1>
           <p className="reportes-subtitulo">
             Métricas analíticas del inventario tecnológico y seguimiento de mantenimientos en laboratorios.
           </p>
+        </div>
+        <div className="reportes-acciones-cabecera">
+          <button
+            type="button"
+            className="reportes-boton-descarga"
+            onClick={manejarDescarga}
+            disabled={descargando}
+          >
+            <FileSpreadsheet size={18} />
+            <span>{descargando ? 'Generando libro Excel...' : 'Exportar a Excel'}</span>
+          </button>
         </div>
       </header>
 
@@ -239,18 +250,7 @@ export default function Reportes({ token, usuario }) {
             </div>
           </section>
 
-          {/* Botón de descarga al pie */}
-          <div className="reportes-acciones-pie">
-            <button
-              type="button"
-              className="reportes-boton-descarga"
-              onClick={manejarDescarga}
-              disabled={descargando}
-            >
-              <FileSpreadsheet size={18} />
-              <span>{descargando ? 'Generando libro Excel...' : 'Descargar Consolidado Oficial (.xlsx)'}</span>
-            </button>
-          </div>
+          {/* Fin de vista */}
         </>
       )}
     </div>
