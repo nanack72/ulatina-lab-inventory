@@ -1,3 +1,5 @@
+import { solicitarInventario } from './solicitarInventario.js';
+
 const API_URL = '/api/equipos';
 
 export async function obtenerEquipos(token, signal) {
@@ -5,29 +7,18 @@ export async function obtenerEquipos(token, signal) {
     throw new Error('Debés iniciar sesión para consultar el inventario.');
   }
 
-  let respuesta;
-
-  try {
-    respuesta = await fetch(API_URL, {
+  const { respuesta, resultado } = await solicitarInventario(
+    API_URL,
+    {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: 'application/json',
       },
       signal,
-    });
-    } catch (error) {
-    if (error.name === 'AbortError') {
-        throw error;
-    }
-
-    throw new Error(
-        'No se pudo conectar con el servidor de inventario.',
-        { cause: error }
-    );
-    }
-
-  const resultado = await respuesta.json().catch(() => null);
+    },
+    'No se pudo conectar con el servidor de inventario.'
+  );
 
   if (!respuesta.ok) {
     const error = new Error(
@@ -54,32 +45,18 @@ export async function obtenerEquipoPorId(idEquipo, token, signal) {
     throw new Error('El identificador del equipo no es válido.');
   }
 
-  let respuesta;
-
-  try {
-    respuesta = await fetch(
-      `/api/equipos/${encodeURIComponent(idEquipo)}`,
-      {
+  const { respuesta, resultado } = await solicitarInventario(
+    `/api/equipos/${encodeURIComponent(idEquipo)}`,
+    {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: 'application/json',
         },
         signal,
-      }
-    );
-  } catch (error) {
-    if (error.name === 'AbortError') {
-      throw error;
-    }
-
-    throw new Error(
-      'No se pudo conectar con el servidor para consultar el equipo.',
-      { cause: error }
-    );
-  }
-
-  const resultado = await respuesta.json().catch(() => null);
+      },
+    'No se pudo conectar con el servidor para consultar el equipo.'
+  );
 
   if (!respuesta.ok) {
     let mensaje = resultado?.message;
@@ -122,10 +99,9 @@ export async function registrarEquipo(datosEquipo, token) {
     );
   }
 
-  let respuesta;
-
-  try {
-    respuesta = await fetch('/api/equipos', {
+  const { respuesta, resultado } = await solicitarInventario(
+    '/api/equipos',
+    {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -133,15 +109,10 @@ export async function registrarEquipo(datosEquipo, token) {
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(datosEquipo),
-    });
-  } catch (error) {
-    throw new Error(
-      'No se pudo conectar con el servidor para registrar el equipo.',
-      { cause: error }
-    );
-  }
-
-  const resultado = await respuesta.json().catch(() => null);
+    },
+    'No se pudo conectar con el servidor para registrar el equipo.',
+    { propagarCancelacion: false }
+  );
 
   if (!respuesta.ok) {
     let mensaje =
@@ -191,12 +162,9 @@ export async function actualizarEquipo(idEquipo, datosEquipo, token) {
     throw new Error('El identificador del equipo no es válido.');
   }
 
-  let respuesta;
-
-  try {
-    respuesta = await fetch(
-      `/api/equipos/${encodeURIComponent(idEquipo)}`,
-      {
+  const { respuesta, resultado } = await solicitarInventario(
+    `/api/equipos/${encodeURIComponent(idEquipo)}`,
+    {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -204,16 +172,10 @@ export async function actualizarEquipo(idEquipo, datosEquipo, token) {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(datosEquipo),
-      }
-    );
-  } catch (error) {
-    throw new Error(
-      'No se pudo conectar con el servidor para actualizar el equipo.',
-      { cause: error }
-    );
-  }
-
-  const resultado = await respuesta.json().catch(() => null);
+      },
+    'No se pudo conectar con el servidor para actualizar el equipo.',
+    { propagarCancelacion: false }
+  );
 
   if (!respuesta.ok) {
     let mensaje =
@@ -300,12 +262,9 @@ export async function trasladarEquipo(
     ubicacion_detalle: ubicacionDetalle || null,
   };
 
-  let respuesta;
-
-  try {
-    respuesta = await fetch(
-      `/api/equipos/${encodeURIComponent(id)}`,
-      {
+  const { respuesta, resultado } = await solicitarInventario(
+    `/api/equipos/${encodeURIComponent(id)}`,
+    {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -313,18 +272,10 @@ export async function trasladarEquipo(
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(datos),
-      }
-    );
-  } catch (error) {
-    throw new Error(
-      'No se pudo conectar con el servidor.',
-      { cause: error }
-    );
-  }
-
-  const resultado = await respuesta
-    .json()
-    .catch(() => null);
+      },
+    'No se pudo conectar con el servidor.',
+    { propagarCancelacion: false }
+  );
 
   if (!respuesta.ok) {
     let mensaje =
@@ -381,34 +332,18 @@ export async function obtenerHistorialUbicacion(
     );
   }
 
-  let respuesta;
-
-  try {
-    respuesta = await fetch(
-      `/api/equipos/${encodeURIComponent(id)}/historial-ubicacion`,
-      {
+  const { respuesta, resultado } = await solicitarInventario(
+    `/api/equipos/${encodeURIComponent(id)}/historial-ubicacion`,
+    {
         method: 'GET',
         headers: {
           Accept: 'application/json',
           Authorization: `Bearer ${token}`,
         },
         signal,
-      }
-    );
-  } catch (error) {
-    if (error.name === 'AbortError') {
-      throw error;
-    }
-
-    throw new Error(
-      'No se pudo conectar con el servidor.',
-      { cause: error }
-    );
-  }
-
-  const resultado = await respuesta
-    .json()
-    .catch(() => null);
+      },
+    'No se pudo conectar con el servidor.'
+  );
 
   if (!respuesta.ok) {
     const error = new Error(
@@ -457,32 +392,18 @@ export async function obtenerHistorialEstados(
     );
   }
 
-  let respuesta;
-
-  try {
-    respuesta = await fetch(
-      `/api/equipos/${encodeURIComponent(id)}/historial-estados`,
-      {
+  const { respuesta, resultado } = await solicitarInventario(
+    `/api/equipos/${encodeURIComponent(id)}/historial-estados`,
+    {
         method: 'GET',
         headers: {
           Accept: 'application/json',
           Authorization: `Bearer ${token}`,
         },
         signal,
-      }
-    );
-  } catch (error) {
-    if (error.name === 'AbortError') {
-      throw error;
-    }
-
-    throw new Error(
-      'No se pudo conectar con el servidor.',
-      { cause: error }
-    );
-  }
-
-  const resultado = await respuesta.json().catch(() => null);
+      },
+    'No se pudo conectar con el servidor.'
+  );
 
   if (!respuesta.ok) {
     const error = new Error(

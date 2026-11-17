@@ -1,27 +1,20 @@
+import { solicitarInventario } from './solicitarInventario.js';
+
 const API_URL = '/api/importacion-equipos';
 
 async function solicitar(ruta, token, opciones) {
-  let respuesta;
-
-  try {
-    respuesta = await fetch(`${API_URL}/${ruta}`, {
+  const { respuesta, resultado } = await solicitarInventario(
+    `${API_URL}/${ruta}`,
+    {
       ...opciones,
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: 'application/json',
         ...(opciones.headers || {}),
       },
-    });
-  } catch (error) {
-    if (error.name === 'AbortError') throw error;
-
-    throw new Error(
-      'No fue posible conectar con el servidor.',
-      { cause: error }
-    );
-  }
-
-  const resultado = await respuesta.json().catch(() => null);
+    },
+    'No fue posible conectar con el servidor.'
+  );
 
   if (!respuesta.ok || resultado?.success !== true) {
     const error = new Error(
