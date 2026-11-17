@@ -90,6 +90,9 @@ export default function Incidencias({ token, usuario }) {
   };
 
   // Métricas
+  const totalCriticas = incidencias.filter(
+    (i) => i.prioridad === 'Crítica' || i.prioridad === 'Critica' || i.prioridad === 'Alta'
+  ).length;
   const totalAbiertas = incidencias.filter((i) => i.estado_incidencia === 'Abierta').length;
   const totalEnRevision = incidencias.filter((i) => i.estado_incidencia === 'En Revisión').length;
   const totalResueltas = incidencias.filter((i) => i.estado_incidencia === 'Resuelta').length;
@@ -122,16 +125,27 @@ export default function Incidencias({ token, usuario }) {
         </div>
       )}
 
-      {/* Tarjetas resumen (Versión inicial de 3 tarjetas) */}
+      {/* Tarjetas resumen (Cuadrícula modular de 4 tarjetas) */}
       <section className="inci-kpis-grid">
+        <article className="inci-kpi-card">
+          <div className="inci-kpi-icono inci-kpi-icono--fuego">
+            <Flame size={20} />
+          </div>
+          <div className="inci-kpi-info">
+            <span className="inci-kpi-etiqueta">Críticas / Altas</span>
+            <span className="inci-kpi-valor">{totalCriticas}</span>
+            <span className="inci-kpi-detalle">Atención prioritaria</span>
+          </div>
+        </article>
+
         <article className="inci-kpi-card">
           <div className="inci-kpi-icono inci-kpi-icono--rojo">
             <AlertTriangle size={20} />
           </div>
           <div className="inci-kpi-info">
-            <span className="inci-kpi-etiqueta">Abiertas / Pendientes</span>
+            <span className="inci-kpi-etiqueta">Abiertas</span>
             <span className="inci-kpi-valor">{totalAbiertas}</span>
-            <span className="inci-kpi-detalle">Requieren diagnóstico</span>
+            <span className="inci-kpi-detalle">Pendientes de revisión</span>
           </div>
         </article>
 
@@ -153,7 +167,7 @@ export default function Incidencias({ token, usuario }) {
           <div className="inci-kpi-info">
             <span className="inci-kpi-etiqueta">Resueltas</span>
             <span className="inci-kpi-valor">{totalResueltas}</span>
-            <span className="inci-kpi-detalle">Equipo operativo restablecido</span>
+            <span className="inci-kpi-detalle">Operatividad restablecida</span>
           </div>
         </article>
       </section>
