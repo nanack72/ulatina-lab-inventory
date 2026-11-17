@@ -120,7 +120,19 @@ export default function ModalRegistrarMantenimiento({
       limpiarFoto();
       alGuardarExitoso();
     } catch (err) {
-      setErrorFormulario(err.message || 'Error al guardar la orden de mantenimiento.');
+      if (err.status === 403) {
+        setErrorFormulario(
+          'Acceso denegado (403): Tu perfil técnico no tiene asignado el laboratorio de este equipo. Selecciona un activo autorizado o consulta a coordinación.'
+        );
+      } else if (err.status === 409) {
+        setErrorFormulario(
+          'Conflicto de integridad (409): El equipo seleccionado ya tiene una intervención activa o su estado actual no admite cambio concurrente.'
+        );
+      } else {
+        setErrorFormulario(
+          err.message || 'Error interno al guardar la orden de mantenimiento.'
+        );
+      }
     } finally {
       setGuardando(false);
     }
