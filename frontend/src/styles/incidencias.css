@@ -300,6 +300,12 @@
   overflow: hidden;
 }
 
+.inci-celda-apilada {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
 .inci-celda-equipo {
   vertical-align: middle;
 }

@@ -84,15 +84,19 @@ export default function TablaIncidencias({
                 </td>
 
                 <td className="inci-celda-equipo">
-                  <span className="inci-nombre-equipo">{item.nombre_equipo}</span>
-                  <span className="inci-placa-equipo">
-                    {item.placa_institucional || 'Sin placa'}
-                  </span>
+                  <div className="inci-celda-apilada">
+                    <span className="inci-nombre-equipo">{item.nombre_equipo}</span>
+                    <span className="inci-placa-equipo">
+                      {item.placa_institucional || 'Sin placa'}
+                    </span>
+                  </div>
                 </td>
 
                 <td className="inci-celda-lab">
-                  <span className="inci-codigo-lab">{item.codigo_laboratorio}</span>
-                  <span className="inci-nombre-lab">{item.nombre_laboratorio}</span>
+                  <div className="inci-celda-apilada">
+                    <span className="inci-codigo-lab">{item.codigo_laboratorio}</span>
+                    <span className="inci-nombre-lab">{item.nombre_laboratorio}</span>
+                  </div>
                 </td>
 
                 <td className="inci-celda-estado">
