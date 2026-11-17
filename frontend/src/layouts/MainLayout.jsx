@@ -12,6 +12,9 @@ import Historial from '../pages/Historial';
 import MiPerfil from '../pages/MiPerfil';
 import Configuracion from '../pages/Configuracion';
 import Usuarios from '../pages/Usuarios';
+import Reportes from '../pages/Reportes';
+import Mantenimiento from '../pages/Mantenimiento';
+import Incidencias from '../pages/Incidencias';
 
 // ==========================================
 // NOMBRES DE LAS PÁGINAS
@@ -453,7 +456,22 @@ export default function MainLayout({
       return <Configuracion token={token} />;
     }
 
-    // OTRAS PÁGINAS
+    // REPORTES
+    if (paginaActual === 'reportes') {
+      return <Reportes token={token} usuario={usuario} />;
+    }
+
+    // MANTENIMIENTO
+    if (paginaActual === 'mantenimiento') {
+      return <Mantenimiento token={token} usuario={usuario} />;
+    }
+
+    // INCIDENCIAS
+    if (paginaActual === 'incidencias') {
+      return <Incidencias token={token} usuario={usuario} />;
+    }
+
+    // HISTORIAL
     return (
       <>
         <h1>{nombrePagina}</h1>
