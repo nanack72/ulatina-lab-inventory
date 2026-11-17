@@ -41,9 +41,9 @@ export async function subirEvidenciaFotografica(datos, token) {
   const respuesta = await fetch(API_URL, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${token}`,
-      // Cabecera manual que rompe el boundary de Multer en multipart/form-data
-      'Content-Type': 'multipart/form-data'
+      Authorization: `Bearer ${token}`
+      // Omitimos Content-Type explícito para que el navegador establezca
+      // multipart/form-data junto con el delimitador (boundary) requerido por Multer
     },
     body: formData
   });
