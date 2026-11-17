@@ -14,7 +14,10 @@ import TablaMantenimientos from '../components/mantenimiento/TablaMantenimientos
 import ModalRegistrarMantenimiento from '../components/mantenimiento/ModalRegistrarMantenimiento';
 import ModalVerEvidencias from '../components/mantenimiento/ModalVerEvidencias';
 
-import { consultarMantenimientos } from '../services/mantenimientosService';
+import {
+  consultarMantenimientos,
+  actualizarEstadoMantenimiento
+} from '../services/mantenimientosService';
 import { obtenerEquipos } from '../services/equiposService';
 import { TIPOS_MANTENIMIENTO, ESTADOS_MANTENIMIENTO } from '../utils/mantenimiento';
 
@@ -37,6 +40,7 @@ export default function Mantenimiento({ token, usuario }) {
   // Modales
   const [modalRegistroAbierto, setModalRegistroAbierto] = useState(false);
   const [mantenimientoSeleccionado, setMantenimientoSeleccionado] = useState(null);
+  const [actualizandoId, setActualizandoId] = useState(null);
 
   const cargarDatos = useCallback(async (signal) => {
     try {
@@ -82,6 +86,22 @@ export default function Mantenimiento({ token, usuario }) {
   const alGuardarExitoso = () => {
     setModalRegistroAbierto(false);
     cargarDatos();
+  };
+
+  const manejarCambioEstado = async (idBitacora, nuevoEstado) => {
+    try {
+      setActualizandoId(idBitacora);
+      await actualizarEstadoMantenimiento(
+        idBitacora,
+        { estado_mantenimiento: nuevoEstado },
+        token
+      );
+      await cargarDatos();
+    } catch (err) {
+      alert('No se pudo actualizar el estado del mantenimiento: ' + err.message);
+    } finally {
+      setActualizandoId(null);
+    }
   };
 
   return (
@@ -171,6 +191,8 @@ export default function Mantenimiento({ token, usuario }) {
           mantenimientos={mantenimientos}
           cargando={cargando}
           alSeleccionarEvidencias={(item) => setMantenimientoSeleccionado(item)}
+          alCambiarEstado={manejarCambioEstado}
+          actualizandoId={actualizandoId}
         />
 
         {/* Paginación */}

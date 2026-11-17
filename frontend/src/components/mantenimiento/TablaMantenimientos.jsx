@@ -3,14 +3,16 @@ import {
   formatearFechaMantenimiento,
   formatearHoras,
   COLORES_ESTADO_MANTENIMIENTO,
-  COLORES_TIPO_MANTENIMIENTO
+  COLORES_TIPO_MANTENIMIENTO,
+  ESTADOS_MANTENIMIENTO
 } from '../../utils/mantenimiento';
 
 export default function TablaMantenimientos({
   mantenimientos = [],
   cargando,
   alSeleccionarEvidencias,
-  alCambiarEstado
+  alCambiarEstado,
+  actualizandoId
 }) {
   if (cargando) {
     return (
@@ -95,16 +97,28 @@ export default function TablaMantenimientos({
                   </span>
                 </td>
                 <td>
-                  <span
-                    className="mant-badge-estado"
+                  <select
+                    className="mant-select-estado"
                     style={{
                       backgroundColor: estiloEstado.fondo,
                       color: estiloEstado.texto,
                       borderColor: estiloEstado.borde
                     }}
+                    value={item.estado_mantenimiento}
+                    disabled={actualizandoId === item.id_bitacora}
+                    onChange={(e) =>
+                      alCambiarEstado &&
+                      alCambiarEstado(item.id_bitacora, e.target.value)
+                    }
+                    aria-label={`Estado del mantenimiento #${item.id_bitacora}`}
+                    title="Actualizar estado del mantenimiento"
                   >
-                    {item.estado_mantenimiento}
-                  </span>
+                    {ESTADOS_MANTENIMIENTO.map((est) => (
+                      <option key={est} value={est}>
+                        {est}
+                      </option>
+                    ))}
+                  </select>
                 </td>
                 <td className="mant-celda-tecnico">
                   {item.nombre_tecnico || item.tecnico}
