@@ -534,7 +534,7 @@ export default function TrasladarEquipo({
             <div className="registro-botones">
               <button
                 type="button"
-                className="registro-cancelar"
+                className="btn btn-lg btn-secundario"
                 onClick={onCancelar}
                 disabled={guardando}
               >
@@ -543,7 +543,7 @@ export default function TrasladarEquipo({
 
               <button
                 type="submit"
-                className="registro-guardar"
+                className="btn btn-lg btn-primario"
                 disabled={
                   guardando ||
                   !hayCambios ||
@@ -613,7 +613,7 @@ export default function TrasladarEquipo({
             <div className="traslado-confirmacion-acciones">
               <button
                 type="button"
-                className="registro-cancelar"
+                className="btn btn-lg btn-secundario"
                 disabled={guardando}
                 onClick={() => setConfirmar(false)}
               >
@@ -622,7 +622,7 @@ export default function TrasladarEquipo({
 
               <button
                 type="button"
-                className="registro-guardar"
+                className="btn btn-lg btn-primario"
                 disabled={guardando}
                 onClick={confirmarTraslado}
               >

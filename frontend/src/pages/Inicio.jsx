@@ -231,7 +231,7 @@ export default function Inicio({
         {puedeRegistrar && (
           <button
             type="button"
-            className="ini-boton-registrar"
+            className="btn btn-lg btn-primario"
             onClick={onRegistrarEquipo}
           >
             <Plus size={17} aria-hidden="true" />

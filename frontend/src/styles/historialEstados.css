@@ -3,8 +3,6 @@
    ========================================== */
 
 .hist-estados {
-  --hist-verde: #205c49;
-  --hist-verde-suave: #edf5f1;
 
   margin-top: 24px;
 }
@@ -23,8 +21,8 @@
   align-items: center;
   padding: 4px 10px;
   border-radius: 20px;
-  background: #edf5f1;
-  color: #205c49;
+  background: var(--verde-suave);
+  color: var(--verde);
   font-size: 10px;
   font-weight: 700;
 }
@@ -52,15 +50,15 @@
 .hist-estado-motivo {
   margin-top: 16px;
   padding: 12px 14px;
-  border: 1px solid #e5ebe7;
-  border-radius: 8px;
+  border: 1px solid var(--borde-suave);
+  border-radius: var(--radio-sm);
   background: #fafcfb;
 }
 
 .hist-estado-motivo span {
   display: block;
   margin-bottom: 6px;
-  color: #8190a2;
+  color: var(--texto-suave);
   font-size: 11px;
 }
 
@@ -74,7 +72,7 @@
 /* RESPONSABLE */
 
 .hist-estados .hist-movimiento-pie strong {
-  color: #205c49;
+  color: var(--verde);
   font-weight: 700;
 }
 

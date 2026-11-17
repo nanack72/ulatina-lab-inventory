@@ -19,6 +19,8 @@ import {
 
 import { registrarEquipo } from '../services/equiposService';
 
+import { Campo, Seccion } from '../components/inventario/FormularioEquipo';
+
 import '../styles/registrarEquipo.css';
 
 const FORMULARIO_INICIAL = {
@@ -45,35 +47,6 @@ function nombreCatalogo(elemento) {
     elemento?.nombre_categoria ??
     elemento?.nombre_estado ??
     ''
-  );
-}
-
-function Campo({ etiqueta, requerido = false, children }) {
-  return (
-    <label className="registro-campo">
-      <span className="registro-etiqueta">
-        {etiqueta}
-        {requerido && <span className="registro-requerido"> *</span>}
-      </span>
-      {children}
-    </label>
-  );
-}
-
-function Seccion({ titulo, icono: Icono, children }) {
-  return (
-    <section className="registro-tarjeta">
-      <div className="registro-tarjeta-titulo">
-        <span className="registro-tarjeta-icono">
-          <Icono size={18} />
-        </span>
-        <h2>{titulo}</h2>
-      </div>
-
-      <div className="registro-tarjeta-contenido">
-        {children}
-      </div>
-    </section>
   );
 }
 
@@ -333,9 +306,10 @@ export default function RegistrarEquipo({
               icono={Monitor}
             >
               <div className="registro-campos-grid">
-                <Campo etiqueta="Nombre del equipo" requerido>
+                <Campo etiqueta="Nombre del equipo" requerido htmlFor="registrar-nombre">
                   <input
                     type="text"
+                    id="registrar-nombre"
                     name="nombre"
                     value={formulario.nombre}
                     onChange={actualizarCampo}
@@ -345,9 +319,10 @@ export default function RegistrarEquipo({
                   />
                 </Campo>
 
-                <Campo etiqueta="Placa institucional">
+                <Campo etiqueta="Placa institucional" htmlFor="registrar-placa_institucional">
                   <input
                     type="text"
+                    id="registrar-placa_institucional"
                     name="placa_institucional"
                     value={formulario.placa_institucional}
                     onChange={actualizarCampo}
@@ -355,9 +330,10 @@ export default function RegistrarEquipo({
                   />
                 </Campo>
 
-                <Campo etiqueta="Número de serie">
+                <Campo etiqueta="Número de serie" htmlFor="registrar-numero_serie">
                   <input
                     type="text"
+                    id="registrar-numero_serie"
                     name="numero_serie"
                     value={formulario.numero_serie}
                     onChange={actualizarCampo}
@@ -365,8 +341,9 @@ export default function RegistrarEquipo({
                   />
                 </Campo>
 
-                <Campo etiqueta="Categoría" requerido>
+                <Campo etiqueta="Categoría" requerido htmlFor="registrar-id_categoria">
                   <select
+                    id="registrar-id_categoria"
                     name="id_categoria"
                     value={formulario.id_categoria}
                     onChange={actualizarCampo}
@@ -393,9 +370,10 @@ export default function RegistrarEquipo({
               icono={Cpu}
             >
               <div className="registro-campos-grid">
-                <Campo etiqueta="Marca">
+                <Campo etiqueta="Marca" htmlFor="registrar-marca">
                   <input
                     type="text"
+                    id="registrar-marca"
                     name="marca"
                     value={formulario.marca}
                     onChange={actualizarCampo}
@@ -403,9 +381,10 @@ export default function RegistrarEquipo({
                   />
                 </Campo>
 
-                <Campo etiqueta="Modelo">
+                <Campo etiqueta="Modelo" htmlFor="registrar-modelo">
                   <input
                     type="text"
+                    id="registrar-modelo"
                     name="modelo"
                     value={formulario.modelo}
                     onChange={actualizarCampo}
@@ -413,9 +392,10 @@ export default function RegistrarEquipo({
                   />
                 </Campo>
 
-                <Campo etiqueta="Año">
+                <Campo etiqueta="Año" htmlFor="registrar-anio">
                   <input
                     type="number"
+                    id="registrar-anio"
                     name="anio"
                     value={formulario.anio}
                     onChange={actualizarCampo}
@@ -426,8 +406,9 @@ export default function RegistrarEquipo({
                   />
                 </Campo>
 
-                <Campo etiqueta="Características">
+                <Campo etiqueta="Características" htmlFor="registrar-caracteristicas">
                   <textarea
+                    id="registrar-caracteristicas"
                     name="caracteristicas"
                     value={formulario.caracteristicas}
                     onChange={actualizarCampo}
@@ -444,8 +425,9 @@ export default function RegistrarEquipo({
               icono={MapPin}
             >
               <div className="registro-campos-grid">
-                <Campo etiqueta="Sede" requerido>
+                <Campo etiqueta="Sede" requerido htmlFor="registrar-id_sede">
                   <select
+                    id="registrar-id_sede"
                     name="id_sede"
                     value={formulario.id_sede}
                     onChange={actualizarCampo}
@@ -472,8 +454,9 @@ export default function RegistrarEquipo({
                   </select>
                 </Campo>
 
-                <Campo etiqueta="Laboratorio autorizado" requerido>
+                <Campo etiqueta="Laboratorio autorizado" requerido htmlFor="registrar-id_laboratorio">
                   <select
+                    id="registrar-id_laboratorio"
                     name="id_laboratorio"
                     value={formulario.id_laboratorio}
                     onChange={actualizarCampo}
@@ -493,9 +476,10 @@ export default function RegistrarEquipo({
                   </select>
                 </Campo>
 
-                <Campo etiqueta="Ubicación detallada">
+                <Campo etiqueta="Ubicación detallada" htmlFor="registrar-ubicacion_detalle">
                   <input
                     type="text"
+                    id="registrar-ubicacion_detalle"
                     name="ubicacion_detalle"
                     value={formulario.ubicacion_detalle}
                     onChange={actualizarCampo}
@@ -503,8 +487,9 @@ export default function RegistrarEquipo({
                   />
                 </Campo>
 
-                <Campo etiqueta="Estado del equipo" requerido>
+                <Campo etiqueta="Estado del equipo" requerido htmlFor="registrar-id_estado">
                   <select
+                    id="registrar-id_estado"
                     name="id_estado"
                     value={formulario.id_estado}
                     onChange={actualizarCampo}
@@ -530,9 +515,10 @@ export default function RegistrarEquipo({
               titulo="Observaciones"
               icono={FileText}
             >
-              <Campo etiqueta="Comentarios adicionales">
+              <Campo etiqueta="Comentarios adicionales" htmlFor="registrar-comentarios">
                 <textarea
-                  name="comentarios"
+                  id="registrar-comentarios"
+                    name="comentarios"
                   value={formulario.comentarios}
                   onChange={actualizarCampo}
                   placeholder="Observaciones importantes del equipo..."
@@ -551,7 +537,7 @@ export default function RegistrarEquipo({
             <div className="registro-botones">
               <button
                 type="button"
-                className="registro-cancelar"
+                className="btn btn-lg btn-secundario"
                 onClick={onCancelar}
                 disabled={guardando}
               >
@@ -560,7 +546,7 @@ export default function RegistrarEquipo({
 
               <button
                 type="submit"
-                className="registro-guardar"
+                className="btn btn-lg btn-primario"
                 disabled={guardando || cargandoCatalogos || !!error && categorias.length === 0}
               >
                 <Save size={17} />

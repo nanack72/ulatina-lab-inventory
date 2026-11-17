@@ -3,16 +3,14 @@
    ========================================== */
 
 .hist-ubicacion {
-  --hist-verde: #205c49;
-  --hist-verde-suave: #edf5f1;
 
   width: 100%;
   min-width: 0;
   overflow: hidden;
-  border: 1px solid #dfe4eb;
-  border-radius: 12px;
-  background: #ffffff;
-  color: #263443;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-md);
+  background: var(--blanco);
+  color: var(--texto);
   box-sizing: border-box;
 }
 
@@ -47,46 +45,23 @@
   flex-shrink: 0;
   width: 38px;
   height: 38px;
-  border-radius: 9px;
-  background: var(--hist-verde);
-  color: #ffffff;
+  border-radius: var(--radio-sm);
+  background: var(--verde);
+  color: var(--blanco);
 }
 
 .hist-titulo h2 {
   margin: 0;
-  color: #263443;
+  color: var(--texto);
   font-size: 15px;
   font-weight: 700;
 }
 
 .hist-titulo p {
   margin: 6px 0 0;
-  color: #8190a2;
+  color: var(--texto-suave);
   font-size: 12px;
   line-height: 1.5;
-}
-
-.hist-actualizar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 38px;
-  height: 38px;
-  border: 1px solid #d9e5de;
-  border-radius: 8px;
-  background: #ffffff;
-  color: var(--hist-verde);
-  cursor: pointer;
-}
-
-.hist-actualizar:hover:not(:disabled) {
-  background: var(--hist-verde-suave);
-}
-
-.hist-actualizar:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 /* ESTADOS */
@@ -107,7 +82,7 @@
 }
 
 .hist-vacio strong {
-  color: #263443;
+  color: var(--texto);
 }
 
 .hist-vacio p {
@@ -123,7 +98,7 @@
   margin: 20px 23px;
   padding: 14px 16px;
   border: 1px solid #efcaca;
-  border-radius: 9px;
+  border-radius: var(--radio-sm);
   background: #fff5f5;
   color: #ae3838;
   font-size: 12px;
@@ -189,19 +164,19 @@
   width: 32px;
   height: 32px;
   margin-left: -19px;
-  border: 3px solid #ffffff;
+  border: 3px solid var(--blanco);
   border-radius: 50%;
-  background: var(--hist-verde);
-  color: #ffffff;
+  background: var(--verde);
+  color: var(--blanco);
 }
 
 .hist-contenido {
   flex: 1;
   min-width: 0;
   padding: 16px 18px;
-  border: 1px solid #e2e9e4;
-  border-radius: 10px;
-  background: #ffffff;
+  border: 1px solid var(--borde-suave);
+  border-radius: var(--radio-sm);
+  background: var(--blanco);
 }
 
 .hist-movimiento:first-child .hist-contenido {
@@ -222,7 +197,7 @@
 
 .hist-movimiento-cabecera h3 {
   margin: 0;
-  color: #263443;
+  color: var(--texto);
   font-size: 13px;
   font-weight: 700;
 }
@@ -248,7 +223,7 @@
   gap: 6px;
   min-width: 0;
   padding: 12px;
-  border-radius: 8px;
+  border-radius: var(--radio-sm);
 }
 
 .hist-ubicacion-origen {
@@ -256,24 +231,24 @@
 }
 
 .hist-ubicacion-destino {
-  background: var(--hist-verde-suave);
+  background: var(--verde-suave);
 }
 
 .hist-ubicacion-origen span,
 .hist-ubicacion-destino span {
-  color: #8190a2;
+  color: var(--texto-suave);
   font-size: 11px;
 }
 
 .hist-ubicacion-origen strong,
 .hist-ubicacion-destino strong {
   overflow-wrap: anywhere;
-  color: #263443;
+  color: var(--texto);
   font-size: 12px;
 }
 
 .hist-ubicacion-destino strong {
-  color: var(--hist-verde);
+  color: var(--verde);
 }
 
 .hist-ubicacion-origen small,
@@ -286,7 +261,7 @@
 .hist-flecha {
   display: flex;
   justify-content: center;
-  color: var(--hist-verde);
+  color: var(--verde);
 }
 
 /* PIE DEL MOVIMIENTO */
@@ -354,8 +329,8 @@
 /* ASIGNACIÓN INICIAL */
 
 .hist-tipo-etiqueta--asignacion_inicial {
-  background: #edf5f1;
-  color: #205c49;
+  background: var(--verde-suave);
+  color: var(--verde);
 }
 
 /* CAMBIO DENTRO DEL MISMO LABORATORIO */
@@ -369,17 +344,17 @@
 
 .hist-tipo-etiqueta--traslado_laboratorio {
   background: #e6f2eb;
-  color: #205c49;
+  color: var(--verde);
 }
 
 .hist-movimiento--traslado_laboratorio
 .hist-contenido {
-  border-left: 3px solid #205c49;
+  border-left: 3px solid var(--verde);
 }
 
 /* RESPONSABLE */
 
 .hist-movimiento-pie strong {
-  color: #205c49;
+  color: var(--verde);
   font-weight: 700;
 }

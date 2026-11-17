@@ -123,7 +123,7 @@ export default function HistorialCambios({
 
         <button
           type="button"
-          className="hc-actualizar"
+          className="btn btn-icono"
           onClick={() => setRecarga((v) => v + 1)}
           disabled={cargando}
           aria-label="Actualizar historial"

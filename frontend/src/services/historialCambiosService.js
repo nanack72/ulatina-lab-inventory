@@ -1,6 +1,3 @@
-const API_URL =
-  import.meta.env.VITE_API_URL || 'http://localhost:3000';
-
 export async function obtenerHistorialCambios(
   idEquipo,
   token,
@@ -10,7 +7,7 @@ export async function obtenerHistorialCambios(
 
   try {
     respuesta = await fetch(
-      `${API_URL.replace(/\/$/, '')}/api/equipos/${encodeURIComponent(idEquipo)}/historial-cambios`,
+      `/api/equipos/${encodeURIComponent(idEquipo)}/historial-cambios`,
       {
         method: 'GET',
         headers: {

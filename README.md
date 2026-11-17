@@ -98,4 +98,22 @@ Las credenciales deben almacenarse de forma privada y no deben incluirse en el r
 
 ## Consideraciones
 
+### Conexión de la interfaz con la API
+
+Todos los servicios de la interfaz utilizan rutas relativas `/api`.
+En desarrollo, Vite las envía a `http://localhost:3000`.
+Al publicar, el servidor web debe dirigir `/api` hacia Express en el mismo origen;
+la configuración de proxy de Vite no se aplica al sitio compilado.
+El historial de modificaciones ya no utiliza `VITE_API_URL`.
+
+### Pruebas de las primeras correcciones
+
+Desde `backend`, ejecutar `npm ci` y después `npm test`.
+Las pruebas del parser utilizan un servidor local temporal y sustituyen las rutas,
+la base de datos y las tareas programadas. No se conectan a Neon ni comprueban
+autorización o escritura de equipos. Cubren el límite especial de importación,
+el límite general, errores JSON y la solicitud del historial.
+
+Desde `frontend`, ejecutar `npm ci`, `npm run lint` y `npm run build`.
+
 Este repositorio corresponde a un proyecto académico en desarrollo. Las funcionalidades pendientes de autenticación, autorización y escritura segura deben completarse y verificarse antes de utilizar el sistema con información institucional real.

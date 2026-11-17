@@ -395,7 +395,7 @@ export default function Usuarios({ token, usuarioActual }) {
           <div className="cfg-acciones">
             <button
               type="button"
-              className="cfg-actualizar"
+              className="btn btn-icono"
               title="Actualizar usuarios"
               aria-label="Actualizar usuarios"
               disabled={cargando}
@@ -408,7 +408,7 @@ export default function Usuarios({ token, usuarioActual }) {
 
             <button
               type="button"
-              className="cfg-primario"
+              className="btn btn-primario"
               disabled={cargando || Boolean(error)}
               onClick={abrirRegistro}
             >
@@ -839,7 +839,7 @@ export default function Usuarios({ token, usuarioActual }) {
               <div className="cfg-modal-acciones">
                 <button
                   type="button"
-                  className="cfg-secundario"
+                  className="btn btn-secundario"
                   disabled={guardando}
                   onClick={cerrarModal}
                 >
@@ -848,7 +848,7 @@ export default function Usuarios({ token, usuarioActual }) {
 
                 <button
                   type="submit"
-                  className="cfg-primario"
+                  className="btn btn-primario"
                   disabled={guardando}
                 >
                   {guardando ? 'Guardando...' : 'Guardar'}

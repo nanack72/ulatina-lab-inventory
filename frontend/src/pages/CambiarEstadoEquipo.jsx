@@ -468,7 +468,7 @@ export default function CambiarEstadoEquipo({
             <div className="registro-botones">
               <button
                 type="button"
-                className="registro-cancelar"
+                className="btn btn-lg btn-secundario"
                 onClick={onCancelar}
                 disabled={guardando}
               >
@@ -477,7 +477,7 @@ export default function CambiarEstadoEquipo({
               
             <button
                 type="submit"
-                className="registro-guardar"
+                className="btn btn-lg btn-primario"
                 disabled={cargando || guardando || !hayCambio}
             >
             <Save size={17} />
@@ -521,7 +521,7 @@ export default function CambiarEstadoEquipo({
           <div className="registro-botones cambio-estado-confirmacion-botones">
             <button
               type="button"
-              className="registro-cancelar"
+              className="btn btn-lg btn-secundario"
               disabled={guardando}
               onClick={() => setConfirmando(false)}
             >
@@ -530,7 +530,7 @@ export default function CambiarEstadoEquipo({
 
             <button
               type="button"
-              className="registro-guardar"
+              className="btn btn-lg btn-primario"
               disabled={guardando}
               onClick={confirmarCambio}
             >

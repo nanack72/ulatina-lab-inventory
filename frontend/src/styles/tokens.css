@@ -1,0 +1,50 @@
+/* ======================================================
+   TOKENS GLOBALES
+   Única fuente de colores, radios, alturas, letras y
+   sombras. Cambiá un valor acá y cambia en toda la app.
+   ====================================================== */
+
+:root {
+  /* Marca */
+  --verde: #205c49;
+  --verde-hover: #184938;
+  --verde-medio: #2d765e;
+  --verde-suave: #edf5f1;
+
+  /* Texto */
+  --texto-fuerte: #1e2732;
+  --texto: #263443;
+  --texto-secundario: #5f6f82;
+  --texto-suave: #718096;
+
+  /* Superficies y bordes */
+  --blanco: #ffffff;
+  --borde: #d9e4dd;
+  --borde-suave: #e5ebe7;
+
+  /* Estados */
+  --peligro: #b42318;
+
+  /* Radios */
+  --radio-sm: 8px;
+  --radio-md: 12px;
+  --radio-pildora: 999px;
+
+  /* Alturas de controles (botones, inputs) */
+  --alto-sm: 32px;
+  --alto-md: 38px;
+  --alto-lg: 42px;
+
+  /* Escala de letra */
+  --fs-xs: 11px;
+  --fs-sm: 12px;
+  --fs-md: 13px;
+  --fs-lg: 15px;
+  --fs-xl: 18px;
+  --fs-titulo: 26px;
+
+  /* Sombras */
+  --sombra-tarjeta: 0 2px 8px rgba(32, 92, 73, 0.04);
+  --sombra-foco: 0 0 0 3px rgba(32, 92, 73, 0.1);
+  --sombra-dialogo: 0 20px 60px rgba(0, 0, 0, 0.18);
+}

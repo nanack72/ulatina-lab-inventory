@@ -125,7 +125,7 @@ export default function HistorialEstados({
 
         <button
           type="button"
-          className="hist-actualizar"
+          className="btn btn-icono"
           aria-label="Actualizar historial de estados"
           title="Actualizar historial"
           disabled={cargando}
