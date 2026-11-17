@@ -130,8 +130,7 @@ const obtenerIncidencias = async (req, res) => {
 
     if (prioridad) {
       valores.push(prioridad);
-      // Bug inicial: índice fijo $1 en lugar de posición dinámica
-      condiciones.push('ir.prioridad = $1');
+      condiciones.push(`ir.prioridad = $${valores.length}`);
     }
 
     if (busqueda && busqueda.trim()) {
