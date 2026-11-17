@@ -74,6 +74,7 @@ export default function Reportes({ token, usuario }) {
   const total = datos?.total_equipos || 0;
   const estados = datos?.equipos_por_estado || {};
   const mantenimientos = datos?.mantenimientos || {};
+  const laboratorios = datos?.equipos_por_laboratorio || [];
 
   return (
     <div className="reportes-contenedor">
@@ -176,7 +177,46 @@ export default function Reportes({ token, usuario }) {
             </div>
           </section>
 
-          {/* Botón de descarga al pie inicialmente */}
+          {/* Tabla de Distribución por Laboratorio */}
+          <section className="reportes-seccion-tabla">
+            <h2 className="reportes-subtitulo-seccion">Distribución de Equipos por Laboratorio</h2>
+            <div className="reportes-tabla-contenedor">
+              <table className="reportes-tabla">
+                <thead>
+                  <tr>
+                    <th>Código</th>
+                    <th>Laboratorio</th>
+                    <th>Equipos</th>
+                    <th>% Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {laboratorios.map((lab) => {
+                    // Cálculo inicial sin validación de división por cero
+                    const porcentaje = Math.round((lab.cantidad_equipos / total) * 100);
+                    return (
+                      <tr key={lab.id_laboratorio}>
+                        <td className="reportes-codigo-lab">{lab.codigo}</td>
+                        <td className="reportes-nombre-lab">{lab.nombre}</td>
+                        <td className="reportes-conteo-lab">{lab.cantidad_equipos}</td>
+                        <td className="reportes-barra-celda">
+                          <div className="reportes-barra-fondo">
+                            <div
+                              className="reportes-barra-progreso"
+                              style={{ width: `${porcentaje}%` }}
+                            />
+                          </div>
+                          <span className="reportes-barra-texto">{porcentaje}%</span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          {/* Botón de descarga al pie */}
           <div className="reportes-acciones-pie">
             <button
               type="button"
