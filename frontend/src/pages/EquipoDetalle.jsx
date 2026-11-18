@@ -545,23 +545,6 @@ export default function EquipoDetalle({
                 </Tarjeta>
 
                 <Tarjeta
-                  titulo="Observaciones"
-                  icono={MessageSquare}
-                >
-                  <Campo
-                    etiqueta="Comentarios"
-                    valor={comentarios}
-                    texto
-                  />
-                </Tarjeta>
-
-              </div>
-
-              {/* COLUMNA DERECHA */}
-              <div className="detalle-columna-derecha">
-                <FotosEquipo idEquipo={idEquipo} token={token} puedeAgregar={puedeAgregarFotos} puedeEliminar={puedeEliminarFotos} />
-
-                <Tarjeta
                   titulo="Ubicación"
                   icono={MapPin}
                 >
@@ -580,6 +563,25 @@ export default function EquipoDetalle({
                     valor={ubicacion}
                   />
                 </Tarjeta>
+
+                <Tarjeta
+                  titulo="Observaciones"
+                  icono={MessageSquare}
+                >
+                  <Campo
+                    etiqueta="Comentarios"
+                    valor={comentarios}
+                    texto
+                  />
+                </Tarjeta>
+
+              </div>
+
+              {/* COLUMNA DERECHA */}
+              <div className="detalle-columna-derecha">
+                <FotosEquipo idEquipo={idEquipo} token={token} puedeAgregar={puedeAgregarFotos} puedeEliminar={puedeEliminarFotos} />
+
+
 
               </div>
 

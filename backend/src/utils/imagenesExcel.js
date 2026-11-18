@@ -1,4 +1,4 @@
-const { validarFoto } = require('../services/fotosEquipoService');
+const { validarFoto, MAX_FOTOS_EQUIPO } = require('../services/fotosEquipoService');
 
 // ExcelJS usa anclas con filas desde cero. Nunca se descargan imágenes externas.
 function extraerImagenes(libro, hoja, filas) {
@@ -14,7 +14,7 @@ function extraerImagenes(libro, hoja, filas) {
       const imagen = libro.getImage(dibujo.imageId);
       const buffer = imagen?.buffer ? Buffer.from(imagen.buffer) : null;
       const mime = validarFoto({ buffer });
-      if (destino.length >= 10 || total + buffer.length > 15 * 1024 * 1024) {
+      if (destino.length >= MAX_FOTOS_EQUIPO || total + buffer.length > 15 * 1024 * 1024) {
         throw new Error(`Se alcanzó el límite de fotos en la fila ${numero} o de 15 MB por importación.`);
       }
       total += buffer.length;

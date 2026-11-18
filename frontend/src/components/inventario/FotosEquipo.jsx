@@ -1,22 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { listarFotos, cargarImagen, agregarFoto, borrarFoto } from '../../services/fotosEquipoService';
+import { listarFotos, agregarFoto, borrarFoto } from '../../services/fotosEquipoService';
 import AdjuntarFotos from './AdjuntarFotos';
+import { MAX_FOTOS_EQUIPO } from '../../utils/limitesFotos';
+import CarruselFotos from './CarruselFotos';
 import '../../styles/fotosEquipos.css';
 
-function FotoProtegida({ idEquipo,foto,token }) {
-  const [url,setUrl] = useState('');
-  const [error,setError] = useState('');
-  useEffect(()=>{
-    const controlador=new AbortController();let enlace;
-    cargarImagen(idEquipo,foto.id_foto,token,controlador.signal).then(blob=>{
-      if(controlador.signal.aborted)return;
-      enlace=URL.createObjectURL(blob);setUrl(enlace);
-    }).catch(error=>{if(!controlador.signal.aborted)setError(error.message);});
-    return()=>{controlador.abort();if(enlace)URL.revokeObjectURL(enlace);};
-  },[idEquipo,foto.id_foto,token]);
-  return url ? <img src={url} alt={`Foto del equipo: ${foto.nombre_archivo}`} loading="lazy" />
-    : <p>{error || 'Cargando foto…'}</p>;
-}
 export default function FotosEquipo({ idEquipo,token,puedeAgregar=false,puedeEliminar=false }) {
   const [fotos,setFotos]=useState([]),[archivos,setArchivos]=useState([]),[recarga,setRecarga]=useState(0);
   const [error,setError]=useState(''),[mensaje,setMensaje]=useState(''),[ocupado,setOcupado]=useState(false);
@@ -31,7 +19,7 @@ export default function FotosEquipo({ idEquipo,token,puedeAgregar=false,puedeEli
   useEffect(()=>{if(eliminando)dialogo.current?.showModal();else dialogo.current?.close();},[eliminando]);
   async function subir() {
     if(operando.current || !archivos.length)return;
-    if(archivos.length+fotos.length>10){setError('El equipo puede tener hasta 10 fotos.');return;}
+    if(archivos.length+fotos.length>MAX_FOTOS_EQUIPO){setError(`El equipo puede tener hasta ${MAX_FOTOS_EQUIPO} fotos; tiene ${fotos.length} guardadas.`);return;}
     operando.current=true;setOcupado(true);setError('');setMensaje('');
     const pendientes=[];let guardadas=0;
     for(const archivo of archivos){try{await agregarFoto(idEquipo,archivo,token);guardadas++;}catch(error){pendientes.push(archivo);setError(error.message);}}
@@ -48,15 +36,11 @@ export default function FotosEquipo({ idEquipo,token,puedeAgregar=false,puedeEli
   return <section className="detalle-tarjeta fotos-panel">
     <h2>Fotos del equipo</h2><p>Puede agregarlas después del registro y elegir cuáles conservar.</p>
     {error&&<p role="alert" className="fotos-error">{error}</p>}{mensaje&&<p role="status">{mensaje}</p>}
-    {fotos.length===0&&<p>No hay fotos registradas.</p>}
-    <div className="fotos-galeria">{fotos.map(foto=><figure key={foto.id_foto}>
-      <FotoProtegida idEquipo={idEquipo} foto={foto} token={token}/><figcaption>{foto.nombre_archivo}</figcaption>
-      {puedeEliminar&&<button type="button" className="btn btn-contorno" disabled={ocupado}
-        onClick={()=>{setConfirmado(false);setEliminando(foto);}}>Eliminar foto</button>}
-    </figure>)}</div>
-    {puedeAgregar&&<><AdjuntarFotos archivos={archivos} onChange={setArchivos} disabled={ocupado}/>
+    <CarruselFotos fotos={fotos} idEquipo={idEquipo} token={token} puedeEliminar={puedeEliminar} ocupado={ocupado}
+      onEliminar={foto=>{setError('');setConfirmado(false);setEliminando(foto);}} />
+    {puedeAgregar&&<details className="fotos-agregar"><summary>Agregar fotos al equipo</summary><AdjuntarFotos archivos={archivos} onChange={setArchivos} disabled={ocupado}/>
       <button type="button" className="btn btn-primario" disabled={ocupado||!archivos.length} onClick={subir}>
-        {ocupado?'Guardando…':`Guardar fotos (${archivos.length})`}</button></>}
+        {ocupado?'Guardando…':`Guardar fotos (${archivos.length})`}</button></details>}
     <dialog ref={dialogo} className="cfg-dialogo" aria-labelledby="foto-eliminar-titulo" onClose={()=>setEliminando(null)}
       onCancel={e=>{if(operando.current)e.preventDefault();}}>
       <h2 id="foto-eliminar-titulo">Eliminar foto</h2><p>{eliminando?.nombre_archivo}</p>

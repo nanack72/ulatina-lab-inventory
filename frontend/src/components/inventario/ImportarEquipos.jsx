@@ -16,6 +16,7 @@ import {
 } from '../../services/importacionEquiposService';
 
 import AdjuntarFotos from './AdjuntarFotos';
+import { MAX_FOTOS_EQUIPO } from '../../utils/limitesFotos';
 import { agregarFoto } from '../../services/fotosEquipoService';
 import '../../styles/fotosEquipos.css';
 import { generarPaginas } from '../../utils/inventario';
@@ -543,7 +544,7 @@ useEffect(() => {
                     <figcaption>{imagen.nombre}</figcaption><button type="button" onClick={()=>setFilas(anteriores=>anteriores.map(f=>f.fila===fila.fila?{...f,imagenes:f.imagenes.filter((_,n)=>n!==i)}:f))}>Quitar foto del Excel</button>
                   </figure>)}</div>
                   <AdjuntarFotos archivos={fila.adjuntos || []} disabled={ocupado} onChange={archivos=>{
-                    if(archivos.length+(fila.imagenes?.length||0)>10){setError('Máximo 10 fotos por equipo, contando las del Excel.');return;}
+                    if(archivos.length+(fila.imagenes?.length||0)>MAX_FOTOS_EQUIPO){setError(`Máximo ${MAX_FOTOS_EQUIPO} fotos por equipo, contando las del Excel.`);return;}
                     setFilas(anteriores=>anteriores.map(f=>f.fila===fila.fila?{...f,adjuntos:archivos}:f));
                   }}/>
                 </details>

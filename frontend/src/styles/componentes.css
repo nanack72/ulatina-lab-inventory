@@ -3,7 +3,7 @@
    Uso:  <button className="btn btn-primario">Guardar</button>
    Variantes: btn-primario | btn-secundario | btn-contorno
               btn-peligro  | btn-icono (cuadrado, solo ícono)
-   Tamaño grande (botones de encabezado): agregar btn-lg
+   Tamaños: btn-sm (pequeño) | btn-lg (botones de encabezado)
    ====================================================== */
 
 .btn {
@@ -27,6 +27,11 @@
 .btn-lg {
   height: var(--alto-lg);
   padding: 0 19px;
+}
+
+.btn-sm {
+  height: var(--alto-sm);
+  padding: 0 12px;
 }
 
 .btn:disabled {

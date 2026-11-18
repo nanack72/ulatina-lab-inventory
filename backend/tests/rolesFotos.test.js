@@ -52,6 +52,15 @@ test('rechaza fotos vacías, excesivas y formatos activos como SVG', () => {
   for(const buffer of [Buffer.alloc(0),Buffer.alloc(5242881),Buffer.from('<svg onload="x()"/>')]) assert.throws(()=>fotos.validarFoto({buffer}));
   assert.equal(fotos.validarFoto({buffer:png}),'image/png');
 });
+test('extrae hasta 50 fotos por equipo y avisa sobre la número 51', () => {
+  const libro = new ExcelJS.Workbook();
+  const hoja = libro.addWorksheet('Inventario');
+  const id = libro.addImage({buffer:png,extension:'png'});
+  for (let i=0;i<51;i++) hoja.addImage(id,{tl:{col:2,row:1},ext:{width:20,height:20}});
+  const resultado = extraerImagenes(libro,hoja,[{fila:2}]);
+  assert.equal(resultado.porFila.get(2).length,50);
+  assert.equal(resultado.avisos.length,1);
+});
 test('roles, fotos y permisos sobre PostgreSQL temporal', async t => {
   const db = new PGlite(); t.after(()=>db.close());
   const pool = {connect:async()=>({query:(sql,args)=>db.query(sql,args),release(){}})};
@@ -105,7 +114,8 @@ test('roles, fotos y permisos sobre PostgreSQL temporal', async t => {
     await assert.rejects(fotos.listarFotos(pool,2,2),e=>e.status===404);
     await assert.rejects(fotos.subirFotoEquipo(pool,1,3,{buffer:png}),e=>e.status===403);
     await assert.rejects(fotos.eliminarFoto(pool,1,3,1),e=>e.status===403);
-    for(let i=1;i<10;i++) await fotos.subirFotoEquipo(pool,1,2,{buffer:png});
+    for(let i=1;i<50;i++) await fotos.subirFotoEquipo(pool,1,2,{buffer:png});
     await assert.rejects(fotos.subirFotoEquipo(pool,1,2,{buffer:png}),e=>e.status===409);
   });
 });
+
