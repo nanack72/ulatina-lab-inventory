@@ -17,11 +17,15 @@ import {
 } from '../services/configuracionService';
 
 import { generarPaginas } from '../utils/inventario';
+import '../styles/inventario.css';
 import '../styles/configuracion.css';
 
 const POR_PAGINA = 5;
 
 const CATALOGOS = {
+  roles: { nombre: 'Roles', singular: 'rol', id: 'id_rol',
+    columnas: [{ campo: 'nombre', titulo: 'Nombre' }],
+    campos: [{ campo: 'nombre', titulo: 'Nombre', max: 50, obligatorio: true }] },
   categorias: {
     nombre: 'Categorías',
     singular: 'categoría',
@@ -76,8 +80,8 @@ const CATALOGOS = {
   },
 };
 
-export default function Configuracion({ token }) {
-  const [catalogo, setCatalogo] = useState('categorias');
+export default function Configuracion({ token, soloRoles = false }) {
+  const [catalogo, setCatalogo] = useState(soloRoles ? 'roles' : 'categorias');
   const [registros, setRegistros] = useState([]);
   const [sedes, setSedes] = useState([]);
   const [busqueda, setBusqueda] = useState('');
@@ -91,6 +95,7 @@ export default function Configuracion({ token }) {
   const [formulario, setFormulario] = useState({});
   const [errorModal, setErrorModal] = useState('');
   const [guardando, setGuardando] = useState(false);
+  const [eliminacionConfirmada, setEliminacionConfirmada] = useState(false);
 
   const dialogoRef = useRef(null);
   const operandoRef = useRef(false);
@@ -178,6 +183,7 @@ export default function Configuracion({ token }) {
   }
 
   function abrirEliminacion(registro) {
+    setEliminacionConfirmada(false);
     setErrorModal('');
     setModal({
       tipo: 'eliminar',
@@ -232,7 +238,7 @@ export default function Configuracion({ token }) {
   }
 
   async function eliminar() {
-    if (operandoRef.current) return;
+    if (operandoRef.current || !eliminacionConfirmada || modal?.tipo !== 'eliminar') return;
 
     operandoRef.current = true;
     setGuardando(true);
@@ -275,13 +281,36 @@ export default function Configuracion({ token }) {
 
   return (
     <div className="cfg-pagina">
-      <div className="cfg-encabezado">
-        <div>
-          <h1>Configuración</h1>
+      <div className="inv-encabezado">
+        <div className="inv-encabezado-texto">
+          <h1>{soloRoles ? 'Roles de usuarios' : 'Configuración'}</h1>
           <p>
-            Administre las categorías, estados, sedes y laboratorios.
+            {soloRoles ? 'Cree y organice roles personalizados. Los roles del sistema están protegidos; los permisos de inventario se asignan por usuario.' : 'Administre las categorías, estados, sedes y laboratorios.'}
           </p>
         </div>        
+      
+        <div className="inv-acciones">
+            <button
+              type="button"
+              className="btn btn-lg btn-icono"
+              aria-label="Actualizar catálogo"
+              title="Actualizar catálogo"
+              disabled={cargando}
+              onClick={() => setRecarga((valor) => valor + 1)}
+            >
+              <RefreshCw size={17} />
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-lg btn-primario"
+              disabled={cargando || Boolean(error)}
+              onClick={() => abrirFormulario()}
+            >
+              <Plus size={17} />
+              Agregar {config.singular}
+            </button>
+          </div>
       </div>
 
       <div
@@ -289,7 +318,7 @@ export default function Configuracion({ token }) {
         role="group"
         aria-label="Catálogos del sistema"
       >
-        {Object.entries(CATALOGOS).map(([clave, opcion]) => (
+        {Object.entries(CATALOGOS).filter(([clave]) => soloRoles ? clave === 'roles' : clave !== 'roles').map(([clave, opcion]) => (
           <button
             key={clave}
             type="button"
@@ -308,9 +337,9 @@ export default function Configuracion({ token }) {
         </div>
       )}
 
-      <section className="cfg-tarjeta" aria-label={config.nombre}>
-        <div className="cfg-barra">
-          <label className="cfg-busqueda">
+      <section className="inv-contenedor" aria-label={config.nombre}>
+        <div className="inv-barra-filtros">
+          <label className="inv-buscador">
             <Search size={17} aria-hidden="true" />
 
             <input
@@ -325,28 +354,7 @@ export default function Configuracion({ token }) {
             />
           </label>
 
-          <div className="cfg-acciones">
-            <button
-              type="button"
-              className="btn btn-icono"
-              aria-label="Actualizar catálogo"
-              title="Actualizar catálogo"
-              disabled={cargando}
-              onClick={() => setRecarga((valor) => valor + 1)}
-            >
-              <RefreshCw size={17} />
-            </button>
-
-            <button
-              type="button"
-              className="btn btn-primario"
-              disabled={cargando || Boolean(error)}
-              onClick={() => abrirFormulario()}
-            >
-              <Plus size={17} />
-              Agregar {config.singular}
-            </button>
-          </div>
+          
         </div>
 
         {error ? (
@@ -360,16 +368,18 @@ export default function Configuracion({ token }) {
           </div>
         ) : (
           <>
-            <div className="cfg-tabla-contenedor">
-              <table className="cfg-tabla">
+            <div className="inv-tabla-contenedor">
+              <table className="inv-tabla">
                 <thead>
                   <tr>
+                    
                     {config.columnas.map(({ campo, titulo }) => (
                       <th key={campo} scope="col">
                         {titulo}
                       </th>
                     ))}
-                    <th scope="col">Acciones</th>
+                    
+                  <th scope="col" className="cfg-columna-acciones">Acciones</th>
                   </tr>
                 </thead>
 
@@ -386,18 +396,21 @@ export default function Configuracion({ token }) {
                   ) : (
                     visibles.map((registro) => (
                       <tr key={registro[config.id]}>
+                        
                         {config.columnas.map(({ campo }) => (
                           <td key={campo}>
                             {registro[campo] ?? 'Sin información'}
                           </td>
                         ))}
 
-                        <td>
+                        
+                      <td className="cfg-columna-acciones">
                           <div className="cfg-acciones-fila">
                             <button
                               type="button"
                               className="cfg-icono"
                               title="Editar"
+                              disabled={registro.protegido === true}
                               aria-label={`Editar ${registro.nombre}`}
                               onClick={() => abrirFormulario(registro)}
                             >
@@ -408,6 +421,7 @@ export default function Configuracion({ token }) {
                               type="button"
                               className="cfg-icono cfg-icono-rojo"
                               title="Eliminar"
+                              disabled={registro.protegido === true}
                               aria-label={`Eliminar ${registro.nombre}`}
                               onClick={() => abrirEliminacion(registro)}
                             >
@@ -422,7 +436,7 @@ export default function Configuracion({ token }) {
               </table>
             </div>
 
-            <div className="cfg-paginacion">
+            <div className="inv-paginacion">
               <p>
                 {total === 0
                   ? 'Mostrando 0 registros'
@@ -431,7 +445,7 @@ export default function Configuracion({ token }) {
                     )} registros`}
               </p>
 
-              <nav aria-label="Paginación del catálogo">
+              <nav className="inv-controles-paginacion" aria-label="Paginación del catálogo">
                 <button
                   type="button"
                   aria-label="Página anterior"
@@ -450,7 +464,7 @@ export default function Configuracion({ token }) {
                         key={numero}
                         type="button"
                         className={
-                          paginaActual === numero ? 'activa' : ''
+                          paginaActual === numero ? 'inv-pagina-activa' : ''
                         }
                         aria-label={`Ir a la página ${numero}`}
                         aria-current={
@@ -508,6 +522,12 @@ export default function Configuracion({ token }) {
                   permitirá eliminarlo.
                 </p>
 
+                <label className="cfg-confirmar-check">
+                  <input type="checkbox" checked={eliminacionConfirmada} disabled={guardando}
+                    onChange={evento => setEliminacionConfirmada(evento.target.checked)} />
+                  <span>Entiendo que esta eliminación es permanente y deseo continuar.</span>
+                </label>
+
                 <div className="cfg-modal-acciones">
                   <button
                     type="button"
@@ -522,7 +542,7 @@ export default function Configuracion({ token }) {
                   <button
                     type="button"
                     className="btn btn-peligro"
-                    disabled={guardando}
+                    disabled={guardando || !eliminacionConfirmada}
                     onClick={eliminar}
                   >
                     {guardando ? 'Eliminando...' : 'Eliminar'}

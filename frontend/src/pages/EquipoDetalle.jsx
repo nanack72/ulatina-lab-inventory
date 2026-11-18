@@ -25,6 +25,7 @@ import { tipoEstado } from '../utils/inventario';
 import HistorialUbicaciones from '../components/inventario/HistorialUbicaciones';
 import HistorialEstados from '../components/inventario/HistorialEstados';
 import HistorialCambios from '../components/inventario/HistorialCambios';
+import FotosEquipo from '../components/inventario/FotosEquipo';
 
 import '../styles/equipoDetalle.css';
 
@@ -128,6 +129,8 @@ export default function EquipoDetalle({
   onTrasladar,
   onCambiarEstado,
   onSesionExpirada,
+  puedeAgregarFotos = false,
+  puedeEliminarFotos = false,
 }) {
 
   // ========================================
@@ -542,22 +545,6 @@ export default function EquipoDetalle({
                 </Tarjeta>
 
                 <Tarjeta
-                  titulo="Observaciones"
-                  icono={MessageSquare}
-                >
-                  <Campo
-                    etiqueta="Comentarios"
-                    valor={comentarios}
-                    texto
-                  />
-                </Tarjeta>
-
-              </div>
-
-              {/* COLUMNA DERECHA */}
-              <div className="detalle-columna-derecha">
-
-                <Tarjeta
                   titulo="Ubicación"
                   icono={MapPin}
                 >
@@ -576,6 +563,25 @@ export default function EquipoDetalle({
                     valor={ubicacion}
                   />
                 </Tarjeta>
+
+                <Tarjeta
+                  titulo="Observaciones"
+                  icono={MessageSquare}
+                >
+                  <Campo
+                    etiqueta="Comentarios"
+                    valor={comentarios}
+                    texto
+                  />
+                </Tarjeta>
+
+              </div>
+
+              {/* COLUMNA DERECHA */}
+              <div className="detalle-columna-derecha">
+                <FotosEquipo idEquipo={idEquipo} token={token} puedeAgregar={puedeAgregarFotos} puedeEliminar={puedeEliminarFotos} />
+
+
 
               </div>
 

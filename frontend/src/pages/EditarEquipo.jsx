@@ -15,6 +15,7 @@ import {
 } from '../services/equiposService';
 
 import { Campo, Seccion } from '../components/inventario/FormularioEquipo';
+import { prepararCambiosEquipo } from '../utils/edicionEquipo';
 
 import '../styles/registrarEquipo.css';
 
@@ -50,6 +51,10 @@ export default function EditarEquipo({
   const [exito, setExito] = useState('');
 
   const enviandoRef = useRef(false);
+  const errorRef = useRef(null);
+  useEffect(() => {
+    if (error) errorRef.current?.focus();
+  }, [error]);
 
   // Cargar la información real del equipo.
   useEffect(() => {
@@ -148,57 +153,12 @@ export default function EditarEquipo({
       return;
     }
 
-    // Conservamos los identificadores originales de las
-    // relaciones; no permitimos editarlas en esta pantalla.
-    const idCategoria =
-      equipoOriginal.id_categoria ??
-      equipoOriginal.categoria?.id_categoria;
-
-    const idEstado =
-      equipoOriginal.id_estado ??
-      equipoOriginal.estado?.id_estado;
-
-    const idLaboratorio =
-      equipoOriginal.id_laboratorio ??
-      equipoOriginal.laboratorio?.id_laboratorio;
-
-    if (
-      !Number.isSafeInteger(Number(idCategoria)) ||
-      !Number.isSafeInteger(Number(idEstado)) ||
-      !Number.isSafeInteger(Number(idLaboratorio)) ||
-      Number(idCategoria) <= 0 ||
-      Number(idEstado) <= 0 ||
-      Number(idLaboratorio) <= 0
-    ) {
-      setError(
-        'No se pudieron identificar la categoría, el estado o el laboratorio originales. Revisá la respuesta del backend antes de actualizar.'
-      );
+    // Enviar únicamente cambios generales; no reenviar relaciones antiguas.
+    const datosEquipo = prepararCambiosEquipo(formulario, equipoOriginal);
+    if (Object.keys(datosEquipo).length === 0) {
+      setError('No hay cambios para guardar.');
       return;
     }
-
-    // PUT usa los datos editados y mantiene las relaciones
-    // originales sin solicitar un traslado ni cambio de estado.
-    const datosEquipo = {
-      nombre: formulario.nombre.trim(),
-      placa_institucional:
-        formulario.placa_institucional.trim() || null,
-      numero_serie:
-        formulario.numero_serie.trim() || null,
-      marca: formulario.marca.trim() || null,
-      modelo: formulario.modelo.trim() || null,
-      anio,
-      caracteristicas:
-        formulario.caracteristicas.trim() || null,
-      comentarios: formulario.comentarios.trim() || null,
-      ubicacion_detalle:
-        equipoOriginal.ubicacion_detalle ??
-        equipoOriginal.ubicacionDetalle ??
-        null,
-      id_categoria: Number(idCategoria),
-      id_estado: Number(idEstado),
-      id_laboratorio: Number(idLaboratorio),
-    };
-
     enviandoRef.current = true;
     setGuardando(true);
     setError('');
@@ -245,7 +205,7 @@ export default function EditarEquipo({
       {error && (
         <div
           className="registro-alerta registro-alerta-error"
-          role="alert"
+          role="alert" ref={errorRef} tabIndex={-1}
         >
           <AlertCircle size={19} />
           <span>{error}</span>

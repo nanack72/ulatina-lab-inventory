@@ -6,6 +6,7 @@ const { verificarToken } = require('../middlewares/authMiddleware');
 const { permitirRoles } = require('../middlewares/permisosMiddleware');
 
 const router = express.Router();
+const { darBajaUsuario } = require('../services/bajaUsuario');
 
 router.use(
   verificarToken,
@@ -624,6 +625,15 @@ router.put('/:id', async (req, res) => {
     return responderError(res, error);
   } finally {
     cliente?.release();
+  }
+});
+
+// El middleware de esta sección ya exige un Superadministrador autenticado.
+router.delete('/:id', async (req, res) => {
+  try {
+    return res.json(await darBajaUsuario(pool, req.params.id, req.usuario.idUsuario));
+  } catch (error) {
+    return responderError(res, error);
   }
 });
 

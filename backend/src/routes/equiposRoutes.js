@@ -1,6 +1,6 @@
-
 const express = require('express');
 const router = express.Router();
+const { obtenerPaginaInventario } = require('../controllers/inventarioPaginadoController');
 
 // ==========================================
 // CONTROLADOR DE EQUIPOS
@@ -35,6 +35,7 @@ const {
 // El usuario debe iniciar sesión y tener
 // un token JWT válido.
 router.use(verificarToken);
+router.use('/:id/fotos', require('./fotosEquipoRoutes'));
 
 // ==========================================
 // 1. CONSULTAR TODOS LOS EQUIPOS
@@ -42,6 +43,8 @@ router.use(verificarToken);
 // ==========================================
 
 router.get('/', obtenerEquipos);
+// Antes de /:id: la consulta completa se conserva para Inicio.
+router.get('/pagina', obtenerPaginaInventario);
 
 // ==========================================
 // 2. REGISTRAR UN EQUIPO

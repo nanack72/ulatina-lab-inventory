@@ -4,11 +4,7 @@
   min-width: 760px;
 }
 
-.usu-tabla th:last-child,
-.usu-tabla td:last-child {
-  width: 110px;
-  min-width: 110px;
-}
+
 
 .usu-estado {
   display: inline-flex;
@@ -43,6 +39,14 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 }
+
+.usu-accion-baja { color: var(--peligro); }
+.usu-accion-baja:disabled { opacity: 0.45; cursor: not-allowed; }
+.usu-boton-baja { background: var(--peligro); color: #fff; }
+.usu-baja { max-width: min(520px, calc(100vw - 32px)); }
+.usu-baja p { line-height: 1.6; overflow-wrap: anywhere; }
+.usu-baja:modal { overscroll-behavior: contain; }
+.usu-baja::backdrop { overflow: hidden; overscroll-behavior: contain; }
 
 .usu-ayuda {
   margin: 0;

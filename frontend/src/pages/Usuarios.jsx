@@ -7,6 +7,7 @@ import {
   ChevronLeft,
   ChevronRight,
   AlertCircle,
+  Trash2,
 } from 'lucide-react';
 
 import {
@@ -16,7 +17,10 @@ import {
 } from '../services/usuariosService';
 
 import { generarPaginas } from '../utils/inventario';
+import BajaUsuario from '../components/BajaUsuario';
+import Configuracion from './Configuracion';
 
+import '../styles/inventario.css';
 import '../styles/configuracion.css';
 import '../styles/usuarios.css';
 
@@ -52,6 +56,8 @@ function formularioInicial() {
 
 export default function Usuarios({ token, usuarioActual }) {
   const [usuarios, setUsuarios] = useState([]);
+  const [usuarioBaja, setUsuarioBaja] = useState(null);
+  const [viendoRoles, setViendoRoles] = useState(false);
   const [opciones, setOpciones] = useState({
     roles: [],
     sedes: [],
@@ -354,16 +360,48 @@ export default function Usuarios({ token, usuarioActual }) {
     Number(usuarioEditando.id_usuario) ===
       Number(usuarioActual?.idUsuario);
 
+  if (viendoRoles) return <>
+    <button type="button" className="btn btn-contorno" onClick={() => { setViendoRoles(false); setRecarga(v => v + 1); }}>← Volver a usuarios</button>
+    <Configuracion token={token} soloRoles />
+  </>;
+
   return (
     <div className="cfg-pagina usu-pagina">
-      <div className="cfg-encabezado">
-        <div>
+      <div className="inv-encabezado">
+        <div className="inv-encabezado-texto">
           <h1>Usuarios</h1>
           <p>
             Administre las cuentas, roles, permisos de inventario
             y asignaciones de acceso.
           </p>
         </div>
+      
+        <div className="inv-acciones">
+            <button
+              type="button"
+              className="btn btn-lg btn-icono"
+              title="Actualizar usuarios"
+              aria-label="Actualizar usuarios"
+              disabled={cargando}
+              onClick={() =>
+                setRecarga((valor) => valor + 1)
+              }
+            >
+              <RefreshCw size={17} />
+            </button>
+
+            <button type="button" className="btn btn-lg btn-contorno" onClick={() => setViendoRoles(true)}>Gestionar roles</button>
+
+            <button
+              type="button"
+              className="btn btn-lg btn-primario"
+              disabled={cargando || Boolean(error)}
+              onClick={abrirRegistro}
+            >
+              <Plus size={17} />
+              Registrar usuario
+            </button>
+          </div>
       </div>
 
       {mensaje && (
@@ -373,11 +411,11 @@ export default function Usuarios({ token, usuarioActual }) {
       )}
 
       <section
-        className="cfg-tarjeta"
+        className="inv-contenedor"
         aria-label="Usuarios registrados"
       >
-        <div className="cfg-barra">
-          <label className="cfg-busqueda">
+        <div className="inv-barra-filtros">
+          <label className="inv-buscador">
             <Search size={17} aria-hidden="true" />
 
             <input
@@ -392,30 +430,7 @@ export default function Usuarios({ token, usuarioActual }) {
             />
           </label>
 
-          <div className="cfg-acciones">
-            <button
-              type="button"
-              className="btn btn-icono"
-              title="Actualizar usuarios"
-              aria-label="Actualizar usuarios"
-              disabled={cargando}
-              onClick={() =>
-                setRecarga((valor) => valor + 1)
-              }
-            >
-              <RefreshCw size={17} />
-            </button>
-
-            <button
-              type="button"
-              className="btn btn-primario"
-              disabled={cargando || Boolean(error)}
-              onClick={abrirRegistro}
-            >
-              <Plus size={17} />
-              Registrar usuario
-            </button>
-          </div>
+          
         </div>
 
         {error ? (
@@ -432,15 +447,17 @@ export default function Usuarios({ token, usuarioActual }) {
           </div>
         ) : (
           <>
-            <div className="cfg-tabla-contenedor">
-              <table className="cfg-tabla usu-tabla">
+            <div className="inv-tabla-contenedor">
+              <table className="inv-tabla usu-tabla">
                 <thead>
                   <tr>
+                    
                     <th scope="col">Nombre</th>
                     <th scope="col">Correo</th>
                     <th scope="col">Rol</th>
                     <th scope="col">Estado</th>
-                    <th scope="col">Acciones</th>
+                    
+                  <th scope="col" className="cfg-columna-acciones">Acciones</th>
                   </tr>
                 </thead>
 
@@ -457,6 +474,7 @@ export default function Usuarios({ token, usuarioActual }) {
                   ) : (
                     visibles.map((usuario) => (
                       <tr key={usuario.id_usuario}>
+                        
                         <td>{usuario.nombre_completo}</td>
                         <td>{usuario.correo_institucional}</td>
                         <td>{usuario.rol}</td>
@@ -473,7 +491,8 @@ export default function Usuarios({ token, usuarioActual }) {
                           </span>
                         </td>
 
-                        <td>
+                        
+                      <td className="cfg-columna-acciones">
                           <div className="cfg-acciones-fila">
                             <button
                               type="button"
@@ -486,6 +505,14 @@ export default function Usuarios({ token, usuarioActual }) {
                             >
                               <Pencil size={16} />
                             </button>
+                            <button type="button" className="cfg-icono usu-accion-baja"
+                              title={Number(usuario.id_usuario) === Number(usuarioActual?.idUsuario)
+                                ? 'No puede dar de baja su propia cuenta' : 'Eliminar o desactivar usuario'}
+                              aria-label={`Eliminar o desactivar ${usuario.nombre_completo}`}
+                              disabled={Number(usuario.id_usuario) === Number(usuarioActual?.idUsuario)}
+                              onClick={() => setUsuarioBaja(usuario)}>
+                              <Trash2 size={16} aria-hidden="true" />
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -495,7 +522,7 @@ export default function Usuarios({ token, usuarioActual }) {
               </table>
             </div>
 
-            <div className="cfg-paginacion">
+            <div className="inv-paginacion">
               <p>
                 {total === 0
                   ? 'Mostrando 0 usuarios'
@@ -504,7 +531,7 @@ export default function Usuarios({ token, usuarioActual }) {
                     )} usuarios`}
               </p>
 
-              <nav aria-label="Paginación de usuarios">
+              <nav className="inv-controles-paginacion" aria-label="Paginación de usuarios">
                 <button
                   type="button"
                   aria-label="Página anterior"
@@ -530,7 +557,7 @@ export default function Usuarios({ token, usuarioActual }) {
                       type="button"
                       className={
                         paginaActual === numero
-                          ? 'activa'
+                          ? 'inv-pagina-activa'
                           : ''
                       }
                       aria-label={`Ir a la página ${numero}`}
@@ -561,6 +588,14 @@ export default function Usuarios({ token, usuarioActual }) {
           </>
         )}
       </section>
+
+      {usuarioBaja && <BajaUsuario usuario={usuarioBaja} token={token}
+        onCerrar={() => setUsuarioBaja(null)}
+        onCompletada={resultado => {
+          setUsuarioBaja(null);
+          setMensaje(resultado.message);
+          setRecarga(valor => valor + 1);
+        }} />}
 
       <dialog
         ref={dialogoRef}

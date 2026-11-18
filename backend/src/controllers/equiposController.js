@@ -12,8 +12,10 @@ const {
 // Verificar identificadores positivos.
 const esIdValido = (valor) => {
   return (
+    (typeof valor === 'string' || typeof valor === 'number') &&
     /^[1-9]\d*$/.test(String(valor ?? '')) &&
-    Number.isSafeInteger(Number(valor))
+    Number.isSafeInteger(Number(valor)) &&
+    Number(valor) <= 2147483647
   );
 };
 
@@ -468,6 +470,10 @@ const crearEquipo = async (req, res) => {
     });
   }
 
+  if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
+    return res.status(400).json({ success: false, message: 'Debe enviar un objeto JSON válido' });
+  }
+
   const {
     nombre,
     numero_serie,
@@ -533,6 +539,7 @@ const crearEquipo = async (req, res) => {
     anio !== null &&
     anio !== '' &&
     (
+      (typeof anio !== 'string' && typeof anio !== 'number') ||
       !/^\d{4}$/.test(String(anio)) ||
       Number(anio) < 1900 ||
       Number(anio) > 2100
@@ -820,6 +827,7 @@ const actualizarEquipo = async (req, res) => {
       anio !== null &&
       anio !== '' &&
       (
+        (typeof anio !== 'string' && typeof anio !== 'number') ||
         !/^\d{4}$/.test(String(anio)) ||
         Number(anio) < 1900 ||
         Number(anio) > 2100

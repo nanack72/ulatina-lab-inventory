@@ -340,6 +340,8 @@ export default function MainLayout({
       if (equipoSeleccionado !== null) {
         return (
           <EquipoDetalle
+            puedeAgregarFotos={usuarioPuedeRegistrar}
+            puedeEliminarFotos={usuarioPuedeModificar}
             key={equipoSeleccionado}
             idEquipo={equipoSeleccionado}
             token={token}
@@ -506,13 +508,7 @@ export default function MainLayout({
             <strong>{obtenerTitulo()}</strong>
           </div>
 
-          <div className="main-user">
-            <span>
-              {typeof usuario?.rol === 'string'
-                ? usuario.rol
-                : usuario?.rol?.nombre || ''}
-            </span>
-          </div>
+
         </header>
 
         <section className="main-page">

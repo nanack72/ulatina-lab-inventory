@@ -1,4 +1,5 @@
 import { ChevronDown } from 'lucide-react';
+import { useId } from 'react';
 
 export default function FiltroSelect({
   etiqueta,
@@ -6,9 +7,13 @@ export default function FiltroSelect({
   opciones,
   onChange,
 }) {
+  const id = useId();
   return (
     <div className="inv-select-contenedor">
+      <label className="selector-etiqueta" htmlFor={id}>Filtrar por {etiqueta.toLowerCase()}</label>
       <select
+        id={id}
+        name={etiqueta}
         aria-label={`Filtrar por ${etiqueta.toLowerCase()}`}
         value={valor}
         onChange={(event) =>

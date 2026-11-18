@@ -4,6 +4,7 @@ const { verificarToken } = require('../middlewares/authMiddleware');
 const { permitirRoles } = require('../middlewares/permisosMiddleware');
 
 const router = express.Router();
+const { modificarRol, esRolSistema } = require('../services/rolesService');
 
 // Todas las operaciones de esta sección requieren Superadministrador.
 router.use(
@@ -13,6 +14,7 @@ router.use(
 
 // Los nombres SQL provienen únicamente de esta lista fija.
 const CATALOGOS = {
+  roles: { tabla: 'rol', id: 'id_rol', campos: { nombre: { max: 50, obligatorio: true } } },
   categorias: {
     tabla: 'categoria',
     id: 'id_categoria',
@@ -129,6 +131,7 @@ function validarDatos(configuracion, body) {
 }
 
 function responderError(res, error, operacion) {
+  if (error.status) return res.status(error.status).json({ success: false, message: error.message });
   if (error.code === '23505') {
     return res.status(409).json({
       success: false,
@@ -190,7 +193,7 @@ router.get('/:catalogo', async (req, res) => {
 
     return res.json({
       success: true,
-      data: resultado.rows,
+      data: config.tabla === 'rol' ? resultado.rows.map(rol => ({ ...rol, protegido: esRolSistema(rol.nombre) })) : resultado.rows,
     });
   } catch (error) {
     return responderError(res, error, 'consultar');
@@ -214,6 +217,7 @@ router.post('/:catalogo', async (req, res) => {
   const parametros = campos.map((_, indice) => `$${indice + 1}`);
 
   try {
+    if (config.tabla === 'rol') return res.status(201).json(await modificarRol(pool, 'crear', null, validacion.datos.nombre, req.usuario.idUsuario));
     const resultado = await pool.query(
       `
         INSERT INTO public.${config.tabla} (${campos.join(', ')})
@@ -255,6 +259,7 @@ router.put('/:catalogo/:id', async (req, res) => {
   valores.push(req.registroId);
 
   try {
+    if (config.tabla === 'rol') return res.json(await modificarRol(pool, 'editar', req.registroId, validacion.datos.nombre, req.usuario.idUsuario));
     const resultado = await pool.query(
       `
         UPDATE public.${config.tabla}
@@ -287,6 +292,7 @@ router.delete('/:catalogo/:id', async (req, res) => {
   const config = req.catalogoConfig;
 
   try {
+    if (config.tabla === 'rol') return res.json(await modificarRol(pool, 'eliminar', req.registroId, null, req.usuario.idUsuario));
     const resultado = await pool.query(
       `
         DELETE FROM public.${config.tabla}
