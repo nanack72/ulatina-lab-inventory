@@ -9,7 +9,7 @@ export default function BajaUsuario({ usuario, token, onCerrar, onCompletada }) 
   const [confirmado, setConfirmado] = useState(false);
   useEffect(() => {
     const dialogo = dialogoRef.current;
-    dialogo.showModal();
+    if (!dialogo.open) dialogo.showModal();
     return () => { if (dialogo.open) dialogo.close(); };
   }, []);
 
@@ -32,7 +32,12 @@ export default function BajaUsuario({ usuario, token, onCerrar, onCompletada }) 
 
   return (
     <dialog ref={dialogoRef} className="cfg-dialogo usu-baja" aria-labelledby="usu-baja-titulo"
-      aria-describedby="usu-baja-descripcion" onClose={onCerrar}
+      aria-describedby="usu-baja-descripcion"
+      onClose={evento => {
+        // close se entrega de forma asíncrona. StrictMode puede haber reabierto
+        // el diálogo tras la limpieza del efecto; ese cierre anterior se ignora.
+        if (!evento.currentTarget.open) onCerrar();
+      }}
       onCancel={evento => { if (enviandoRef.current) evento.preventDefault(); }}>
       <h2 id="usu-baja-titulo">¿Dar de baja a este usuario?</h2>
       <p><strong>{usuario.nombre_completo}</strong><br />{usuario.correo_institucional}</p>

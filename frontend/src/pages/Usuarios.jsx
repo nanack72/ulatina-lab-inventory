@@ -377,7 +377,6 @@ export default function Usuarios({ token, usuarioActual }) {
         </div>
       
         <div className="inv-acciones">
-            <button type="button" className="btn btn-lg btn-contorno" onClick={() => setViendoRoles(true)}>Gestionar roles</button>
             <button
               type="button"
               className="btn btn-lg btn-icono"
@@ -390,6 +389,8 @@ export default function Usuarios({ token, usuarioActual }) {
             >
               <RefreshCw size={17} />
             </button>
+
+            <button type="button" className="btn btn-lg btn-contorno" onClick={() => setViendoRoles(true)}>Gestionar roles</button>
 
             <button
               type="button"
