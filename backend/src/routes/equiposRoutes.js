@@ -35,6 +35,7 @@ const {
 // El usuario debe iniciar sesión y tener
 // un token JWT válido.
 router.use(verificarToken);
+router.use('/:id/fotos', require('./fotosEquipoRoutes'));
 
 // ==========================================
 // 1. CONSULTAR TODOS LOS EQUIPOS

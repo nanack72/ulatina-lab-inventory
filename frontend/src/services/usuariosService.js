@@ -1,5 +1,12 @@
 const API_URL = '/api/admin/usuarios';
 
+export function darBajaUsuario(id, token) {
+  if (!Number.isSafeInteger(Number(id)) || Number(id) <= 0) {
+    throw new Error('Identificador de usuario no válido.');
+  }
+  return solicitar(`/${encodeURIComponent(id)}`, token, { method: 'DELETE' });
+}
+
 async function solicitar(ruta, token, opciones = {}) {
   let respuesta;
 

@@ -411,3 +411,11 @@
     flex: 1;
   }
 }
+.imp-carga input::file-selector-button {background:#205e4c;color:white;border:0;border-radius:8px;padding:12px 18px;margin-right:12px;font:inherit;cursor:pointer;}
+.imp-carga-activa {background:#e4f3ec;border-color:#205e4c;}
+.imp-pasos {display:flex;gap:12px;flex-wrap:wrap;list-style:none;padding:0;margin:20px 0;}
+.imp-pasos li {padding:10px 14px;border-radius:8px;background:#f0f4f2;color:#405d54;}
+.imp-pasos [aria-current="step"] {background:#205e4c;color:white;font-weight:600;}
+.imp-fotos-revision {margin-block:16px;}
+.imp-fotos-revision summary {cursor:pointer;font-weight:600;color:#205e4c;padding-block:8px;}
+.imp-carga input {max-width:100%;}

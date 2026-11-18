@@ -41,13 +41,13 @@ export async function leerArchivoEquipos(archivo, token) {
   return resultado.data;
 }
 
-export async function confirmarImportacionEquipos(filas, token) {
+export async function confirmarImportacionEquipos(filas, token, validarSolo = false) {
   const resultado = await solicitar('confirmar', token, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ filas }),
+    body: JSON.stringify({ filas, ...(validarSolo ? { validar_solo: true } : {}) }),
   });
 
   return resultado;

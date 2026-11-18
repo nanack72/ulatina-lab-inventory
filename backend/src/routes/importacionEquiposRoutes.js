@@ -1,6 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const ExcelJS = require('exceljs');
+const { extraerImagenes } = require('../utils/imagenesExcel');
 
 const pool = require('../config/database');
 const { verificarToken } = require('../middlewares/authMiddleware');
@@ -387,7 +388,7 @@ function validarFila(entrada, catalogos) {
       const valor = entrada[campo];
 
       if (!esId(valor)) {
-        errores.push(`Seleccione un valor válido para ${campo}.`);
+        errores.push(`Seleccione un valor válido para ${{id_categoria:'categoría',id_estado:'estado',id_laboratorio:'laboratorio'}[campo]}.`);
       }
 
       datos[campo] = valor;
@@ -727,17 +728,20 @@ router.post('/leer', recibirArchivo, async (req, res) => {
     }
 
     const revision = await validarLote(pool, filas, catalogos);
+    const fotos = extraerImagenes(libro, hoja, filas);
 
     return res.json({
       success: true,
       message: 'Archivo leído. Revise los datos antes de confirmar.',
       data: {
         archivo: req.file.originalname,
+        avisos_fotos: fotos.avisos,
         catalogos,
         filas: revision.map((resultado) => ({
           fila: resultado.fila,
           ...resultado.datos,
           originales: originales.get(resultado.fila),
+          imagenes: fotos.porFila.get(resultado.fila) || [],
           errores: resultado.errores,
         })),
         total: revision.length,
@@ -816,6 +820,11 @@ router.post('/confirmar', async (req, res) => {
       catalogos
     );
 
+    if (req.body.validar_solo === true) {
+      await cliente.query('ROLLBACK');
+      transaccion = false;
+      return res.json({ success: true, data: { filas: revision } });
+    }
     await cliente.query(
       "SELECT set_config('app.usuario_id', $1, true)",
       [String(req.usuario.idUsuario)]

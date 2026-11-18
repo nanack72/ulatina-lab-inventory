@@ -25,6 +25,7 @@ import { tipoEstado } from '../utils/inventario';
 import HistorialUbicaciones from '../components/inventario/HistorialUbicaciones';
 import HistorialEstados from '../components/inventario/HistorialEstados';
 import HistorialCambios from '../components/inventario/HistorialCambios';
+import FotosEquipo from '../components/inventario/FotosEquipo';
 
 import '../styles/equipoDetalle.css';
 
@@ -128,6 +129,8 @@ export default function EquipoDetalle({
   onTrasladar,
   onCambiarEstado,
   onSesionExpirada,
+  puedeAgregarFotos = false,
+  puedeEliminarFotos = false,
 }) {
 
   // ========================================
@@ -556,6 +559,7 @@ export default function EquipoDetalle({
 
               {/* COLUMNA DERECHA */}
               <div className="detalle-columna-derecha">
+                <FotosEquipo idEquipo={idEquipo} token={token} puedeAgregar={puedeAgregarFotos} puedeEliminar={puedeEliminarFotos} />
 
                 <Tarjeta
                   titulo="Ubicación"

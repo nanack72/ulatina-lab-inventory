@@ -15,6 +15,9 @@ import {
   confirmarImportacionEquipos,
 } from '../../services/importacionEquiposService';
 
+import AdjuntarFotos from './AdjuntarFotos';
+import { agregarFoto } from '../../services/fotosEquipoService';
+import '../../styles/fotosEquipos.css';
 import { generarPaginas } from '../../utils/inventario';
 
 import '../../styles/importarEquipos.css';
@@ -39,6 +42,10 @@ export default function ImportarEquipos({
   const dialogoRef = useRef(null);
   const operandoRef = useRef(false);
 
+  const [arrastrando, setArrastrando] = useState(false);
+  const [avisosFotos, setAvisosFotos] = useState([]);
+  const [fotosPendientes, setFotosPendientes] = useState([]);
+  const [valoresComunes, setValoresComunes] = useState({});
   const [archivo, setArchivo] = useState(null);
   const [filas, setFilas] = useState([]);
   const [catalogos, setCatalogos] = useState({
@@ -71,6 +78,8 @@ useEffect(() => {
     }
   };
 }, [abierto]);
+  useEffect(() => { if (abierto) dialogoRef.current?.querySelector('h2')?.focus(); }, [paso, abierto]);
+  useEffect(() => { if (error) dialogoRef.current?.querySelector('[role="alert"]')?.focus(); }, [error]);
   function cerrar() {
     if (operandoRef.current) return;
     onCerrar?.();
@@ -105,10 +114,12 @@ useEffect(() => {
         resultado.filas.map((fila) => ({
           ...fila,
           modificado: false,
+          adjuntos: [],
         }))
       );
 
       setCatalogos(resultado.catalogos);
+      setAvisosFotos(resultado.avisos_fotos || []);
       setSeleccionadas(
         resultado.filas.map((fila) => fila.fila)
       );
@@ -149,6 +160,21 @@ useEffect(() => {
     return lista.find((elemento) => elemento[campoId] === id)?.nombre;
   }
 
+  async function guardarFotos(cola) {
+    const pendientes = [];
+    for (const foto of cola) {
+      try { await agregarFoto(foto.id, foto.archivo, token); }
+      catch (error) { pendientes.push({...foto, error:error.message}); }
+    }
+    setFotosPendientes(pendientes);
+    return pendientes;
+  }
+  async function reintentarFotos() {
+    if (operandoRef.current) return;
+    operandoRef.current = true; setOcupado(true);
+    try { await guardarFotos(fotosPendientes); }
+    finally { operandoRef.current = false; setOcupado(false); }
+  }
   async function confirmar() {
     if (operandoRef.current) return;
 
@@ -188,10 +214,27 @@ useEffect(() => {
     setError('');
 
     try {
-      const resultado = await confirmarImportacionEquipos(
-        datos,
-        token
-      );
+      const comprobacion = await confirmarImportacionEquipos(datos, token, true);
+      const revisadas = comprobacion.data.filas;
+      if (revisadas.some(f => f.errores.length)) {
+        setFilas(anteriores => anteriores.map(f => {
+          const revisada = revisadas.find(r => r.fila === f.fila);
+          return revisada ? {...f, errores:revisada.errores, modificado:false} : f;
+        }));
+        setError('Hay equipos seleccionados con errores. Corríjalos o desmárquelos para continuar.');
+        return;
+      }
+      const resultado = await confirmarImportacionEquipos(datos, token);
+      const cola = [];
+      for (const guardado of resultado.data.resultados.filter(f => f.importado)) {
+        const fila = elegidas.find(f => f.fila === guardado.fila);
+        for (const imagen of fila.imagenes || []) {
+          const bytes = Uint8Array.from(atob(imagen.base64), c => c.charCodeAt(0));
+          cola.push({id:guardado.id_equipo, nombre:fila.nombre, archivo:new File([bytes], imagen.nombre, {type:imagen.mime})});
+        }
+        for (const archivo of fila.adjuntos || []) cola.push({id:guardado.id_equipo, nombre:fila.nombre, archivo});
+      }
+      await guardarFotos([...fotosPendientes, ...cola]);
 
       const resultados = resultado.data.resultados;
 
@@ -277,7 +320,7 @@ useEffect(() => {
     >
       <div className="imp-encabezado">
         <div>
-          <h2 id="imp-titulo">
+          <h2 id="imp-titulo" tabIndex={-1}>
             {paso === 'archivo'
               ? 'Importar equipos'
               : paso === 'revision'
@@ -305,8 +348,10 @@ useEffect(() => {
         </button>
       </div>
 
+      <ol className="imp-pasos" aria-label="Pasos de importación">{[['archivo','1. Elegir Excel'],['revision','2. Revisar datos y fotos'],['resultado','3. Resultado']].map(([id,texto]) => <li key={id} aria-current={paso===id?'step':undefined}>{texto}</li>)}</ol>
+      {avisosFotos.length > 0 && <details><summary>Avisos sobre imágenes ({avisosFotos.length})</summary><ul>{avisosFotos.map((aviso,i)=><li key={i}>{aviso}</li>)}</ul></details>}
       {error && (
-        <div className="imp-alerta imp-error" role="alert">
+        <div className="imp-alerta imp-error" role="alert" tabIndex={-1}>
           <AlertCircle size={18} />
           <span>{error}</span>
         </div>
@@ -314,15 +359,21 @@ useEffect(() => {
 
       {paso === 'archivo' && (
         <>
-          <div className="imp-carga">
+          <div className={`imp-carga ${arrastrando ? 'imp-carga-activa' : ''}`}
+            onDragOver={e=>{e.preventDefault();if(!ocupado)setArrastrando(true);}}
+            onDragLeave={()=>setArrastrando(false)}
+            onDrop={e=>{e.preventDefault();setArrastrando(false);if(ocupado)return;
+              if(e.dataTransfer.files.length!==1){setError('Arrastre un único archivo Excel.');return;}
+              setArchivo(e.dataTransfer.files[0]);setError('');}}>
             <FileSpreadsheet size={38} aria-hidden="true" />
 
             <label htmlFor="imp-archivo">
-              Archivo de inventario
+              Arrastre su Excel aquí o selecciónelo
             </label>
 
             <input
               id="imp-archivo"
+              name="archivo"
               type="file"
               accept=".xlsx"
               disabled={ocupado}
@@ -332,6 +383,7 @@ useEffect(() => {
               }}
             />
 
+            <p role="status">{archivo ? `Seleccionado: ${archivo.name}` : "Ningún archivo seleccionado"}</p>
             <p>
               Formato .xlsx · Máximo 5 MB y 200 equipos.
             </p>
@@ -345,13 +397,11 @@ useEffect(() => {
 
             <p>
               Categoría, estado y laboratorio podrán seleccionarse
-              en la revisión. Las fotografías y los tickets no se
-              importan en este paso.
+              en la revisión. Extraeremos las fotos pegadas en la hoja y podrá adjuntar más a cada equipo.
             </p>
 
             <p>
-              El archivo institucional que compartiste está vacío:
-              agregá equipos de prueba para comprobar la lectura.
+              Cada foto se asocia a la fila donde comienza su esquina superior izquierda. Revise la asociación antes de guardar. Los tickets no se importan.
             </p>
           </div>
         </>
@@ -364,6 +414,30 @@ useEffect(() => {
             <span>{seleccionadas.length} seleccionados</span>
             <span>{erroresPendientes} con observaciones</span>
           </div>
+
+          <details className="imp-valores-comunes">
+            <summary>Completar campos vacíos de varios equipos a la vez</summary>
+            <p>Elija valores comunes y aplíquelos a los equipos seleccionados. Los datos que ya tengan un valor se conservan.</p>
+            <div className="imp-campos">
+              {[
+                ['id_categoria', 'Categoría', catalogos.categorias],
+                ['id_estado', 'Estado', catalogos.estados],
+                ['id_laboratorio', 'Laboratorio', catalogos.laboratorios],
+              ].map(([campo, etiqueta, opciones]) => <div className="imp-campo" key={campo}>
+                <label htmlFor={`comun-${campo}`}>{etiqueta}</label>
+                <select id={`comun-${campo}`} name={campo} disabled={ocupado} value={valoresComunes[campo] || ''}
+                  onChange={e => setValoresComunes(v => ({...v, [campo]:Number(e.target.value) || null}))}>
+                  <option value="">Sin cambios</option>
+                  {opciones.map(o => <option key={o[campo]} value={o[campo]}>{o.nombre_sede ? `${o.nombre_sede} · ` : ''}{o.nombre}</option>)}
+                </select>
+              </div>)}
+            </div>
+            <button type="button" className="btn btn-contorno" disabled={ocupado} onClick={() => setFilas(anteriores => anteriores.map(f => {
+              if (!seleccionadas.includes(f.fila)) return f;
+              const cambios = Object.fromEntries(Object.entries(valoresComunes).filter(([campo,valor]) => valor && !f[campo]));
+              return Object.keys(cambios).length ? {...f,...cambios,modificado:true} : f;
+            }))}>Aplicar a campos vacíos seleccionados</button>
+          </details>
 
           <div className="imp-seleccion">
             <label>
@@ -391,7 +465,7 @@ useEffect(() => {
           <fieldset
             className="imp-lista"
             disabled={ocupado}
-          >
+          ><legend>Equipos del archivo</legend>
             {visibles.map((fila) => (
               <article className="imp-equipo" key={fila.fila}>
                 <div className="imp-equipo-encabezado">
@@ -463,6 +537,16 @@ useEffect(() => {
                   ) || 'Sin laboratorio'}
                 </p>
 
+                <details className="imp-fotos-revision"><summary>Fotos ({(fila.imagenes?.length || 0)+(fila.adjuntos?.length || 0)}) · Ver, agregar o quitar</summary>
+                  <div className="fotos-galeria">{(fila.imagenes || []).map((imagen,i)=><figure key={i}>
+                    <img src={`data:${imagen.mime};base64,${imagen.base64}`} alt={`Foto extraída del Excel para ${fila.nombre || 'este equipo'}`} />
+                    <figcaption>{imagen.nombre}</figcaption><button type="button" onClick={()=>setFilas(anteriores=>anteriores.map(f=>f.fila===fila.fila?{...f,imagenes:f.imagenes.filter((_,n)=>n!==i)}:f))}>Quitar foto del Excel</button>
+                  </figure>)}</div>
+                  <AdjuntarFotos archivos={fila.adjuntos || []} disabled={ocupado} onChange={archivos=>{
+                    if(archivos.length+(fila.imagenes?.length||0)>10){setError('Máximo 10 fotos por equipo, contando las del Excel.');return;}
+                    setFilas(anteriores=>anteriores.map(f=>f.fila===fila.fila?{...f,adjuntos:archivos}:f));
+                  }}/>
+                </details>
                 <details className="imp-detalles">
                   <summary>Ver y editar datos</summary>
 
@@ -703,7 +787,11 @@ useEffect(() => {
       )}
 
       {paso === 'resultado' && resumen && (
-        <div className="imp-resultado">
+        <div className="imp-resultado" role="status">
+          {fotosPendientes.length>0 && <div className="imp-alerta imp-error"><div><strong>Equipos guardados, fotos pendientes: {fotosPendientes.length}</strong>
+            <p>Reintente sin importar los equipos de nuevo. Si cierra, podrá agregar las fotos desde el detalle del equipo.</p>
+            <ul>{fotosPendientes.map((foto,i)=><li key={i}>{foto.nombre}: {foto.archivo.name} — {foto.error}</li>)}</ul>
+            <button type="button" disabled={ocupado} onClick={reintentarFotos}>Reintentar fotos pendientes</button></div></div>}
           {resumen.importados > 0 ? (
             <CheckCircle2 size={38} aria-hidden="true" />
           ) : (
@@ -757,8 +845,8 @@ useEffect(() => {
             onClick={confirmar}
           >
             {ocupado
-              ? 'Importando...'
-              : `Confirmar importación (${seleccionadas.length})`}
+              ? 'Comprobando y guardando...'
+              : `Comprobar y guardar (${seleccionadas.length})`}
           </button>
         )}
 

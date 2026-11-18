@@ -1,0 +1,13 @@
+.fotos-panel{padding:20px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.fotos-panel h2,.fotos-panel p{margin:0}.fotos-panel p,.fotos-adjuntar small{color:var(--texto-secundario);font-size:13px;line-height:1.6}
+.fotos-galeria{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px}
+.fotos-galeria figure{margin:0;padding:12px;border:1px solid var(--borde);border-radius:12px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.fotos-galeria img{width:100%;height:170px;object-fit:contain;background:#f5f8f6;border-radius:8px}
+.fotos-galeria figcaption{font-size:12px;overflow-wrap:anywhere}.fotos-error{color:var(--peligro)!important}
+.fotos-adjuntar{border:1px dashed #a8cabb;border-radius:12px;padding:16px;background:#f8fbf9;display:flex;flex-direction:column;gap:12px;min-width:0}
+.fotos-adjuntar label{font-size:13px;font-weight:600;color:var(--verde)}
+.fotos-adjuntar input{max-width:100%;font:inherit;font-size:12px}
+.fotos-adjuntar input::file-selector-button{border:1px solid var(--verde);border-radius:8px;background:white;color:var(--verde);padding:10px 14px;margin-right:12px;font:inherit;cursor:pointer}
+.fotos-adjuntar ul{padding:0;margin:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+.fotos-adjuntar li{display:flex;gap:12px;justify-content:space-between;align-items:center;font-size:12px}
+.fotos-adjuntar li span{overflow-wrap:anywhere;min-width:0}.fotos-adjuntar li button{background:transparent;border:0;color:var(--peligro);cursor:pointer;padding:6px}

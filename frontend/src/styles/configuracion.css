@@ -81,7 +81,7 @@
 
 .cfg-barra {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   gap: 14px;
   padding: 17px 19px;
@@ -153,7 +153,7 @@
   overflow-wrap: anywhere;
 }
 
-.cfg-tabla td:first-child {
+.cfg-tabla td:nth-child(2) {
   font-weight: 600;
 }
 
@@ -413,6 +413,36 @@
   line-height: 1.6;
 }
 
+.cfg-confirmar-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-block: 20px;
+  padding: 14px;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-sm);
+  background: var(--verde-suave);
+  font-size: 13px;
+  line-height: 1.6;
+  cursor: pointer;
+}
+
+.cfg-confirmar-check input {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  accent-color: var(--verde);
+}
+
+.cfg-confirmar-check:focus-within {
+  outline: 2px solid var(--verde);
+  outline-offset: 2px;
+}
+
+.cfg-dialogo:modal { overscroll-behavior: contain; }
+.cfg-dialogo::backdrop { overflow: hidden; overscroll-behavior: contain; }
+
 @media (max-width: 600px) {
   .cfg-barra {
     flex-wrap: wrap;
@@ -424,17 +454,38 @@
 
   .cfg-acciones {
     width: 100%;
-    justify-content: flex-end;
+    justify-content: flex-start;
   }
 }
 
-.cfg-tabla th:last-child,
-.cfg-tabla td:last-child {
-  width: 153px;
-  min-width: 153px;
+.cfg-tabla th.cfg-columna-acciones,
+.cfg-tabla td.cfg-columna-acciones {
+  width: 112px;
+  min-width: 112px;
   white-space: nowrap;
 }
 
 .cfg-acciones-fila {
   justify-content: flex-start;
+}
+
+/* Administración reutiliza la tabla y distribución de Inventario. */
+.cfg-pagina .inv-tabla .cfg-columna-acciones {
+  width: 112px;
+  min-width: 112px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.cfg-pagina .inv-tabla .cfg-acciones-fila {
+  justify-content: center;
+}
+
+.cfg-pagina .inv-tabla td:first-child:not(.cfg-vacio) {
+  color: var(--verde);
+  font-weight: 600;
+}
+
+.cfg-pagina .inv-acciones .btn {
+  white-space: nowrap;
 }
