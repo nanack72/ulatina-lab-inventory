@@ -16,13 +16,23 @@ const { subirFoto } = require('../middlewares/uploadMiddleware');
  * se valida en el controlador a partir de la bitácora indicada.
  */
 
+const ROLES_OPERATIVOS = [
+  'SuperAdministrador',
+  'Superadministrador',
+  'Administrador',
+  'Coordinador',
+  'Director',
+  'Tecnico',
+  'Técnico'
+];
+
 router.use(verificarToken);
 
 // POST /api/evidencias
 // El JWT y el rol se validan ANTES de que multer escriba nada en disco.
 router.post(
   '/',
-  permitirRoles('SuperAdministrador', 'Administrador', 'Tecnico'),
+  permitirRoles(...ROLES_OPERATIVOS),
   subirFoto,
   subirEvidencia
 );
