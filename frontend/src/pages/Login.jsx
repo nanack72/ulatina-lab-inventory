@@ -7,11 +7,17 @@ import logoGris from '../assets/images/logo-ulatina-gris.png';
 import '../styles/login.css';
 
 export default function Login({ onLogin }) {
-  const [correo, setCorreo] = useState('');
+  const [correo, setCorreo] = useState(() => {
+    return localStorage.getItem('ulatina_correo_recordado') || '';
+  });
   const [contrasena, setContrasena] = useState('');
   const [mostrarContrasena, setMostrarContrasena] = useState(false);
+  const [recordarme, setRecordarme] = useState(() => {
+    return Boolean(localStorage.getItem('ulatina_correo_recordado'));
+  });
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState('');
+  const [mostrarModalRecuperacion, setMostrarModalRecuperacion] = useState(false);
 
   const manejarLogin = async (event) => {
     event.preventDefault();
@@ -29,6 +35,12 @@ export default function Login({ onLogin }) {
         correo.trim(),
         contrasena
       );
+
+      if (recordarme) {
+        localStorage.setItem('ulatina_correo_recordado', correo.trim());
+      } else {
+        localStorage.removeItem('ulatina_correo_recordado');
+      }
 
       onLogin(sesion);
     } catch (err) {
@@ -231,15 +243,22 @@ export default function Login({ onLogin }) {
               <label className="login-remember">
                 <input
                   type="checkbox"
-                  disabled
-                  title="Disponible próximamente"
+                  checked={recordarme}
+                  onChange={(event) =>
+                    setRecordarme(event.target.checked)
+                  }
+                  disabled={cargando}
                 />
                 <span>Recordarme</span>
               </label>
 
-              <span className="login-forgot">
+              <button
+                type="button"
+                className="login-forgot"
+                onClick={() => setMostrarModalRecuperacion(true)}
+              >
                 ¿Olvidaste tu contraseña?
-              </span>
+              </button>
             </div>
 
             {/* MENSAJE DE ERROR */}
@@ -267,6 +286,77 @@ export default function Login({ onLogin }) {
 
         </div>
       </section>
+
+      {/* MODAL INSTITUCIONAL DE RECUPERACIÓN */}
+      {mostrarModalRecuperacion && (
+        <div
+          className="login-modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-recuperar-titulo"
+          onClick={() => setMostrarModalRecuperacion(false)}
+        >
+          <div
+            className="login-modal-card"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="login-modal-header">
+              <div className="login-modal-icon-badge" aria-hidden="true">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  width="22"
+                  height="22"
+                >
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+              </div>
+              <h2 id="modal-recuperar-titulo">Recuperación de Contraseña</h2>
+            </div>
+
+            <div className="login-modal-body">
+              <p>
+                Por normativas de seguridad institucional y control de auditoría de los laboratorios universitarios, el restablecimiento de contraseñas no se procesa mediante auto-servicio público para resguardar la integridad de los activos tecnológicos.
+              </p>
+
+              <div className="login-modal-info-box">
+                <p className="login-modal-info-title">Canal oficial de soporte técnico:</p>
+                <ul>
+                  <li>
+                    <strong>Soporte Técnico de Laboratorios:</strong>{' '}
+                    <a href="mailto:soporte.laboratorios@ulatina.cr">
+                      soporte.laboratorios@ulatina.cr
+                    </a>
+                  </li>
+                  <li>
+                    <strong>Ubicación física:</strong> Sede Heredia, Edificio Central, Piso 2, Oficina de TICs.
+                  </li>
+                  <li>
+                    <strong>Extensión telefónica:</strong> 4200 (Lunes a Viernes, 8:00 a. m. a 6:00 p. m.)
+                  </li>
+                </ul>
+              </div>
+
+              <p className="login-modal-nota">
+                Para validar su identidad, proporcione su nombre completo, correo institucional y rol asignado al comunicarse con el departamento técnico.
+              </p>
+            </div>
+
+            <div className="login-modal-footer">
+              <button
+                type="button"
+                className="btn btn-primario"
+                onClick={() => setMostrarModalRecuperacion(false)}
+              >
+                Comprendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -264,9 +264,141 @@
 }
 
 .login-forgot {
+  background: none;
+  border: none;
+  padding: 0;
   color: #16805e;
   font-size: 13px;
   font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.15s ease, text-decoration 0.15s ease;
+}
+
+.login-forgot:hover {
+  color: #0c5e45;
+  text-decoration: underline;
+}
+
+/* ==========================================
+   MODAL DE RECUPERACIÓN INSTITUCIONAL
+========================================== */
+
+.login-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+  animation: loginFadeIn 0.2s ease-out;
+}
+
+.login-modal-card {
+  width: 100%;
+  max-width: 480px;
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  animation: loginScaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.login-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.login-modal-icon-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #ecfdf5;
+  color: #059669;
+  flex-shrink: 0;
+}
+
+.login-modal-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.login-modal-body {
+  padding: 20px 24px;
+  color: #334155;
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+
+.login-modal-body p {
+  margin: 0 0 12px;
+}
+
+.login-modal-info-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin: 14px 0;
+}
+
+.login-modal-info-title {
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 8px !important;
+}
+
+.login-modal-info-box ul {
+  margin: 0;
+  padding-left: 20px;
+  list-style-type: disc;
+}
+
+.login-modal-info-box li {
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+.login-modal-info-box a {
+  color: #059669;
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.login-modal-nota {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0 !important;
+}
+
+.login-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 24px;
+  background: #f8fafc;
+  border-top: 1px solid #f1f5f9;
+}
+
+@keyframes loginFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes loginScaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 /* ==========================================

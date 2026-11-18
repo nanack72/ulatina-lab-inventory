@@ -1,30 +1,33 @@
 const test = require('node:test');
 const assert = require('node:assert');
+const { obtenerBaseUrl, cerrarServidorTest, obtenerCredencialesTest } = require('./testHelper');
 
-const BASE_URL = process.env.TEST_API_URL || 'http://localhost:3000/api';
-
-async function obtenerTokenAdmin() {
-  const resp = await fetch(`${BASE_URL}/auth/login`, {
+async function obtenerTokenAdmin(baseUrl) {
+  const credenciales = obtenerCredencialesTest();
+  const resp = await fetch(`${baseUrl}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      correo: 'oscar.monoga@ulatina.net',
-      contrasena: 'AdminOscar2026!'
-    })
+    body: JSON.stringify(credenciales)
   });
   const json = await resp.json();
   return json.token;
 }
 
 test('Reportes y Exportación - Integridad de datos y generación Excel', async (t) => {
+  let baseUrl;
   let token;
 
   t.before(async () => {
-    token = await obtenerTokenAdmin();
+    baseUrl = await obtenerBaseUrl();
+    token = await obtenerTokenAdmin(baseUrl);
+  });
+
+  t.after(() => {
+    cerrarServidorTest();
   });
 
   await t.test('Debe devolver el resumen general con conteo numérico de equipos y estados', async () => {
-    const respuesta = await fetch(`${BASE_URL}/reportes/resumen-general`, {
+    const respuesta = await fetch(`${baseUrl}/reportes/resumen-general`, {
       headers: { Authorization: `Bearer ${token}` }
     });
 
@@ -39,7 +42,7 @@ test('Reportes y Exportación - Integridad de datos y generación Excel', async 
   });
 
   await t.test('Debe generar y descargar el libro binario de Excel (.xlsx) con cabeceras MIME correctas', async () => {
-    const respuesta = await fetch(`${BASE_URL}/reportes/exportar-excel`, {
+    const respuesta = await fetch(`${baseUrl}/reportes/exportar-excel`, {
       headers: { Authorization: `Bearer ${token}` }
     });
 

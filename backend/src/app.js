@@ -110,11 +110,16 @@ app.use((error, req, res, next) => {
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-    console.log(
-        `Servidor PES ejecutándose en http://localhost:${PORT}`
-    );
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(
+            `Servidor PES ejecutándose en http://localhost:${PORT}`
+        );
 
-    // Iniciar la limpieza automática de tokens
-    iniciarLimpiezaTokens();
-});
+        // Iniciar la limpieza automática de tokens
+        iniciarLimpiezaTokens();
+    });
+}
+
+module.exports = app;
+

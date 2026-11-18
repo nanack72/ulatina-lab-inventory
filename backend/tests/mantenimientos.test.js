@@ -1,30 +1,33 @@
 const test = require('node:test');
 const assert = require('node:assert');
+const { obtenerBaseUrl, cerrarServidorTest, obtenerCredencialesTest } = require('./testHelper');
 
-const BASE_URL = process.env.TEST_API_URL || 'http://localhost:3000/api';
-
-async function obtenerTokenAdmin() {
-  const resp = await fetch(`${BASE_URL}/auth/login`, {
+async function obtenerTokenAdmin(baseUrl) {
+  const credenciales = obtenerCredencialesTest();
+  const resp = await fetch(`${baseUrl}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      correo: 'oscar.monoga@ulatina.net',
-      contrasena: 'AdminOscar2026!'
-    })
+    body: JSON.stringify(credenciales)
   });
   const json = await resp.json();
   return json.token;
 }
 
 test('Mantenimientos e Incidencias - Control de acceso y trazabilidad', async (t) => {
+  let baseUrl;
   let token;
 
   t.before(async () => {
-    token = await obtenerTokenAdmin();
+    baseUrl = await obtenerBaseUrl();
+    token = await obtenerTokenAdmin(baseUrl);
+  });
+
+  t.after(() => {
+    cerrarServidorTest();
   });
 
   await t.test('Debe listar mantenimientos con estructura paginada y badges de estado', async () => {
-    const respuesta = await fetch(`${BASE_URL}/mantenimientos?pagina=1&limite=5`, {
+    const respuesta = await fetch(`${baseUrl}/mantenimientos?pagina=1&limite=5`, {
       headers: { Authorization: `Bearer ${token}` }
     });
 
@@ -36,7 +39,7 @@ test('Mantenimientos e Incidencias - Control de acceso y trazabilidad', async (t
   });
 
   await t.test('Debe consultar incidencias técnicas y responder estructura válida', async () => {
-    const respuesta = await fetch(`${BASE_URL}/incidencias`, {
+    const respuesta = await fetch(`${baseUrl}/incidencias`, {
       headers: { Authorization: `Bearer ${token}` }
     });
 
