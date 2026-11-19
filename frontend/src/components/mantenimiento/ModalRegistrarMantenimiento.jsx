@@ -1,370 +1,272 @@
-import { useState, useRef } from 'react';
-import { X, Upload, Camera, AlertTriangle, CheckCircle2, RefreshCw } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { DialogoModulo, Aviso } from '../comunes/Modulo';
 import { registrarMantenimiento } from '../../services/mantenimientosService';
 import { subirEvidenciaFotografica } from '../../services/evidenciasService';
-import { TIPOS_MANTENIMIENTO } from '../../utils/mantenimiento';
-
+import { TIPOS_MANTENIMIENTO, ESTADOS_MANTENIMIENTO } from '../../utils/mantenimiento';
 export default function ModalRegistrarMantenimiento({
   abierto,
   alCerrar,
   alGuardarExitoso,
   equiposDisponibles = [],
-  estadosDisponibles = [],
-  token
+  errorEquipos,
+  cargandoEquipos,
+  token,
 }) {
-  const [idEquipo, setIdEquipo] = useState('');
-  const [tipoMantenimiento, setTipoMantenimiento] = useState('Preventivo');
-  const [motivoFalla, setMotivoFalla] = useState('');
-  const [descripcionTrabajo, setDescripcionTrabajo] = useState('');
-  const [horasInvertidas, setHorasInvertidas] = useState('1.0');
-  const [actualizarEstado, setActualizarEstado] = useState(false);
-  const [idNuevoEstado, setIdNuevoEstado] = useState('');
-  const [motivoCambioEstado, setMotivoCambioEstado] = useState('');
-
-  // Evidencia fotográfica inicial
-  const [archivoFoto, setArchivoFoto] = useState(null);
-  const [previsualizacion, setPrevisualizacion] = useState(null);
-  const [tipoEvidencia, setTipoEvidencia] = useState('Antes');
-  const [descripcionEvidencia, setDescripcionEvidencia] = useState('');
-
-  const [guardando, setGuardando] = useState(false);
-  const [errorFormulario, setErrorFormulario] = useState(null);
-  const archivoInputRef = useRef(null);
-
-  if (!abierto) return null;
-
-  const manejarSeleccionArchivo = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      alert('Solo se admiten imágenes JPG, PNG o WEBP');
+  const [equipo, setEquipo] = useState(''),
+    [tipo, setTipo] = useState('Preventivo'),
+    [motivo, setMotivo] = useState(''),
+    [trabajo, setTrabajo] = useState(''),
+    [horas, setHoras] = useState('1'),
+    [estado, setEstado] = useState('En Proceso');
+  const [foto, setFoto] = useState(null),
+    [tipoFoto, setTipoFoto] = useState('Antes'),
+    [descripcionFoto, setDescripcionFoto] = useState(''),
+    [preview, setPreview] = useState('');
+  const enlaceFoto = useRef(null);
+  const [guardando, setGuardando] = useState(false),
+    [error, setError] = useState(''),
+    [idGuardado, setIdGuardado] = useState(null),
+    ocupado = useRef(false);
+  useEffect(
+    () => () => {
+      if (enlaceFoto.current) URL.revokeObjectURL(enlaceFoto.current);
+    },
+    []
+  );
+  function seleccionarFoto(e) {
+    const archivo = e.target.files?.[0];
+    if (!archivo) {
+      if (enlaceFoto.current) URL.revokeObjectURL(enlaceFoto.current);
+      enlaceFoto.current = null;
+      setFoto(null);
+      setPreview('');
       return;
     }
-
-    if (file.size > 5 * 1024 * 1024) {
-      alert('La imagen supera el límite máximo de 5 MB');
+    if (!/\.(jpe?g|png|webp)$/i.test(archivo.name) || archivo.size > 5242880 || !archivo.size) {
+      setError('Adjunte una imagen JPG, PNG o WEBP de hasta 5 MB.');
+      e.target.value = '';
       return;
     }
-
-    setArchivoFoto(file);
-    setPrevisualizacion(URL.createObjectURL(file));
-  };
-
-  const limpiarFoto = () => {
-    if (previsualizacion) {
-      URL.revokeObjectURL(previsualizacion);
-    }
-    setArchivoFoto(null);
-    setPrevisualizacion(null);
-    if (archivoInputRef.current) {
-      archivoInputRef.current.value = '';
-    }
-  };
-
-  const manejarEnvio = async (e) => {
+    if (enlaceFoto.current) URL.revokeObjectURL(enlaceFoto.current);
+    enlaceFoto.current = URL.createObjectURL(archivo);
+    setPreview(enlaceFoto.current);
+    setFoto(archivo);
+    setError('');
+  }
+  async function guardar(e) {
     e.preventDefault();
-    setErrorFormulario(null);
-
-    if (!idEquipo) {
-      setErrorFormulario('Debe seleccionar el equipo a intervenir.');
-      return;
-    }
-
-    if (!descripcionTrabajo.trim()) {
-      setErrorFormulario('Debe ingresar la descripción del trabajo técnico realizado.');
-      return;
-    }
-
+    if (ocupado.current) return;
+    ocupado.current = true;
+    setGuardando(true);
+    setError('');
     try {
-      setGuardando(true);
-
-      const payload = {
-        id_equipo: Number(idEquipo),
-        tipo_mantenimiento: tipoMantenimiento,
-        descripcion_trabajo: descripcionTrabajo.trim(),
-        horas_invertidas: Number(horasInvertidas) || 1,
-        estado_mantenimiento: 'En Proceso'
-      };
-
-      if (tipoMantenimiento === 'Correctivo' && motivoFalla.trim()) {
-        payload.motivo_falla = motivoFalla.trim();
+      let id = idGuardado;
+      if (!id) {
+        const creado = await registrarMantenimiento(
+          {
+            id_equipo: Number(equipo),
+            tipo_mantenimiento: tipo,
+            motivo_falla: tipo === 'Correctivo' ? motivo.trim() : null,
+            descripcion_trabajo: trabajo.trim(),
+            horas_invertidas: Number(horas),
+            estado_mantenimiento: estado,
+          },
+          token
+        );
+        id = creado.id_bitacora;
+        setIdGuardado(id);
       }
-
-      if (actualizarEstado && idNuevoEstado) {
-        payload.id_nuevo_estado = Number(idNuevoEstado);
-        payload.motivo_cambio_estado =
-          motivoCambioEstado.trim() || 'Cambio por intervención técnica';
-      }
-
-      const resultado = await registrarMantenimiento(payload, token);
-      const idBitacoraCreada = resultado?.id_bitacora;
-
-      // Si el técnico adjuntó foto, se sube como evidencia
-      if (archivoFoto && idBitacoraCreada) {
-        try {
-          await subirEvidenciaFotografica(
-            {
-              foto: archivoFoto,
-              id_bitacora: idBitacoraCreada,
-              tipo_evidencia: tipoEvidencia,
-              descripcion: descripcionEvidencia.trim() || `Evidencia inicial (${tipoEvidencia})`
-            },
-            token
-          );
-        } catch (errorFoto) {
-          console.warn('Mantenimiento guardado, pero falló la subida de evidencia:', errorFoto.message);
-        }
-      }
-
-      limpiarFoto();
-      alGuardarExitoso();
+      if (foto)
+        await subirEvidenciaFotografica(
+          { foto, id_bitacora: id, tipo_evidencia: tipoFoto, descripcion: descripcionFoto.trim() },
+          token
+        );
+      alGuardarExitoso('Mantenimiento registrado' + (foto ? ' con su evidencia.' : '.'));
     } catch (err) {
-      if (err.status === 403) {
-        setErrorFormulario(
-          'Acceso denegado (403): Tu perfil técnico no tiene asignado el laboratorio de este equipo. Selecciona un activo autorizado o consulta a coordinación.'
-        );
-      } else if (err.status === 409) {
-        setErrorFormulario(
-          'Conflicto de integridad (409): El equipo seleccionado ya tiene una intervención activa o su estado actual no admite cambio concurrente.'
-        );
-      } else {
-        setErrorFormulario(
-          err.message || 'Error interno al guardar la orden de mantenimiento.'
-        );
-      }
+      setError(err.message);
     } finally {
+      ocupado.current = false;
       setGuardando(false);
     }
-  };
-
+  }
   return (
-    <div className="mant-modal-backdrop" onClick={alCerrar}>
-      <div
-        className="mant-modal-contenido"
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-labelledby="mant-modal-titulo"
-      >
-        <header className="mant-modal-cabecera">
-          <div>
-            <h2 id="mant-modal-titulo" className="mant-modal-titulo">
-              Registrar Intervención Técnica
-            </h2>
-            <p className="mant-modal-subtitulo">
-              Bitácora de mantenimiento y trazabilidad física del hardware.
-            </p>
-          </div>
-          <button
-            type="button"
-            className="mant-modal-cerrar"
-            onClick={alCerrar}
-            disabled={guardando}
-            aria-label="Cerrar ventana"
-          >
-            <X size={20} />
-          </button>
-        </header>
-
-        {errorFormulario && (
-          <div className="mant-alerta-error" role="alert">
-            <AlertTriangle size={18} />
-            <span>{errorFormulario}</span>
-          </div>
+    <DialogoModulo
+      abierto={abierto}
+      alCerrar={() =>
+        idGuardado
+          ? alGuardarExitoso('Mantenimiento guardado. Quedó pendiente su evidencia.')
+          : alCerrar()
+      }
+      titulo="Registrar mantenimiento"
+      descripcion="Registre el trabajo realizado y agregue una evidencia si la necesita."
+      ocupado={guardando}
+    >
+      <form className="mod-formulario" onSubmit={guardar}>
+        <Aviso error>{error || errorEquipos}</Aviso>
+        {idGuardado && (
+          <Aviso>
+            El mantenimiento ya está guardado. Puede reintentar la evidencia sin crear otro
+            registro.
+          </Aviso>
         )}
-
-        <form onSubmit={manejarEnvio} className="mant-formulario">
-          {/* Selector de Equipo */}
-          <div className="mant-campo">
-            <label htmlFor="mant-select-equipo" className="mant-label">
-              Equipo a Intervenir <span className="mant-requerido">*</span>
-            </label>
+        <fieldset disabled={guardando || !!idGuardado} className="mod-formulario mod-fieldset">
+          <legend className="mod-sr">Datos de mantenimiento</legend>
+          <label className="mod-campo" htmlFor="mant-equipo">
+            Equipo *
             <select
-              id="mant-select-equipo"
-              className="mant-input"
-              value={idEquipo}
-              onChange={(e) => setIdEquipo(e.target.value)}
+              id="mant-equipo"
+              name="id_equipo"
+              value={equipo}
               required
+              disabled={cargandoEquipos || !!idGuardado}
+              onChange={(e) => setEquipo(e.target.value)}
             >
-              <option value="">-- Seleccione un activo tecnológico --</option>
+              <option value="">
+                {cargandoEquipos ? 'Cargando equipos…' : 'Seleccione un equipo'}
+              </option>
               {equiposDisponibles.map((eq) => (
                 <option key={eq.id_equipo} value={eq.id_equipo}>
-                  {eq.placa_institucional || eq.numero_serie || `ID #${eq.id_equipo}`} — {eq.nombre} ({eq.laboratorio || 'Lab'})
+                  {eq.placa_institucional || eq.numero_serie || 'Sin placa'} · {eq.nombre}
                 </option>
               ))}
             </select>
-          </div>
-
-          {/* Tipo de Mantenimiento y Horas Invertidas en fila de dos columnas */}
-          <div className="mant-grid-dos-cols">
-            <div className="mant-campo">
-              <label htmlFor="mant-select-tipo" className="mant-label">
-                Tipo de Mantenimiento <span className="mant-requerido">*</span>
-              </label>
+          </label>
+          <div className="mod-campos">
+            <label className="mod-campo" htmlFor="mant-tipo">
+              Tipo
               <select
-                id="mant-select-tipo"
-                className="mant-input"
-                value={tipoMantenimiento}
-                onChange={(e) => setTipoMantenimiento(e.target.value)}
+                id="mant-tipo"
+                name="tipo_mantenimiento"
+                value={tipo}
+                onChange={(e) => setTipo(e.target.value)}
               >
                 {TIPOS_MANTENIMIENTO.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
+                  <option key={t}>{t}</option>
                 ))}
               </select>
-            </div>
-
-            <div className="mant-campo">
-              <label htmlFor="mant-horas" className="mant-label">
-                Horas Invertidas <span className="mant-requerido">*</span>
-              </label>
-              <input
-                id="mant-horas"
-                type="number"
-                step="0.5"
-                min="0.5"
-                max="100"
-                className="mant-input"
-                value={horasInvertidas}
-                onChange={(e) => setHorasInvertidas(e.target.value)}
-                required
-              />
-            </div>
-          </div>
-
-          {tipoMantenimiento === 'Correctivo' && (
-            <div className="mant-campo">
-              <label htmlFor="mant-motivo-falla" className="mant-label">
-                Motivo de la Falla Reportada
-              </label>
-              <input
-                id="mant-motivo-falla"
-                type="text"
-                className="mant-input"
-                placeholder="Ej. Pantalla azul, sobrecalentamiento, ventilador ruidoso..."
-                value={motivoFalla}
-                onChange={(e) => setMotivoFalla(e.target.value)}
-              />
-            </div>
-          )}
-
-          {/* Descripción del Trabajo */}
-          <div className="mant-campo">
-            <label htmlFor="mant-descripcion" className="mant-label">
-              Descripción del Trabajo Realizado <span className="mant-requerido">*</span>
             </label>
-            <textarea
-              id="mant-descripcion"
-              className="mant-textarea"
-              rows={3}
-              placeholder="Detalle los procedimientos ejecutados, repuestos o pruebas..."
-              value={descripcionTrabajo}
-              onChange={(e) => setDescripcionTrabajo(e.target.value)}
-              required
-            />
+            <label className="mod-campo" htmlFor="mant-estado">
+              Estado
+              <select
+                id="mant-estado"
+                name="estado_mantenimiento"
+                value={estado}
+                onChange={(e) => setEstado(e.target.value)}
+              >
+                {ESTADOS_MANTENIMIENTO.map((t) => (
+                  <option key={t}>{t}</option>
+                ))}
+              </select>
+            </label>
           </div>
-
-          {/* Subida de Evidencia con Multer */}
-          <div className="mant-seccion-evidencia">
-            <h3 className="mant-evidencia-titulo">
-              <Camera size={18} />
-              <span>Evidencia Fotográfica (Multer)</span>
-            </h3>
-
-            <div className="mant-evidencia-dropzone">
-              {previsualizacion ? (
-                <div className="mant-previsualizacion-box">
-                  <img
-                    src={previsualizacion}
-                    alt="Previsualización de evidencia"
-                    className="mant-img-preview"
-                  />
-                  <div className="mant-preview-acciones">
-                    <span className="mant-preview-nombre">{archivoFoto?.name}</span>
-                    <button
-                      type="button"
-                      className="mant-btn-remover-foto"
-                      onClick={limpiarFoto}
-                    >
-                      Remover foto
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div
-                  className="mant-subida-placeholder"
-                  onClick={() => archivoInputRef.current?.click()}
-                >
-                  <Upload size={28} className="mant-icono-upload" />
-                  <p>Haga clic para seleccionar o arrastrar fotografía de evidencia</p>
-                  <span>Formatos admitidos: JPG, PNG, WEBP (Máx. 5 MB)</span>
-                </div>
-              )}
-
+          {tipo === 'Correctivo' && (
+            <label className="mod-campo" htmlFor="mant-motivo">
+              Motivo de la falla
               <input
-                ref={archivoInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="mant-input-file-oculto"
-                onChange={manejarSeleccionArchivo}
+                id="mant-motivo"
+                name="motivo_falla"
+                value={motivo}
+                maxLength={10000}
+                onChange={(e) => setMotivo(e.target.value)}
               />
+            </label>
+          )}
+          <label className="mod-campo" htmlFor="mant-trabajo">
+            Trabajo realizado *
+            <textarea
+              id="mant-trabajo"
+              name="descripcion_trabajo"
+              required
+              rows={4}
+              maxLength={10000}
+              value={trabajo}
+              onChange={(e) => setTrabajo(e.target.value)}
+            />
+          </label>
+          <label className="mod-campo" htmlFor="mant-horas">
+            Horas invertidas
+            <input
+              id="mant-horas"
+              name="horas_invertidas"
+              type="number"
+              min="0"
+              max="9999.99"
+              step="0.01"
+              required
+              value={horas}
+              onChange={(e) => setHoras(e.target.value)}
+            />
+          </label>
+        </fieldset>
+        <label className="mod-campo" htmlFor="mant-foto">
+          Evidencia opcional · JPG, PNG o WEBP, hasta 5 MB
+          <input
+            id="mant-foto"
+            name="foto"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            disabled={guardando}
+            onChange={seleccionarFoto}
+          />
+        </label>
+        {foto && (
+          <>
+            <img className="mod-imagen-previa" src={preview} alt="Vista previa de la evidencia" />
+            <div className="mod-campos">
+              <label className="mod-campo" htmlFor="mant-tipofoto">
+                Momento
+                <select
+                  id="mant-tipofoto"
+                  name="tipo_evidencia"
+                  value={tipoFoto}
+                  disabled={guardando}
+                  onChange={(e) => setTipoFoto(e.target.value)}
+                >
+                  {['Antes', 'Durante', 'Después'].map((t) => (
+                    <option key={t}>{t}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="mod-campo" htmlFor="mant-descfoto">
+                Descripción de la foto
+                <input
+                  id="mant-descfoto"
+                  name="descripcion"
+                  maxLength={1000}
+                  value={descripcionFoto}
+                  disabled={guardando}
+                  onChange={(e) => setDescripcionFoto(e.target.value)}
+                />
+              </label>
             </div>
-
-            {archivoFoto && (
-              <div className="mant-grid-dos-cols">
-                <div className="mant-campo">
-                  <label className="mant-label">Momento de Evidencia</label>
-                  <select
-                    className="mant-input"
-                    value={tipoEvidencia}
-                    onChange={(e) => setTipoEvidencia(e.target.value)}
-                  >
-                    <option value="Antes">Antes de la intervención</option>
-                    <option value="Durante">Durante el procedimiento</option>
-                    <option value="Después">Después de reparar</option>
-                  </select>
-                </div>
-                <div className="mant-campo">
-                  <label className="mant-label">Nota de Evidencia</label>
-                  <input
-                    type="text"
-                    className="mant-input"
-                    placeholder="Ej. Estado del ventilador con polvo..."
-                    value={descripcionEvidencia}
-                    onChange={(e) => setDescripcionEvidencia(e.target.value)}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          <footer className="mant-modal-pie">
-            <button
-              type="button"
-              className="mant-btn-secundario"
-              onClick={alCerrar}
-              disabled={guardando}
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              className="mant-btn-primario"
-              disabled={guardando}
-            >
-              {guardando ? (
-                <>
-                  <RefreshCw className="mant-spinner-btn" size={16} />
-                  <span>Guardando...</span>
-                </>
-              ) : (
-                'Registrar Mantenimiento'
-              )}
-            </button>
-          </footer>
-        </form>
-      </div>
-    </div>
+          </>
+        )}
+        <footer className="mod-acciones">
+          <button
+            type="button"
+            className="btn btn-secundario"
+            disabled={guardando}
+            onClick={() =>
+              idGuardado
+                ? alGuardarExitoso('Mantenimiento guardado. Quedó pendiente su evidencia.')
+                : alCerrar()
+            }
+          >
+            {idGuardado ? 'Finalizar sin evidencia' : 'Cancelar'}
+          </button>
+          <button
+            type="submit"
+            className="btn btn-primario"
+            disabled={guardando || (!idGuardado && (cargandoEquipos || !!errorEquipos))}
+          >
+            {guardando
+              ? 'Guardando…'
+              : idGuardado
+                ? 'Reintentar evidencia'
+                : 'Registrar mantenimiento'}
+          </button>
+        </footer>
+      </form>
+    </DialogoModulo>
   );
 }

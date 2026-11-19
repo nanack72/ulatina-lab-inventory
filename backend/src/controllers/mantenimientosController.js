@@ -1,4 +1,6 @@
 const pool = require('../config/database');
+const {listarMantenimientos}=require('../services/mantenimientosListado');
+const {validarEntradaMantenimiento}=require('../utils/validacionMantenimiento');
 const { verificarAccesoEquipo } = require('../utils/accesoEquipos');
 
 /**
@@ -30,6 +32,8 @@ const esUsuarioAdministrador = (rol) => {
  * al laboratorio al que pertenece el equipo.
  */
 const crearMantenimiento = async (req, res) => {
+    const invalido=validarEntradaMantenimiento(req.body,false);
+    if(invalido)return res.status(400).json({success:false,message:invalido});
     const {
         id_equipo,
         tipo_mantenimiento,
@@ -356,202 +360,9 @@ const crearMantenimiento = async (req, res) => {
  * Para usuarios no superadministradores, se restringen
  * los resultados a las sedes y laboratorios asignados.
  */
-const obtenerMantenimientos = async (req, res) => {
-    try {
-        const {
-            id_equipo,
-            tipo,
-            tipo_mantenimiento,
-            estado,
-            estado_mantenimiento,
-            busqueda,
-            fecha_desde,
-            fecha_hasta,
-            id_sede
-        } = req.query;
-
-        const tipoEfectivo = tipo || tipo_mantenimiento;
-        const estadoEfectivo = estado || estado_mantenimiento;
-
-        const esAdmin = esUsuarioAdministrador(req.usuario.rol);
-        const idUsuario = req.usuario.idUsuario;
-
-        const params = [];
-        let paramIndex = 1;
-
-        let query = `
-            SELECT
-                bm.id_bitacora,
-                bm.id_equipo,
-                bm.id_usuario_tecnico,
-                bm.tipo_mantenimiento,
-                bm.motivo_falla,
-                bm.descripcion_trabajo,
-                bm.horas_invertidas,
-                bm.fecha_mantenimiento,
-                bm.estado_mantenimiento,
-
-                e.nombre AS nombre_equipo,
-                e.placa_institucional,
-                e.numero_serie,
-                e.marca,
-                e.modelo,
-                e.id_estado AS id_estado_equipo,
-
-                es.nombre AS estado_equipo,
-
-                u.nombre_completo AS nombre_tecnico,
-                u.correo_institucional AS correo_tecnico,
-
-                l.id_laboratorio,
-                l.codigo AS codigo_laboratorio,
-                l.nombre AS nombre_laboratorio,
-
-                s.id_sede,
-                s.nombre AS nombre_sede
-
-            FROM public.bitacora_mantenimiento bm
-
-            INNER JOIN public.equipo e
-                ON bm.id_equipo = e.id_equipo
-
-            INNER JOIN public.usuario u
-                ON bm.id_usuario_tecnico = u.id_usuario
-
-            INNER JOIN public.laboratorio l
-                ON e.id_laboratorio = l.id_laboratorio
-
-            INNER JOIN public.sede s
-                ON l.id_sede = s.id_sede
-
-            LEFT JOIN public.estado es
-                ON e.id_estado = es.id_estado
-        `;
-
-        // Restringir por sede y laboratorio del usuario
-        if (!esAdmin) {
-            query += `
-                INNER JOIN public.usuario_sede us
-                    ON s.id_sede = us.id_sede
-                    AND us.id_usuario = $${paramIndex++}
-
-                INNER JOIN public.usuario_laboratorio ul
-                    ON us.id_usuario_sede = ul.id_usuario_sede
-                    AND ul.id_sede = l.id_sede
-                    AND ul.id_laboratorio = e.id_laboratorio
-            `;
-
-            params.push(idUsuario);
-        }
-
-        const condiciones = [];
-
-        // Filtro por equipo
-        if (id_equipo) {
-            const equipoNum = parseInt(id_equipo, 10);
-
-            if (!isNaN(equipoNum)) {
-                condiciones.push(
-                    `bm.id_equipo = $${paramIndex++}`
-                );
-
-                params.push(equipoNum);
-            }
-        }
-
-        // Filtro por tipo
-        if (tipoEfectivo && tipoEfectivo.trim()) {
-            condiciones.push(
-                `LOWER(bm.tipo_mantenimiento) = LOWER($${paramIndex++})`
-            );
-
-            params.push(tipoEfectivo.trim());
-        }
-
-        // Filtro por estado de mantenimiento
-        if (estadoEfectivo && estadoEfectivo.trim()) {
-            condiciones.push(
-                `LOWER(bm.estado_mantenimiento) = LOWER($${paramIndex++})`
-            );
-
-            params.push(estadoEfectivo.trim());
-        }
-
-        // Filtro por búsqueda de texto
-        if (busqueda && busqueda.trim()) {
-            const termino = `%${busqueda.trim()}%`;
-            condiciones.push(`(
-                e.nombre ILIKE $${paramIndex} OR
-                e.placa_institucional ILIKE $${paramIndex} OR
-                e.numero_serie ILIKE $${paramIndex} OR
-                bm.motivo_falla ILIKE $${paramIndex} OR
-                bm.descripcion_trabajo ILIKE $${paramIndex}
-            )`);
-            params.push(termino);
-            paramIndex++;
-        }
-
-        // Filtro por fecha inicial
-        if (fecha_desde && fecha_desde.trim()) {
-            condiciones.push(
-                `bm.fecha_mantenimiento >= $${paramIndex++}`
-            );
-
-            params.push(fecha_desde.trim());
-        }
-
-        // Filtro por fecha final
-        if (fecha_hasta && fecha_hasta.trim()) {
-            let hasta = fecha_hasta.trim();
-
-            if (/^\d{4}-\d{2}-\d{2}$/.test(hasta)) {
-                hasta += ' 23:59:59.999';
-            }
-
-            condiciones.push(
-                `bm.fecha_mantenimiento <= $${paramIndex++}`
-            );
-
-            params.push(hasta);
-        }
-
-        // Filtro por sede
-        if (id_sede) {
-            const sedeNum = parseInt(id_sede, 10);
-
-            if (!isNaN(sedeNum)) {
-                condiciones.push(
-                    `s.id_sede = $${paramIndex++}`
-                );
-
-                params.push(sedeNum);
-            }
-        }
-
-        if (condiciones.length > 0) {
-            query += ` WHERE ${condiciones.join(' AND ')} `;
-        }
-
-        query += `
-            ORDER BY bm.fecha_mantenimiento DESC
-        `;
-
-        const resultado = await pool.query(query, params);
-
-        return res.json({
-            success: true,
-            total: resultado.rowCount,
-            data: resultado.rows
-        });
-
-    } catch (error) {
-        console.error('Error al obtener mantenimientos:', error);
-
-        return res.status(500).json({
-            success: false,
-            message: 'Error al consultar la lista de mantenimientos'
-        });
-    }
+const obtenerMantenimientos = async (req,res) => {
+  try{return res.json(await listarMantenimientos(pool,req.query,req.usuario));}
+  catch(error){if(error.status)return res.status(error.status).json({success:false,message:error.message});console.error('Error al consultar mantenimientos:',error);return res.status(500).json({success:false,message:'Error al consultar mantenimientos.'});}
 };
 
 /**
@@ -859,6 +670,8 @@ const obtenerHistorialPorEquipo = async (req, res) => {
  * la bitácora y, si corresponde, el estado del equipo.
  */
 const actualizarEstadoMantenimiento = async (req, res) => {
+    const invalido=validarEntradaMantenimiento(req.body,true);
+    if(invalido)return res.status(400).json({success:false,message:invalido});
     const { id } = req.params;
 
     const {

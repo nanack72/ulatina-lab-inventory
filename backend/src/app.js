@@ -1,7 +1,6 @@
 require('dotenv').config();
 
 const express = require('express');
-const path = require('path');
 const cors = require('cors');
 const pool = require('./config/database');
 
@@ -52,8 +51,7 @@ app.use('/api/admin/usuarios', usuariosRoutes);
 app.use('/api/importacion-equipos', importacionEquiposRoutes);
 app.use('/api/incidencias', incidenciasRoutes);
 
-// Archivos subidos (fotos de evidencias)
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+// Las evidencias se sirven por la API con autenticación y acceso por laboratorio.
 
 // Verificar que Express funciona
 app.get('/api/health', (req, res) => {
@@ -110,16 +108,11 @@ app.use((error, req, res, next) => {
 
 const PORT = process.env.PORT || 3000;
 
-if (require.main === module) {
-    app.listen(PORT, () => {
-        console.log(
-            `Servidor PES ejecutándose en http://localhost:${PORT}`
-        );
+app.listen(PORT, () => {
+    console.log(
+        `Servidor PES ejecutándose en http://localhost:${PORT}`
+    );
 
-        // Iniciar la limpieza automática de tokens
-        iniciarLimpiezaTokens();
-    });
-}
-
-module.exports = app;
-
+    // Iniciar la limpieza automática de tokens
+    iniciarLimpiezaTokens();
+});
