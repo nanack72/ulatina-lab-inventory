@@ -18,6 +18,7 @@ import { useInventarioPaginado } from '../hooks/useInventarioPaginado';
 
 import {
 
+  EQUIPOS_POR_PAGINA,
   FILTROS_INICIALES,
   FILTROS_SELECT,
 } from '../utils/inventario';
@@ -44,9 +45,10 @@ export default function Inventario({
   );
 
   const [pagina, setPagina] = useState(1);
+  const [limite, setLimite] = useState(EQUIPOS_POR_PAGINA);
 
   const { equipos: equiposPagina, total, totalAutorizados, paginaActual, opciones,
-    cargando, error, recargar } = useInventarioPaginado(token, filtros, pagina, onSesionExpirada);
+    cargando, error, recargar } = useInventarioPaginado(token, filtros, pagina, limite, onSesionExpirada);
 
   const tablaRef = useRef(null);
   const enfocarPaginaRef = useRef(false);
@@ -84,6 +86,13 @@ export default function Inventario({
     if (numero === paginaActual) return;
     enfocarPaginaRef.current = true;
     setPagina(numero);
+  }
+
+  function cambiarLimite(nuevoLimite) {
+    if (nuevoLimite === limite) return;
+    enfocarPaginaRef.current = true;
+    setPagina(1);
+    setLimite(nuevoLimite);
   }
 
   // ========================================
@@ -402,7 +411,9 @@ export default function Inventario({
             <Paginacion
               pagina={paginaActual}
               total={total}
+              limite={limite}
               onCambiar={cambiarPagina}
+              onCambiarLimite={cambiarLimite}
             />
 
           </>

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const {
+  obtenerArchivoEvidencia,
   subirEvidencia,
   obtenerEvidenciasPorBitacora
 } = require('../controllers/evidenciasController');
@@ -39,6 +40,7 @@ router.post(
 
 // GET /api/evidencias/bitacora/:id_bitacora
 router.get('/bitacora/:id_bitacora', obtenerEvidenciasPorBitacora);
+router.get('/:id/archivo', obtenerArchivoEvidencia);
 
 module.exports = router;
 

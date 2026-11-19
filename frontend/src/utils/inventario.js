@@ -1,4 +1,4 @@
-export const EQUIPOS_POR_PAGINA = 5;
+export const EQUIPOS_POR_PAGINA = 10;
 
 export const FILTROS_INICIALES = {
   busqueda: '',

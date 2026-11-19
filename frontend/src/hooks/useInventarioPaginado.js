@@ -5,13 +5,13 @@ import { adaptarEquipo } from '../utils/inventario';
 const VACIO = { equipos: [], total: 0, totalAutorizados: 0, paginaActual: 1,
   opciones: { sede: [], laboratorio: [], categoria: [], estado: [] } };
 
-export function useInventarioPaginado(token, filtros, pagina, onSesionExpirada) {
+export function useInventarioPaginado(token, filtros, pagina, limite, onSesionExpirada) {
   const [datos, setDatos] = useState(VACIO);
   const [estado, setEstado] = useState({ clave: '', cargando: true, error: '' });
   const [recarga, setRecarga] = useState(0);
   const alExpirar = useRef(onSesionExpirada);
   useEffect(() => { alExpirar.current = onSesionExpirada; }, [onSesionExpirada]);
-  const consulta = JSON.stringify({ filtros, pagina });
+  const consulta = JSON.stringify({ filtros, pagina, limite });
   const clave = JSON.stringify([token, consulta, recarga]);
 
   useEffect(() => {
@@ -21,7 +21,7 @@ export function useInventarioPaginado(token, filtros, pagina, onSesionExpirada) 
       setEstado({ clave, cargando: true, error: '' });
       try {
         const resultado = await obtenerPaginaInventario(token, solicitud.filtros,
-          solicitud.pagina, controlador.signal);
+          solicitud.pagina, solicitud.limite, controlador.signal);
         if (controlador.signal.aborted) return;
         const opciones = Object.fromEntries(Object.entries(resultado.opciones).map(([campo, valores]) =>
           [campo, valores.toSorted((a, b) => a.localeCompare(b, 'es'))]));
