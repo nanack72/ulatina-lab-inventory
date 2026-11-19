@@ -13,6 +13,8 @@ const normalizar = (texto) =>
     .replace(/[\u0300-\u036f]/g, '');
 
 const esIdValido = (valor) =>
+  ['string','number'].includes(typeof valor) &&
+  Number(valor)<=2147483647 &&
   /^[1-9]\d*$/.test(String(valor ?? '').trim()) &&
   Number.isSafeInteger(Number(valor));
 
@@ -26,6 +28,8 @@ const esUsuarioAdmin = (rol) =>
  * POST /api/incidencias
  */
 const crearIncidencia = async (req, res) => {
+  const b=req.body;
+  if(!b || typeof b!=='object' || Array.isArray(b) || typeof b.titulo!=='string' || typeof b.descripcion_falla!=='string' || b.descripcion_falla.length>10000 || (b.prioridad!==undefined && typeof b.prioridad!=='string'))return res.status(400).json({success:false,message:'Envíe título, descripción y prioridad con tipos válidos.'});
   try {
     const { id_equipo, titulo, descripcion_falla, prioridad } = req.body;
 
@@ -124,6 +128,7 @@ const crearIncidencia = async (req, res) => {
  * GET /api/incidencias
  */
 const obtenerIncidencias = async (req, res) => {
+  if(['estado','prioridad','busqueda'].some(c=>req.query[c]!==undefined && (typeof req.query[c]!=='string'||req.query[c].length>200)))return res.status(400).json({success:false,message:'Filtros inválidos.'});
   try {
     const { estado, prioridad, busqueda, id_laboratorio } = req.query;
 
@@ -236,6 +241,7 @@ const obtenerIncidencias = async (req, res) => {
  * PATCH /api/incidencias/:id/estado
  */
 const actualizarEstadoIncidencia = async (req, res) => {
+  if(!req.body || typeof req.body.nuevo_estado!=='string')return res.status(400).json({success:false,message:'Indique un nuevo estado válido.'});
   try {
     const { id } = req.params;
     const { nuevo_estado } = req.body;

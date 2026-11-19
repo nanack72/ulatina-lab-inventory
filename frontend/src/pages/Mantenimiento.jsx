@@ -1,247 +1,164 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useState } from 'react';
+import { Plus } from 'lucide-react';
 import {
-  Wrench,
-  Plus,
-  Search,
-  Filter,
-  RefreshCw,
-  AlertTriangle,
-  ChevronLeft,
-  ChevronRight
-} from 'lucide-react';
-
+  EncabezadoModulo,
+  Aviso,
+  BusquedaModulo,
+  PaginacionModulo,
+} from '../components/comunes/Modulo';
+import { useListadoModulo } from '../hooks/useListadoModulo';
+import { useBusquedaDiferida } from '../hooks/useBusquedaDiferida';
 import TablaMantenimientos from '../components/mantenimiento/TablaMantenimientos';
 import ModalRegistrarMantenimiento from '../components/mantenimiento/ModalRegistrarMantenimiento';
 import ModalVerEvidencias from '../components/mantenimiento/ModalVerEvidencias';
-
 import {
   consultarMantenimientos,
-  actualizarEstadoMantenimiento
+  actualizarEstadoMantenimiento,
 } from '../services/mantenimientosService';
 import { obtenerEquipos } from '../services/equiposService';
 import { TIPOS_MANTENIMIENTO, ESTADOS_MANTENIMIENTO } from '../utils/mantenimiento';
 
-import '../styles/mantenimiento.css';
-
-export default function Mantenimiento({ token, usuario }) {
-  const [mantenimientos, setMantenimientos] = useState([]);
-  const [equipos, setEquipos] = useState([]);
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState(null);
-
-  // Filtros y paginación
-  const [busqueda, setBusqueda] = useState('');
-  const [tipoFiltro, setTipoFiltro] = useState('');
-  const [estadoFiltro, setEstadoFiltro] = useState('');
-  const [pagina, setPagina] = useState(1);
-  const [totalPaginas, setTotalPaginas] = useState(1);
-  const [totalRegistros, setTotalRegistros] = useState(0);
-
-  // Modales
-  const [modalRegistroAbierto, setModalRegistroAbierto] = useState(false);
-  const [mantenimientoSeleccionado, setMantenimientoSeleccionado] = useState(null);
-  const [actualizandoId, setActualizandoId] = useState(null);
-
-  const cargarDatos = useCallback(async (signal) => {
+export default function Mantenimiento({ token }) {
+  const [busqueda, setBusqueda] = useState(''),
+    [tipo, setTipo] = useState(''),
+    [estado, setEstado] = useState('');
+  const [pagina, setPagina] = useState(1),
+    [registro, setRegistro] = useState(false),
+    [seleccionado, setSeleccionado] = useState(null);
+  const [actualizando, setActualizando] = useState(null),
+    [errorAccion, setErrorAccion] = useState(''),
+    [mensaje, setMensaje] = useState('');
+  const busquedaDiferida = useBusquedaDiferida(busqueda);
+  const cargar = useCallback(
+    (signal) =>
+      consultarMantenimientos(
+        {
+          pagina,
+          limite: 10,
+          busqueda: busquedaDiferida,
+          tipo_mantenimiento: tipo,
+          estado_mantenimiento: estado,
+        },
+        token,
+        signal
+      ),
+    [pagina, busquedaDiferida, tipo, estado, token]
+  );
+  const { datos, cargando, error, recargar } = useListadoModulo(cargar);
+  const cargarEquipos = useCallback(
+    (signal) => (registro ? obtenerEquipos(token, signal) : Promise.resolve([])),
+    [registro, token]
+  );
+  const opciones = useListadoModulo(cargarEquipos);
+  async function cambiarEstado(id, valor) {
+    if (actualizando !== null) return;
+    setActualizando(id);
+    setErrorAccion('');
     try {
-      setCargando(true);
-      setError(null);
-
-      const params = {
-        pagina,
-        limite: 10,
-        busqueda: busqueda.trim() || undefined,
-        tipo_mantenimiento: tipoFiltro || undefined,
-        estado_mantenimiento: estadoFiltro || undefined
-      };
-
-      const [resMant, resEquipos] = await Promise.all([
-        consultarMantenimientos(params, token, signal),
-        obtenerEquipos(token, signal).catch(() => [])
-      ]);
-
-      setMantenimientos(resMant.data || []);
-      setTotalPaginas(resMant.totalPaginas || 1);
-      setTotalRegistros(resMant.total || 0);
-
-      if (Array.isArray(resEquipos)) {
-        setEquipos(resEquipos);
-      }
+      await actualizarEstadoMantenimiento(id, { estado_mantenimiento: valor }, token);
+      recargar();
+      setMensaje('Estado del mantenimiento actualizado.');
     } catch (err) {
-      if (err.name !== 'AbortError') {
-        setError(err.message || 'Error al cargar el módulo de mantenimientos');
-      }
+      setErrorAccion(err.message);
     } finally {
-      setCargando(false);
+      setActualizando(null);
     }
-  }, [pagina, busqueda, tipoFiltro, estadoFiltro, token]);
-
-  useEffect(() => {
-    const controlador = new AbortController();
-    cargarDatos(controlador.signal);
-
-    return () => controlador.abort();
-  }, [cargarDatos]);
-
-  const alGuardarExitoso = () => {
-    setModalRegistroAbierto(false);
-    cargarDatos();
-  };
-
-  const manejarCambioEstado = async (idBitacora, nuevoEstado) => {
-    try {
-      setActualizandoId(idBitacora);
-      await actualizarEstadoMantenimiento(
-        idBitacora,
-        { estado_mantenimiento: nuevoEstado },
-        token
-      );
-      await cargarDatos();
-    } catch (err) {
-      alert('No se pudo actualizar el estado del mantenimiento: ' + err.message);
-    } finally {
-      setActualizandoId(null);
-    }
-  };
-
+  }
+  function filtro(setter, valor) {
+    setter(valor);
+    setPagina(1);
+  }
   return (
-    <div className="mant-contenedor">
-      {/* Encabezado */}
-      <header className="mant-encabezado">
-        <div className="mant-encabezado-texto">
-          <h1 className="mant-titulo">Bitácora de Mantenimientos</h1>
-          <p className="mant-subtitulo">
-            Registro cronológico, trazabilidad de fallas técnicas y gestión de evidencias fotográficas.
-          </p>
-        </div>
-
+    <div className="inv-pagina mod-pagina">
+      <EncabezadoModulo
+        titulo="Mantenimientos"
+        descripcion="Consulte las intervenciones técnicas y sus evidencias fotográficas."
+        alActualizar={recargar}
+        cargando={cargando}
+      >
         <button
           type="button"
-          className="mant-btn-nuevo"
-          onClick={() => setModalRegistroAbierto(true)}
+          className="btn btn-lg btn-primario"
+          onClick={() => {
+            setMensaje('');
+            setRegistro(true);
+          }}
         >
-          <Plus size={18} />
-          <span>Registrar Intervención</span>
+          <Plus size={17} aria-hidden="true" />
+          Registrar mantenimiento
         </button>
-      </header>
-
-      {error && (
-        <div className="mant-alerta-error" role="alert">
-          <AlertTriangle size={18} />
-          <span>{error}</span>
-        </div>
-      )}
-
-      {/* Barra de Filtros */}
-      <section className="mant-filtros-barra">
-        <div className="mant-buscador-wrap">
-          <Search size={18} className="mant-icono-buscar" />
-          <input
-            type="text"
-            className="mant-input-busqueda"
-            placeholder="Buscar por placa, serie o nombre del equipo..."
-            value={busqueda}
-            onChange={(e) => {
-              setBusqueda(e.target.value);
-              setPagina(1);
-            }}
+      </EncabezadoModulo>
+      <Aviso error>{errorAccion || error}</Aviso>
+      <Aviso>{mensaje}</Aviso>
+      <section className="inv-contenedor" aria-label="Listado de mantenimientos">
+        <div className="inv-barra-filtros">
+          <BusquedaModulo
+            etiqueta="Buscar por equipo, placa o trabajo…"
+            valor={busqueda}
+            onChange={(valor) => filtro(setBusqueda, valor)}
           />
+          <div className="mod-selectores">
+            <label>
+              Tipo
+              <select name="tipo" value={tipo} onChange={(e) => filtro(setTipo, e.target.value)}>
+                <option value="">Todos los tipos</option>
+                {TIPOS_MANTENIMIENTO.map((t) => (
+                  <option key={t}>{t}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Estado
+              <select
+                name="estado"
+                value={estado}
+                onChange={(e) => filtro(setEstado, e.target.value)}
+              >
+                <option value="">Todos los estados</option>
+                {ESTADOS_MANTENIMIENTO.map((t) => (
+                  <option key={t}>{t}</option>
+                ))}
+              </select>
+            </label>
+          </div>
         </div>
-
-        <div className="mant-selectores-filtros">
-          <select
-            className="mant-select"
-            value={tipoFiltro}
-            onChange={(e) => {
-              setTipoFiltro(e.target.value);
-              setPagina(1);
-            }}
-            aria-label="Filtrar por tipo de mantenimiento"
-          >
-            <option value="">Todos los tipos</option>
-            {TIPOS_MANTENIMIENTO.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-
-          <select
-            className="mant-select"
-            value={estadoFiltro}
-            onChange={(e) => {
-              setEstadoFiltro(e.target.value);
-              setPagina(1);
-            }}
-            aria-label="Filtrar por estado del mantenimiento"
-          >
-            <option value="">Todos los estados</option>
-            {ESTADOS_MANTENIMIENTO.map((est) => (
-              <option key={est} value={est}>
-                {est}
-              </option>
-            ))}
-          </select>
-        </div>
-      </section>
-
-      {/* Tabla de Mantenimientos */}
-      <section className="mant-seccion-tabla">
         <TablaMantenimientos
-          mantenimientos={mantenimientos}
+          mantenimientos={datos?.data || []}
           cargando={cargando}
-          alSeleccionarEvidencias={(item) => setMantenimientoSeleccionado(item)}
-          alCambiarEstado={manejarCambioEstado}
-          actualizandoId={actualizandoId}
+          alSeleccionarEvidencias={setSeleccionado}
+          alCambiarEstado={cambiarEstado}
+          actualizandoId={actualizando}
         />
-
-        {/* Paginación */}
-        {totalPaginas > 1 && (
-          <footer className="mant-paginacion">
-            <span className="mant-paginacion-resumen">
-              Mostrando página {pagina} de {totalPaginas} ({totalRegistros} intervenciones)
-            </span>
-            <div className="mant-paginacion-controles">
-              <button
-                type="button"
-                className="mant-btn-pag"
-                disabled={pagina <= 1 || cargando}
-                onClick={() => setPagina((p) => Math.max(1, p - 1))}
-                aria-label="Página anterior"
-              >
-                <ChevronLeft size={16} />
-                <span>Anterior</span>
-              </button>
-              <button
-                type="button"
-                className="mant-btn-pag"
-                disabled={pagina >= totalPaginas || cargando}
-                onClick={() => setPagina((p) => p + 1)}
-                aria-label="Página siguiente"
-              >
-                <span>Siguiente</span>
-                <ChevronRight size={16} />
-              </button>
-            </div>
-          </footer>
-        )}
+        <PaginacionModulo
+          pagina={datos?.pagina || pagina}
+          total={datos?.total || 0}
+          alCambiar={setPagina}
+          cargando={cargando}
+        />
       </section>
-
-      {/* Modales */}
-      <ModalRegistrarMantenimiento
-        abierto={modalRegistroAbierto}
-        alCerrar={() => setModalRegistroAbierto(false)}
-        alGuardarExitoso={alGuardarExitoso}
-        equiposDisponibles={equipos}
-        token={token}
-      />
-
-      <ModalVerEvidencias
-        abierto={Boolean(mantenimientoSeleccionado)}
-        mantenimiento={mantenimientoSeleccionado}
-        alCerrar={() => setMantenimientoSeleccionado(null)}
-        token={token}
-      />
+      {registro && (
+        <ModalRegistrarMantenimiento
+          abierto
+          alCerrar={() => setRegistro(false)}
+          alGuardarExitoso={(aviso) => {
+            setRegistro(false);
+            setMensaje(aviso || 'Mantenimiento registrado.');
+            recargar();
+          }}
+          equiposDisponibles={opciones.datos || []}
+          errorEquipos={opciones.error}
+          cargandoEquipos={opciones.cargando}
+          token={token}
+        />
+      )}
+      {seleccionado && (
+        <ModalVerEvidencias
+          abierto
+          mantenimiento={seleccionado}
+          alCerrar={() => setSeleccionado(null)}
+          token={token}
+        />
+      )}
     </div>
   );
 }
