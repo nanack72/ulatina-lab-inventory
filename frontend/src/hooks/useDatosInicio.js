@@ -1,13 +1,8 @@
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
   obtenerActividadReciente,
-  obtenerMantenimientos,
+  obtenerResumenMantenimientos,
 } from '../services/dashboardService';
 
 const ACTIVIDAD_VISIBLE = 6;
@@ -17,6 +12,7 @@ const ACTIVIDAD_VISIBLE = 6;
 export function useDatosInicio(token, onSesionExpirada) {
   const [datos, setDatos] = useState(() => ({
     mantenimientos: [],
+    resumenMantenimientos: null,
     actividad: [],
     errorMantenimientos: '',
     errorActividad: '',
@@ -38,18 +34,14 @@ export function useDatosInicio(token, onSesionExpirada) {
       setCargando(true);
 
       const [mantenimientos, actividad] = await Promise.allSettled([
-        obtenerMantenimientos(token, controlador.signal),
-        obtenerActividadReciente(
-          token,
-          controlador.signal,
-          ACTIVIDAD_VISIBLE
-        ),
+        obtenerResumenMantenimientos(token, controlador.signal),
+        obtenerActividadReciente(token, controlador.signal, ACTIVIDAD_VISIBLE),
       ]);
 
       if (controlador.signal.aborted) return;
 
       const fallos = [mantenimientos, actividad].filter(
-        (resultado) => resultado.status === 'rejected'
+        (resultado) => resultado.status === 'rejected',
       );
 
       if (fallos.some((fallo) => fallo.reason?.status === 401)) {
@@ -62,12 +54,10 @@ export function useDatosInicio(token, onSesionExpirada) {
           : '';
 
       setDatos({
-        mantenimientos:
-          mantenimientos.status === 'fulfilled'
-            ? mantenimientos.value
-            : [],
-        actividad:
-          actividad.status === 'fulfilled' ? actividad.value : [],
+        mantenimientos: mantenimientos.status === 'fulfilled' ? mantenimientos.value.data : [],
+        resumenMantenimientos:
+          mantenimientos.status === 'fulfilled' ? mantenimientos.value.resumen : null,
+        actividad: actividad.status === 'fulfilled' ? actividad.value : [],
         errorMantenimientos: mensaje(mantenimientos),
         errorActividad: mensaje(actividad),
         ahora: Date.now(),

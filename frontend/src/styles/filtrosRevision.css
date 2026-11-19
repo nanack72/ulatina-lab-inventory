@@ -1,0 +1,57 @@
+/* Extensiones de revisión: se mantienen los estilos y la paginación de Inventario. */
+.mod-pagina .mod-selectores { align-items: flex-end; flex-wrap: wrap; }
+.mod-pagina .mod-selectores > label,
+.revision-filtros-reportes > label { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 5px; color: var(--texto-secundario); font-size: 12px; }
+.mod-pagina .mod-selectores > label select,
+.revision-filtros-reportes > label select, .revision-controles select {
+  height: 38px; min-width: 155px; max-width: 260px; padding: 0 10px;
+  border: 1px solid var(--borde); border-radius: var(--radio-sm); background: #fff;
+  color: var(--texto); font: inherit; font-size: 12px;
+}
+.mod-pagina .mod-selectores > label select:focus-visible,
+.revision-filtros-reportes select:focus-visible, .revision-controles select:focus-visible,
+.revision-busqueda:focus-visible { outline: 2px solid var(--verde); outline-offset: 1px; }
+.revision-filtros-reportes { display: flex; gap: 10px; align-items: end; flex-wrap: wrap; }
+.revision-busqueda { height: 38px; min-width: 210px; max-width: 270px; flex: 1; padding: 0 11px; border: 1px solid var(--borde); border-radius: var(--radio-sm); font-size: 12px; }
+.revision-paginacion { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; padding: 14px 18px; border-top: 1px solid var(--borde-suave); color: var(--texto-secundario); font-size: 12px; }
+.revision-paginacion > div { display: flex; gap: 8px; }
+.revision-paginacion button, .revision-actualizar { border: 1px solid var(--borde); background: white; color: var(--verde); border-radius: 7px; padding: 7px 12px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.revision-paginacion button:hover:not(:disabled), .revision-actualizar:hover:not(:disabled) { background: var(--verde-suave); }
+.revision-paginacion button:disabled, .revision-actualizar:disabled { opacity: .45; cursor: not-allowed; }
+.revision-vacio { padding: 18px; margin: 0; color: var(--texto-secundario); font-size: 13px; }
+.revision-error { margin: 14px 20px; padding: 10px; border-radius: 8px; background: #fff1f0; color: #9e2727; font-size: 12px; }
+/* Componente independiente de Inicio, coherente con sus tarjetas existentes. */
+.revision-panel { width: 100%; }
+.revision-cabecera { display: flex; justify-content: space-between; align-items: start; gap: 16px; padding: 18px 20px; border-bottom: 1px solid var(--borde-suave); }
+.revision-cabecera h2 { font-size: 16px; font-weight: 600; color: var(--texto-fuerte); margin: 0 0 5px; }
+.revision-cabecera p { font-size: 12px; color: var(--texto-secundario); margin: 0; max-width: 600px; }
+.revision-controles { display: flex; gap: 10px; align-items: end; }
+.revision-controles label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--texto-secundario); }
+.revision-actualizar { height: 38px; display: inline-flex; align-items: center; justify-content: center; }
+.revision-tabla-wrap { overflow-x: auto; max-width: 100%; }
+.revision-tabla { width: 100%; border-collapse: collapse; font-size: 12px; }
+.revision-tabla th { text-align: left; padding: 12px 15px; color: var(--texto-secundario); background: #f6f9f7; font-weight: 600; white-space: nowrap; }
+.revision-tabla td { padding: 13px 15px; border-top: 1px solid var(--borde-suave); vertical-align: top; }
+.revision-tabla td small { display: block; margin-top: 4px; font-size: 11px; color: var(--texto-secundario); }
+.revision-enlace { border: none; background: none; padding: 0; color: var(--verde); cursor: pointer; font: inherit; font-weight: 600; text-align: left; }
+.revision-enlace:hover { text-decoration: underline; }
+.revision-motivos { display: flex; flex-wrap: wrap; gap: 6px; }
+.revision-motivo { padding: 4px 8px; border-radius: 14px; border: 1px solid #e9d8b5; background: #fff6e6; color: #845212; white-space: nowrap; font-size: 11px; }
+.revision-motivo--falla { background: #fff0ed; border-color: #eec7c0; color: #a12d25; }
+.revision-nota { margin: 0; padding: 12px 18px; background: #fcfdfa; color: var(--texto-secundario); font-size: 11px; line-height: 1.5; }
+.revision-solo-lectores { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+@media (max-width: 850px) { .revision-cabecera { flex-direction: column; } .revision-filtros-reportes { width: 100%; } .revision-busqueda { max-width: none; } }
+@media (max-width: 550px) { .revision-controles { width: 100%; justify-content: space-between; } .revision-controles select { max-width: 210px; } .mod-pagina .mod-selectores > label { flex: 1; min-width: 130px; } .mod-pagina .mod-selectores > label select { min-width: 0; width: 100%; } .revision-paginacion { justify-content: center; text-align: center; } }
+@media (max-width: 900px) {
+  .reportes-tabla-cabecera .revision-filtros-reportes { flex-basis: 100%; }
+}
+
+/* Los filtros de ubicación se integran con los módulos posteriores al merge. */
+.mod-pagina .mod-selectores > label { min-width: 135px; }
+.mod-pagina .mod-selectores > label select { width: 100%; max-width: 220px; }
+.mod-pagina .revision-filtros-reportes { flex: 1; justify-content: flex-end; }
+.mod-pagina .revision-filtros-reportes > label input { max-width: 240px; }
+@media (max-width: 700px) {
+  .mod-pagina .inv-barra-filtros .mod-selectores { width: 100%; justify-content: flex-start; }
+  .mod-pagina .revision-filtros-reportes { justify-content: flex-start; }
+}

@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 
 import { useEquipos } from '../hooks/useEquipos';
+import EquiposPorRevisar from '../components/inventario/EquiposPorRevisar';
+import '../styles/filtrosRevision.css';
 import { useDatosInicio } from '../hooks/useDatosInicio';
 
 import {
@@ -144,6 +146,7 @@ export default function Inicio({
 
   const {
     mantenimientos,
+    resumenMantenimientos,
     actividad,
     cargando: cargandoDatos,
     errorMantenimientos,
@@ -153,7 +156,7 @@ export default function Inicio({
   } = useDatosInicio(token, onSesionExpirada);
 
   const cargando = cargandoEquipos || cargandoDatos;
-  const resumen = resumirInicio(equipos, mantenimientos);
+  const resumen = { ...resumirInicio(equipos, mantenimientos), ...resumenMantenimientos };
 
   const hoy = new Date(ahora);
   const { dia, mes } = diaYMes(hoy);
@@ -423,6 +426,8 @@ export default function Inicio({
           )}
         </Panel>
       </div>
+
+      <EquiposPorRevisar token={token} onVerEquipo={onVerEquipo} />
 
       {/* ACTIVIDAD RECIENTE */}
       <Panel

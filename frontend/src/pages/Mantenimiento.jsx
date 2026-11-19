@@ -17,11 +17,14 @@ import {
 } from '../services/mantenimientosService';
 import { obtenerEquipos } from '../services/equiposService';
 import { TIPOS_MANTENIMIENTO, ESTADOS_MANTENIMIENTO } from '../utils/mantenimiento';
+import FiltrosUbicacion from '../components/comunes/FiltrosUbicacion';
+import '../styles/filtrosRevision.css';
 
 export default function Mantenimiento({ token }) {
   const [busqueda, setBusqueda] = useState(''),
     [tipo, setTipo] = useState(''),
     [estado, setEstado] = useState('');
+  const [sede, setSede] = useState(''), [laboratorio, setLaboratorio] = useState('');
   const [pagina, setPagina] = useState(1),
     [registro, setRegistro] = useState(false),
     [seleccionado, setSeleccionado] = useState(null);
@@ -38,11 +41,13 @@ export default function Mantenimiento({ token }) {
           busqueda: busquedaDiferida,
           tipo_mantenimiento: tipo,
           estado_mantenimiento: estado,
+          id_sede: sede,
+          id_laboratorio: laboratorio,
         },
         token,
         signal
       ),
-    [pagina, busquedaDiferida, tipo, estado, token]
+    [pagina, busquedaDiferida, tipo, estado, sede, laboratorio, token]
   );
   const { datos, cargando, error, recargar } = useListadoModulo(cargar);
   const cargarEquipos = useCallback(
@@ -98,6 +103,12 @@ export default function Mantenimiento({ token }) {
             onChange={(valor) => filtro(setBusqueda, valor)}
           />
           <div className="mod-selectores">
+            <FiltrosUbicacion
+              ubicaciones={datos?.ubicaciones || []}
+              sede={sede}
+              laboratorio={laboratorio}
+              alCambiar={(s, l) => { setSede(s); setLaboratorio(l); setPagina(1); }}
+            />
             <label>
               Tipo
               <select name="tipo" value={tipo} onChange={(e) => filtro(setTipo, e.target.value)}>

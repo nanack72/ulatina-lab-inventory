@@ -1,4 +1,5 @@
 const pool = require('../config/database');
+const { listarUbicaciones } = require('../services/ubicacionesListado');
 const { verificarAccesoEquipo } = require('../utils/accesoEquipos');
 
 // Valores canónicos con tilde
@@ -130,7 +131,7 @@ const crearIncidencia = async (req, res) => {
 const obtenerIncidencias = async (req, res) => {
   if(['estado','prioridad','busqueda'].some(c=>req.query[c]!==undefined && (typeof req.query[c]!=='string'||req.query[c].length>200)))return res.status(400).json({success:false,message:'Filtros inválidos.'});
   try {
-    const { estado, prioridad, busqueda, id_laboratorio } = req.query;
+    const { estado, prioridad, busqueda, id_laboratorio, id_sede } = req.query;
 
     const condiciones = ['1=1'];
     const valores = [];
@@ -150,6 +151,14 @@ const obtenerIncidencias = async (req, res) => {
             AND ul.id_laboratorio = l.id_laboratorio
         )
       `);
+    }
+
+    if (id_sede !== undefined && id_sede !== '') {
+      if (!esIdValido(id_sede)) return res.status(400).json({
+        success: false, message: 'El filtro id_sede debe ser un entero positivo válido'
+      });
+      valores.push(Number(id_sede));
+      condiciones.push(`l.id_sede = $${valores.length}`);
     }
 
     if (id_laboratorio !== undefined && id_laboratorio !== '') {
@@ -200,6 +209,7 @@ const obtenerIncidencias = async (req, res) => {
         e.id_equipo,
         e.placa_institucional,
         e.nombre AS nombre_equipo,
+        l.id_sede,
         l.id_laboratorio,
         l.codigo AS codigo_laboratorio,
         l.nombre AS nombre_laboratorio,
@@ -220,10 +230,14 @@ const obtenerIncidencias = async (req, res) => {
         ir.fecha_reporte DESC
     `;
 
-    const resultado = await pool.query(consulta, valores);
+    const [resultado, ubicaciones] = await Promise.all([
+      pool.query(consulta, valores),
+      listarUbicaciones(pool, req.usuario, esUsuarioAdmin(req.usuario.rol))
+    ]);
 
     return res.status(200).json({
       success: true,
+      ubicaciones,
       total: resultado.rowCount,
       data: resultado.rows
     });

@@ -1,5 +1,5 @@
 // Consulta GET autenticada y devuelve resultado.data (arreglo).
-async function consultar(url, token, signal, mensajeError) {
+async function consultar(url, token, signal, mensajeError, completo = false) {
   if (!token) {
     throw new Error('Debés iniciar sesión para consultar esta información.');
   }
@@ -37,7 +37,7 @@ async function consultar(url, token, signal, mensajeError) {
     throw new Error('El servidor devolvió datos con un formato inesperado.');
   }
 
-  return resultado.data;
+  return completo ? resultado : resultado.data;
 }
 
 // GET /api/mantenimientos (más recientes primero)
@@ -46,7 +46,7 @@ export function obtenerMantenimientos(token, signal) {
     '/api/mantenimientos',
     token,
     signal,
-    'No fue posible consultar los mantenimientos.'
+    'No fue posible consultar los mantenimientos.',
   );
 }
 
@@ -56,6 +56,16 @@ export function obtenerActividadReciente(token, signal, limite = 6) {
     `/api/dashboard/actividad?limite=${encodeURIComponent(limite)}`,
     token,
     signal,
-    'No fue posible consultar la actividad reciente.'
+    'No fue posible consultar la actividad reciente.',
+  );
+}
+// El listado sigue paginado; sus agregados cuentan todos los mantenimientos autorizados.
+export function obtenerResumenMantenimientos(token, signal) {
+  return consultar(
+    '/api/mantenimientos',
+    token,
+    signal,
+    'No fue posible consultar los mantenimientos.',
+    true,
   );
 }

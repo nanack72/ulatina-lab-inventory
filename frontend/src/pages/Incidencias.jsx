@@ -14,11 +14,14 @@ import ModalReportarIncidencia from '../components/incidencias/ModalReportarInci
 import { consultarIncidencias, actualizarEstadoIncidencia } from '../services/incidenciasService';
 import { obtenerEquipos } from '../services/equiposService';
 import { PRIORIDADES_INCIDENCIA, ESTADOS_INCIDENCIA } from '../utils/incidencias';
+import FiltrosUbicacion from '../components/comunes/FiltrosUbicacion';
+import '../styles/filtrosRevision.css';
 
 export default function Incidencias({ token }) {
   const [busqueda, setBusqueda] = useState(''),
     [prioridad, setPrioridad] = useState(''),
     [estado, setEstado] = useState('');
+  const [sede, setSede] = useState(''), [laboratorio, setLaboratorio] = useState('');
   const [pagina, setPagina] = useState(1),
     [abierto, setAbierto] = useState(false),
     [actualizando, setActualizando] = useState(null);
@@ -27,8 +30,8 @@ export default function Incidencias({ token }) {
   const busquedaDiferida = useBusquedaDiferida(busqueda);
   const cargar = useCallback(
     (signal) =>
-      consultarIncidencias({ busqueda: busquedaDiferida, prioridad, estado }, token, signal),
-    [busquedaDiferida, prioridad, estado, token]
+      consultarIncidencias({ busqueda: busquedaDiferida, prioridad, estado, id_sede: sede, id_laboratorio: laboratorio }, token, signal),
+    [busquedaDiferida, prioridad, estado, sede, laboratorio, token]
   );
   const { datos, cargando, error, recargar } = useListadoModulo(cargar);
   const cargarEquipos = useCallback(
@@ -110,6 +113,12 @@ export default function Incidencias({ token }) {
             onChange={(v) => filtro(setBusqueda, v)}
           />
           <div className="mod-selectores">
+            <FiltrosUbicacion
+              ubicaciones={datos?.ubicaciones || []}
+              sede={sede}
+              laboratorio={laboratorio}
+              alCambiar={(s, l) => { setSede(s); setLaboratorio(l); setPagina(1); }}
+            />
             <label>
               Prioridad
               <select

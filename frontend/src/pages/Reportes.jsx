@@ -4,6 +4,9 @@ import { EncabezadoModulo, Aviso, Indicador, PaginacionModulo } from '../compone
 import { useListadoModulo } from '../hooks/useListadoModulo';
 import { consultarResumenGeneral, descargarReporteExcel } from '../services/reportesService';
 import { formatearNumero, calcularPorcentajeSeguro } from '../utils/reportes';
+import FiltrosUbicacion from '../components/comunes/FiltrosUbicacion';
+import { filtrarDistribucion } from '../utils/ubicaciones';
+import '../styles/filtrosRevision.css';
 
 export default function Reportes({ token }) {
   const cargar = useCallback((signal) => consultarResumenGeneral(token, signal), [token]);
@@ -11,6 +14,8 @@ export default function Reportes({ token }) {
   const [descargando, setDescargando] = useState(false),
     [errorDescarga, setErrorDescarga] = useState(''),
     [laboratorio, setLaboratorio] = useState(''),
+    [sede, setSede] = useState(''),
+    [busqueda, setBusqueda] = useState(''),
     [pagina, setPagina] = useState(1);
   const ocupado = useRef(false);
   async function descargar() {
@@ -31,9 +36,7 @@ export default function Reportes({ token }) {
     estados = datos?.equipos_por_estado || {},
     mantenimiento = datos?.mantenimientos || {},
     laboratorios = datos?.equipos_por_laboratorio || [];
-  const filtrados = laboratorios.filter(
-      (l) => !laboratorio || String(l.id_laboratorio) === laboratorio
-    ),
+  const filtrados = filtrarDistribucion(laboratorios, sede, laboratorio, busqueda),
     actual = Math.min(pagina, Math.max(1, Math.ceil(filtrados.length / 10)));
   return (
     <div className="inv-pagina mod-pagina">
@@ -112,25 +115,23 @@ export default function Reportes({ token }) {
             <section className="inv-contenedor" aria-label="Distribución por laboratorio">
               <div className="inv-barra-filtros">
                 <h2 className="mod-titulo-tabla">Equipos por laboratorio</h2>
-                <div className="mod-selectores">
+                <div className="mod-selectores revision-filtros-reportes">
                   <label>
-                    Laboratorio
-                    <select
-                      name="laboratorio"
-                      value={laboratorio}
-                      onChange={(e) => {
-                        setLaboratorio(e.target.value);
-                        setPagina(1);
-                      }}
-                    >
-                      <option value="">Todos los laboratorios</option>
-                      {laboratorios.map((l) => (
-                        <option key={l.id_laboratorio} value={l.id_laboratorio}>
-                          {l.codigo} · {l.nombre}
-                        </option>
-                      ))}
-                    </select>
+                    Buscar
+                    <input
+                      type="search"
+                      className="revision-busqueda"
+                      value={busqueda}
+                      placeholder="Código, laboratorio o sede…"
+                      onChange={(e) => { setBusqueda(e.target.value); setPagina(1); }}
+                    />
                   </label>
+                  <FiltrosUbicacion
+                    ubicaciones={laboratorios}
+                    sede={sede}
+                    laboratorio={laboratorio}
+                    alCambiar={(s, l) => { setSede(s); setLaboratorio(l); setPagina(1); }}
+                  />
                 </div>
               </div>
               <div
@@ -143,7 +144,7 @@ export default function Reportes({ token }) {
                   <caption className="mod-sr">Equipos por laboratorio</caption>
                   <thead>
                     <tr>
-                      {['Código', 'Laboratorio', 'Equipos', 'Porcentaje del total'].map((t) => (
+                      {['Código', 'Laboratorio', 'Sede', 'Equipos', 'Porcentaje del total'].map((t) => (
                         <th scope="col" key={t}>
                           {t}
                         </th>
@@ -157,6 +158,7 @@ export default function Reportes({ token }) {
                         <tr key={l.id_laboratorio}>
                           <td>{l.codigo}</td>
                           <td>{l.nombre}</td>
+                          <td>{l.nombre_sede}</td>
                           <td>{formatearNumero(l.cantidad_equipos)}</td>
                           <td>
                             <span>{porcentaje}%</span>
