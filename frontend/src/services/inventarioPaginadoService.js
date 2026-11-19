@@ -1,8 +1,9 @@
 import { solicitarInventario } from './solicitarInventario.js';
 
-export async function obtenerPaginaInventario(token, filtros, pagina, signal) {
+export async function obtenerPaginaInventario(token, filtros, pagina, limite, signal) {
   if (!token) throw new Error('Debés iniciar sesión para consultar el inventario.');
-  const parametros = new URLSearchParams({ pagina: String(pagina), limite: '5' });
+  if (![10, 20, 50].includes(limite)) throw new Error('Cantidad de equipos por página inválida.');
+  const parametros = new URLSearchParams({ pagina: String(pagina), limite: String(limite) });
   for (const campo of ['busqueda', 'sede', 'laboratorio', 'categoria', 'estado']) {
     if (filtros[campo]) parametros.set(campo, filtros[campo]);
   }
@@ -21,7 +22,7 @@ export async function obtenerPaginaInventario(token, filtros, pagina, signal) {
     !Number.isSafeInteger(resultado.total) || resultado.total < 0 ||
     !Number.isSafeInteger(resultado.total_autorizados) || resultado.total_autorizados < resultado.total ||
     !Number.isSafeInteger(resultado.pagina) || resultado.pagina < 1 ||
-    resultado.limite !== 5 || !opcionesValidas) {
+    resultado.limite !== limite || !opcionesValidas) {
     throw new Error('El servidor devolvió una página de inventario inválida.');
   }
   return resultado;
