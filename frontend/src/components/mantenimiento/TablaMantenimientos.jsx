@@ -5,6 +5,13 @@ import {
   formatearHoras,
   ESTADOS_MANTENIMIENTO,
 } from '../../utils/mantenimiento';
+// Color del selector según el estado del mantenimiento
+const TONO_ESTADO = {
+  'Completado': 'verde',
+  'En Proceso': 'ambar',
+  'Pendiente Repuesto': 'rojo',
+};
+
 export default function TablaMantenimientos({
   mantenimientos = [],
   cargando,
@@ -66,6 +73,7 @@ export default function TablaMantenimientos({
               </td>
               <td>
                 <select
+                  className={`mod-select-estado mod-insignia-${TONO_ESTADO[m.estado_mantenimiento] || 'neutro'}`}
                   name={'estado-' + m.id_bitacora}
                   aria-label={'Estado del mantenimiento ' + m.id_bitacora}
                   value={m.estado_mantenimiento}

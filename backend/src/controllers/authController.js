@@ -3,6 +3,9 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const pool = require('../config/database');
 
+// Hash válido de bcrypt (12 rondas) usado solo para igualar tiempos de respuesta.
+const HASH_FICTICIO = bcrypt.hashSync('contrasena-ficticia-sin-uso', 12);
+
 // Procesa el inicio de sesión del usuario.
 const login = async (req, res) => {
     const { correo, contrasena } = req.body || {};
@@ -42,28 +45,17 @@ const login = async (req, res) => {
             correo.trim()
         ]);
 
-        if (resultado.rowCount === 0) {
-            return res.status(401).json({
-                success: false,
-                message: 'Credenciales inválidas'
-            });
-        }
-
         const usuario = resultado.rows[0];
 
-        if (!usuario.activo) {
-            return res.status(403).json({
-                success: false,
-                message: 'Usuario inactivo. Contacte al administrador.'
-            });
-        }
-
+        // Siempre se compara contra un hash para que la respuesta tarde lo
+        // mismo exista o no la cuenta, y se devuelve el mismo mensaje si el
+        // usuario no existe, está inactivo o la contraseña es incorrecta.
         const contrasenaValida = await bcrypt.compare(
             contrasena,
-            usuario.contrasena_hash
+            usuario?.contrasena_hash || HASH_FICTICIO
         );
 
-        if (!contrasenaValida) {
+        if (!usuario || !usuario.activo || !contrasenaValida) {
             return res.status(401).json({
                 success: false,
                 message: 'Credenciales inválidas'

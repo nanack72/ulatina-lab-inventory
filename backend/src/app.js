@@ -2,6 +2,8 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const pool = require('./config/database');
 
 // Importamos las rutas
@@ -26,7 +28,44 @@ const { iniciarLimpiezaTokens } = require('../jobs/limpiezaTokens');
 
 const app = express();
 
-app.use(cors());
+// Detrás de un proxy (Render, Nginx...) indicar cuántos saltos confiar: TRUST_PROXY=1
+if (process.env.TRUST_PROXY) {
+    app.set('trust proxy', Number(process.env.TRUST_PROXY) || process.env.TRUST_PROXY);
+}
+
+app.use(helmet({
+    // El frontend (otro origen) consume la API y las evidencias por fetch.
+    crossOriginResourcePolicy: { policy: 'cross-origin' }
+}));
+
+// CORS_ORIGINS=https://inventario.ulatina.net,http://localhost:5173
+// Sin la variable solo se permite el origen de desarrollo de Vite.
+const origenesPermitidos = (
+    process.env.CORS_ORIGINS || 'http://localhost:5173'
+).split(',').map((origen) => origen.trim()).filter(Boolean);
+
+app.use(cors({
+    origin(origen, callback) {
+        // Peticiones sin cabecera Origin (Postman, pruebas, servidor a servidor)
+        if (!origen || origenesPermitidos.includes(origen)) {
+            return callback(null, true);
+        }
+        return callback(null, false);
+    }
+}));
+
+// Límite general por IP para frenar abusos y ráfagas.
+app.use('/api', rateLimit({
+    windowMs: 60 * 1000,
+    limit: Number(process.env.RATE_LIMIT_API) || 300,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    skip: () => process.env.NODE_ENV === 'test',
+    message: {
+        success: false,
+        message: 'Demasiadas solicitudes. Intente nuevamente en un momento.'
+    }
+}));
 // Aplicar el límite especial antes del parser general de 100 kB.
 app.use(
   '/api/importacion-equipos/confirmar',
@@ -64,14 +103,12 @@ app.get('/api/health', (req, res) => {
 // Verificar la conexión con PostgreSQL
 app.get('/api/health/db', async (req, res) => {
     try {
-        const result = await pool.query(
-            'SELECT current_database() AS base_datos, current_user AS usuario'
-        );
+        await pool.query('SELECT 1');
 
+        // No se exponen el nombre de la base ni el usuario de conexión.
         res.json({
             success: true,
-            message: 'Conexión con PostgreSQL exitosa',
-            data: result.rows[0]
+            message: 'Conexión con PostgreSQL exitosa'
         });
 
     } catch (error) {
