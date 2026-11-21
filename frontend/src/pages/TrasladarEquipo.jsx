@@ -1,13 +1,8 @@
+import { notificar } from '../utils/notificaciones';
+import Notificacion from '../components/comunes/Notificacion';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import {
-  ArrowLeft,
-  ArrowLeftRight,
-  MapPin,
-  AlertCircle,
-  CheckCircle2,
-  Building2,
-} from 'lucide-react';
+import { ArrowLeft, ArrowLeftRight, MapPin, Building2 } from 'lucide-react';
 
 import { obtenerEquipoPorId } from '../services/equiposService';
 
@@ -70,7 +65,7 @@ export default function TrasladarEquipo({
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
   const [confirmar, setConfirmar] = useState(false);
-  const [exito, setExito] = useState('');
+  
 
   const enviandoRef = useRef(false);
 
@@ -81,7 +76,7 @@ export default function TrasladarEquipo({
     async function cargarDatos() {
       setCargando(true);
       setError('');
-      setExito('');
+      
 
       try {
         const [
@@ -287,7 +282,7 @@ export default function TrasladarEquipo({
         token
       );
 
-      setExito('El equipo fue trasladado correctamente.');
+      notificar({ tipo: 'exito', mensaje: 'El equipo fue trasladado correctamente.' });
       setConfirmar(false);
 
       if (typeof onTrasladado === 'function') {
@@ -339,24 +334,13 @@ export default function TrasladarEquipo({
       </div>
 
       {error && (
-        <div
-          className="registro-alerta registro-alerta-error"
-          role="alert"
-        >
-          <AlertCircle size={19} />
+        <Notificacion tipo="error">
+          
           <span>{error}</span>
-        </div>
+        </Notificacion>
       )}
 
-      {exito && (
-        <div
-          className="registro-alerta registro-alerta-exito"
-          role="status"
-        >
-          <CheckCircle2 size={19} />
-          <span>{exito}</span>
-        </div>
-      )}
+      
 
       {equipo && (
         <form onSubmit={solicitarConfirmacion}>

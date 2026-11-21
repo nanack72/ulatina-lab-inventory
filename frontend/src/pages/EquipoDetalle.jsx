@@ -1,24 +1,7 @@
+import Notificacion from '../components/comunes/Notificacion';
 import { useEffect, useRef, useState } from 'react';
 
-import {
-  ArrowLeft,
-  Monitor,
-  MapPin,
-  Cpu,
-  Tag,
-  Hash,
-  AlertCircle,
-  RefreshCw,
-  History,
-  ClipboardList,
-  ArrowLeftRight,
-  FileClock,
-  MessageSquare,
-  Pencil,
-  Trash2,
-  MoreHorizontal,
-  ChevronDown,
-} from 'lucide-react';
+import { ArrowLeft, Monitor, MapPin, Cpu, Tag, Hash, RefreshCw, History, ClipboardList, ArrowLeftRight, FileClock, MessageSquare, Pencil, Trash2, MoreHorizontal, ChevronDown } from 'lucide-react';
 
 import { useEquipo } from '../hooks/useEquipo';
 import { tipoEstado } from '../utils/inventario';
@@ -316,11 +299,8 @@ export default function EquipoDetalle({
 
       {/* ERROR */}
       {!cargando && error && (
-        <div
-          className="detalle-mensaje detalle-mensaje--error"
-          role="alert"
-        >
-          <AlertCircle size={21} />
+        <Notificacion tipo="error">
+          
 
           <span>{error}</span>
 
@@ -331,7 +311,7 @@ export default function EquipoDetalle({
             <RefreshCw size={15} />
             Reintentar
           </button>
-        </div>
+        </Notificacion>
       )}
 
       {/* CONTENIDO */}

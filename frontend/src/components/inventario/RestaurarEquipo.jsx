@@ -1,3 +1,4 @@
+import Notificacion from '../comunes/Notificacion';
 import { useEffect, useRef, useState } from 'react';
 
 export default function RestaurarEquipo({ equipo, token, onCerrar, onRestaurado, onSesionExpirada }) {
@@ -42,7 +43,7 @@ export default function RestaurarEquipo({ equipo, token, onCerrar, onRestaurado,
         <p><strong>{equipo.nombre}</strong></p>
         <p>Placa: {equipo.placa || 'Sin placa'}</p>
         <p>Volverá al inventario activo con sus datos, fotos e historiales. Su estado y laboratorio se conservarán.</p>
-        {error && <p role="alert">{error}</p>}
+        {error && <Notificacion tipo="error" alCerrar={() => setError('')}>{error}</Notificacion>}
         <div className="inv-eliminar-acciones">
           <button ref={cancelar} type="button" className="btn btn-secundario" disabled={ocupado} onClick={onCerrar}>Cancelar</button>
           <button type="submit" className="btn btn-primario" disabled={ocupado}>

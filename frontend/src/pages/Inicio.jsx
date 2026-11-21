@@ -1,3 +1,4 @@
+import Notificacion from '../components/comunes/Notificacion';
 import {
   AlertCircle,
   ArrowLeftRight,
@@ -89,6 +90,12 @@ function Panel({ titulo, subtitulo, enlace, onEnlace, claseExtra = '', children 
 }
 
 function Aviso({ children, conError = false, onReintentar }) {
+  if (conError) return (
+    <Notificacion tipo="error">
+      <span>{children}</span>
+      {onReintentar && <button type="button" onClick={onReintentar}>Reintentar</button>}
+    </Notificacion>
+  );
   return (
     <div
       className={`ini-aviso ${conError ? 'ini-aviso--error' : ''}`}

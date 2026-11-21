@@ -1,3 +1,5 @@
+import { notificar } from '../utils/notificaciones';
+import Notificacion from '../components/comunes/Notificacion';
 import { useEffect, useState, useRef } from 'react';
 
 import {
@@ -76,7 +78,7 @@ export default function CambiarEstadoEquipo({
   const [guardando, setGuardando] = useState(false);
 
   const [error, setError] = useState('');
-  const [exito, setExito] = useState('');
+  
 
   const [confirmando, setConfirmando] = useState(false);
 
@@ -92,7 +94,7 @@ export default function CambiarEstadoEquipo({
     async function cargarDatos() {
       setCargando(true);
       setError('');
-      setExito('');
+      
       setEquipo(null);
 
       try {
@@ -225,7 +227,7 @@ export default function CambiarEstadoEquipo({
     enviandoRef.current = true;
     setGuardando(true);
     setError('');
-    setExito('');
+    
 
     try {
       // El PUT ya permite actualizaciones parciales.
@@ -239,9 +241,7 @@ export default function CambiarEstadoEquipo({
         token
       );
 
-      setExito(
-        'El estado del equipo se actualizó correctamente.'
-      );
+      notificar({ tipo: 'exito', mensaje: 'El estado del equipo se actualizó correctamente.' });
 
       setConfirmando(false);
 
@@ -291,25 +291,14 @@ export default function CambiarEstadoEquipo({
 
       {/* MENSAJE DE ERROR */}
       {error && (
-        <div
-          className="registro-alerta registro-alerta-error"
-          role="alert"
-        >
-          <AlertCircle size={19} />
+        <Notificacion tipo="error">
+          
           <span>{error}</span>
-        </div>
+        </Notificacion>
       )}
 
       {/* MENSAJE DE ÉXITO */}
-      {exito && (
-        <div
-          className="registro-alerta registro-alerta-exito"
-          role="status"
-        >
-          <CheckCircle2 size={19} />
-          <span>{exito}</span>
-        </div>
-      )}
+      
 
       {/* CARGANDO */}
       {cargando && (

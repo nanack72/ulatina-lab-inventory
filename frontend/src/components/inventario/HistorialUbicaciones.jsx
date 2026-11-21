@@ -1,14 +1,7 @@
+import Notificacion from '../comunes/Notificacion';
 import { useEffect, useMemo, useState } from 'react';
 
-import {
-  History,
-  MapPin,
-  ArrowRight,
-  ArrowLeftRight,
-  RefreshCw,
-  AlertCircle,
-  PackagePlus,
-} from 'lucide-react';
+import { History, MapPin, ArrowRight, ArrowLeftRight, RefreshCw, PackagePlus } from 'lucide-react';
 
 import {
   obtenerHistorialUbicacion,
@@ -261,8 +254,8 @@ export default function HistorialUbicaciones({
 
       {/* ERROR */}
       {!cargando && error && (
-        <div className="hist-error" role="alert">
-          <AlertCircle size={18} />
+        <Notificacion tipo="error">
+          
 
           <span>{error}</span>
 
@@ -272,7 +265,7 @@ export default function HistorialUbicaciones({
           >
             Reintentar
           </button>
-        </div>
+        </Notificacion>
       )}
 
       {/* SIN MOVIMIENTOS */}

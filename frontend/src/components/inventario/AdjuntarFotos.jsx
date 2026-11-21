@@ -1,3 +1,4 @@
+import Notificacion from '../comunes/Notificacion';
 import { useId, useState } from 'react';
 import { MAX_FOTOS_EQUIPO, MAX_FOTOS_POR_CARGA } from '../../utils/limitesFotos';
 
@@ -24,7 +25,7 @@ export default function AdjuntarFotos({ archivos, onChange, disabled = false }) 
     <input id={id} name="fotos" type="file" accept="image/jpeg,image/png,image/webp" multiple disabled={disabled}
       onChange={e => {elegir(e.target.files);e.target.value='';}} />
     <small>JPG, PNG o WEBP · Hasta 5 MB por foto · Máximo {MAX_FOTOS_EQUIPO} por equipo; seleccione hasta {MAX_FOTOS_POR_CARGA} archivos por vez.</small>
-    {error && <p role="alert">{error}</p>}
+    {error && <Notificacion tipo="error" alCerrar={() => setError('')}>{error}</Notificacion>}
     {archivos.length > 0 && <ul>{archivos.map((foto,i) => <li key={`${foto.name}-${i}`}>
       <span>{foto.name}</span><button type="button" disabled={disabled} onClick={() => onChange(archivos.filter((_,indice)=>indice!==i))}
         aria-label={`Quitar ${foto.name}`}>Quitar</button>

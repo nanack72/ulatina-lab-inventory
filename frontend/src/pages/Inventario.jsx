@@ -1,13 +1,7 @@
+import Notificacion from '../components/comunes/Notificacion';
 import { useEffect, useRef, useState } from 'react';
 
-import {
-  Search,
-  Plus,
-  RefreshCw,
-  AlertCircle,
-  X,
-  Upload,
-} from 'lucide-react';
+import { Search, Plus, RefreshCw, X, Upload } from 'lucide-react';
 
 import FiltroSelect from '../components/inventario/FiltroSelect';
 import FilaEquipo from '../components/inventario/FilaEquipo';
@@ -248,7 +242,7 @@ export default function Inventario({
           onSesionExpirada={onSesionExpirada}
         />
       )}
-      {avisoRestauracion && <p className="inv-mensaje" role="status">{avisoRestauracion}</p>}
+      {avisoRestauracion && <Notificacion tipo="exito">{avisoRestauracion}</Notificacion>}
       {puedeGestionarEliminados && (
         <div className="inv-pestanas" role="tablist" aria-label="Vista del inventario" onKeyDown={navegarVistas}>
           {[
@@ -386,11 +380,8 @@ export default function Inventario({
             ================================== */}
 
         {error && (
-          <div
-            className="inv-mensaje inv-mensaje--error"
-            role="alert"
-          >
-            <AlertCircle size={19} />
+          <Notificacion tipo="error">
+            
 
             <span>{error}</span>
 
@@ -400,7 +391,7 @@ export default function Inventario({
             >
               Reintentar
             </button>
-          </div>
+          </Notificacion>
         )}
 
         {/* ==================================

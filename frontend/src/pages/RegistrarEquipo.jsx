@@ -1,14 +1,7 @@
+import { notificar } from '../utils/notificaciones';
+import Notificacion from '../components/comunes/Notificacion';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  ArrowLeft,
-  Save,
-  Monitor,
-  Cpu,
-  MapPin,
-  FileText,
-  AlertCircle,
-  CheckCircle2,
-} from 'lucide-react';
+import { ArrowLeft, Save, Monitor, Cpu, MapPin, FileText } from 'lucide-react';
 
 import {
   obtenerCategorias,
@@ -68,7 +61,7 @@ export default function RegistrarEquipo({
   const [guardando, setGuardando] = useState(false);
 
   const [error, setError] = useState('');
-  const [exito, setExito] = useState('');
+  
 
   const enviandoRef = useRef(false);
 
@@ -211,7 +204,7 @@ export default function RegistrarEquipo({
     enviandoRef.current = true;
     setGuardando(true);
     setError('');
-    setExito('');
+    
 
     const datosEquipo = {
       nombre: formulario.nombre.trim(),
@@ -238,7 +231,7 @@ export default function RegistrarEquipo({
     try {
       await registrarEquipo(datosEquipo, token);
 
-      setExito('Equipo registrado correctamente.');
+      notificar({ tipo: 'exito', mensaje: 'Equipo registrado correctamente.' });
 
       if (typeof onRegistrado === 'function') {
         onRegistrado();
@@ -279,19 +272,14 @@ export default function RegistrarEquipo({
 
       {/* ERRORES */}
       {error && (
-        <div className="registro-alerta registro-alerta-error" role="alert">
-          <AlertCircle size={19} />
+        <Notificacion tipo="error">
+          
           <span>{error}</span>
-        </div>
+        </Notificacion>
       )}
 
       {/* CONFIRMACIÓN */}
-      {exito && (
-        <div className="registro-alerta registro-alerta-exito" role="status">
-          <CheckCircle2 size={19} />
-          <span>{exito}</span>
-        </div>
-      )}
+      
 
       {cargandoCatalogos ? (
         <div className="registro-cargando" role="status">

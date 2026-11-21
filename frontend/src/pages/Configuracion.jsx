@@ -1,14 +1,6 @@
+import Notificacion from '../components/comunes/Notificacion';
 import { useEffect, useRef, useState } from 'react';
-import {
-  Search,
-  RefreshCw,
-  AlertCircle,
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  Pencil,
-  Trash2,
-} from 'lucide-react';
+import { Search, RefreshCw, ChevronLeft, ChevronRight, Plus, Pencil, Trash2 } from 'lucide-react';
 
 import {
   consultarConfiguracion,
@@ -87,6 +79,7 @@ export default function Configuracion({ token, soloRoles = false }) {
   const [registros, setRegistros] = useState([]);
   const [sedes, setSedes] = useState([]);
   const [busqueda, setBusqueda] = useState('');
+  const [filtroSede, setFiltroSede] = useState('');
   const [pagina, setPagina] = useState(1);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
@@ -165,6 +158,7 @@ export default function Configuracion({ token, soloRoles = false }) {
     setError('');
     setMensaje('');
     setBusqueda('');
+    setFiltroSede('');
     setPagina(1);
     setCatalogo(clave);
   }
@@ -271,6 +265,7 @@ export default function Configuracion({ token, soloRoles = false }) {
   const termino = busqueda.trim().toLocaleLowerCase('es');
 
   const filtrados = registros.filter((registro) =>
+    (catalogo !== 'laboratorios' || !filtroSede || String(registro.id_sede) === filtroSede) &&
     config.columnas.some(({ campo }) =>
       String(registro[campo] ?? '')
         .toLocaleLowerCase('es')
@@ -338,9 +333,9 @@ export default function Configuracion({ token, soloRoles = false }) {
       </div>
 
       {mensaje && (
-        <div className="cfg-exito" role="status">
+        <Notificacion tipo="exito">
           {mensaje}
-        </div>
+        </Notificacion>
       )}
 
       <section className="inv-contenedor" aria-label={config.nombre}>
@@ -360,14 +355,31 @@ export default function Configuracion({ token, soloRoles = false }) {
             />
           </label>
 
-          
+          {catalogo === 'laboratorios' && (
+            <label className="cfg-filtro-sede">
+              <span className="inv-sr-only">Filtrar laboratorios por sede</span>
+              <select
+                value={filtroSede}
+                disabled={cargando || sedes.length === 0}
+                onChange={(evento) => {
+                  setFiltroSede(evento.target.value);
+                  setPagina(1);
+                }}
+              >
+                <option value="">Todas las sedes</option>
+                {sedes.map(sede => (
+                  <option key={sede.id_sede} value={String(sede.id_sede)}>{sede.nombre}</option>
+                ))}
+              </select>
+            </label>
+          )}
         </div>
 
         {error ? (
-          <div className="cfg-mensaje cfg-error" role="alert">
-            <AlertCircle size={19} />
+          <Notificacion tipo="error">
+            
             <span>{error}</span>
-          </div>
+          </Notificacion>
         ) : cargando ? (
           <div className="cfg-mensaje" role="status">
             Cargando catálogo...
@@ -515,9 +527,9 @@ export default function Configuracion({ token, soloRoles = false }) {
             </h2>
 
             {errorModal && (
-              <div className="cfg-mensaje cfg-error" role="alert">
+              <Notificacion tipo="error" alCerrar={() => setErrorModal('')}>
                 {errorModal}
-              </div>
+              </Notificacion>
             )}
 
             {modal.tipo === 'eliminar' ? (

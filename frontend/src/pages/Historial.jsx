@@ -1,18 +1,6 @@
+import Notificacion from '../components/comunes/Notificacion';
 import { useEffect, useState } from 'react';
-import {
-  History,
-  MapPin,
-  ArrowLeftRight,
-  Settings2,
-  Search,
-  RefreshCw,
-  ChevronLeft,
-  ChevronRight,
-  ChevronDown,
-  ArrowRight,
-  AlertCircle,
-  UserRound,
-} from 'lucide-react';
+import { History, MapPin, ArrowLeftRight, Settings2, Search, RefreshCw, ChevronLeft, ChevronRight, ChevronDown, ArrowRight, UserRound } from 'lucide-react';
 
 import { obtenerHistorialGeneral } from '../services/historialGeneralService';
 import { generarPaginas } from '../utils/inventario';
@@ -389,10 +377,10 @@ export default function Historial({
       </div>
 
       {error ? (
-        <div className="hg-mensaje hg-error" role="alert">
-          <AlertCircle size={20} />
+        <Notificacion tipo="error">
+          
           {error}
-        </div>
+        </Notificacion>
       ) : cargando ? (
         <div className="hg-mensaje" role="status">
           Cargando movimientos...

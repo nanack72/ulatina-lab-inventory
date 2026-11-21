@@ -1,3 +1,4 @@
+import Notificacion from '../components/comunes/Notificacion';
 import { useState } from 'react';
 import { ClipboardList, Monitor, Wrench } from 'lucide-react';
 import { iniciarSesion } from '../services/authService';
@@ -313,12 +314,9 @@ export default function Login({ onLogin }) {
 
             {/* MENSAJE DE ERROR */}
             {error && (
-              <div
-                className="login-error"
-                role="alert"
-              >
+              <Notificacion tipo="error" alCerrar={() => setError('')}>
                 {error}
-              </div>
+              </Notificacion>
             )}
 
             {/* BOTÓN */}

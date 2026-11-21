@@ -1,3 +1,4 @@
+import Notificacion from '../components/comunes/Notificacion';
 import { useState } from 'react';
 
 import Sidebar from '../components/Sidebar';
@@ -433,9 +434,9 @@ export default function MainLayout({
     if (paginaActual === 'usuarios') {
       if (!esSuperadministrador) {
         return (
-          <div role="alert">
+          <Notificacion tipo="error">
             No tiene permisos para administrar usuarios.
-          </div>
+          </Notificacion>
         );
       }
 
@@ -451,9 +452,9 @@ export default function MainLayout({
     if (paginaActual === 'configuracion') {
       if (!esSuperadministrador) {
         return (
-          <div role="alert">
+          <Notificacion tipo="error">
             No tiene permisos para acceder a Configuración.
-          </div>
+          </Notificacion>
         );
       }
 

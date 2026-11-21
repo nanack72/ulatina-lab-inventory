@@ -1,11 +1,6 @@
+import Notificacion from '../comunes/Notificacion';
 import { useEffect, useState } from 'react';
-import {
-  ArrowRight,
-  History,
-  RefreshCw,
-  AlertCircle,
-  Pencil,
-} from 'lucide-react';
+import { ArrowRight, History, RefreshCw, Pencil } from 'lucide-react';
 
 import { obtenerHistorialCambios } from '../../services/historialCambiosService';
 
@@ -139,10 +134,10 @@ export default function HistorialCambios({
         )}
 
         {!cargando && error && (
-          <div className="hc-error" role="alert">
-            <AlertCircle size={19} />
+          <Notificacion tipo="error">
+            
             <span>{error}</span>
-          </div>
+          </Notificacion>
         )}
 
         {!cargando && !error && (

@@ -1,13 +1,7 @@
+import Notificacion from '../comunes/Notificacion';
 import { useEffect, useMemo, useState } from 'react';
 
-import {
-  History,
-  RefreshCw,
-  AlertCircle,
-  ArrowRight,
-  PackagePlus,
-  RefreshCcw,
-} from 'lucide-react';
+import { History, RefreshCw, ArrowRight, PackagePlus, RefreshCcw } from 'lucide-react';
 
 import { obtenerHistorialEstados } from '../../services/equiposService';
 
@@ -144,8 +138,8 @@ export default function HistorialEstados({
       )}
 
       {!cargando && error && (
-        <div className="hist-error" role="alert">
-          <AlertCircle size={18} />
+        <Notificacion tipo="error">
+          
           <span>{error}</span>
 
           <button
@@ -156,7 +150,7 @@ export default function HistorialEstados({
           >
             Reintentar
           </button>
-        </div>
+        </Notificacion>
       )}
 
       {!cargando &&

@@ -1,5 +1,6 @@
+import Notificacion from './Notificacion';
 import { useEffect, useId, useRef } from 'react';
-import { AlertCircle, ChevronLeft, ChevronRight, RefreshCw, Search, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, RefreshCw, Search, X } from 'lucide-react';
 import { generarPaginas } from '../../utils/inventario';
 import '../../styles/inventario.css';
 import '../../styles/modulos.css';
@@ -28,15 +29,7 @@ export function EncabezadoModulo({ titulo, descripcion, alActualizar, cargando, 
 }
 export function Aviso({ children, error = false }) {
   if (!children) return null;
-  return (
-    <div
-      className={'mod-aviso ' + (error ? 'mod-aviso-error' : '')}
-      role={error ? 'alert' : 'status'}
-    >
-      <AlertCircle size={18} aria-hidden="true" />
-      <span>{children}</span>
-    </div>
-  );
+  return <Notificacion tipo={error ? 'error' : 'exito'}>{children}</Notificacion>;
 }
 export function Indicador({ titulo, valor, detalle, tono = 'verde' }) {
   return (
