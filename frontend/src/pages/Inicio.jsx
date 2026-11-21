@@ -28,6 +28,7 @@ import {
 } from '../utils/dashboard';
 
 import { formatearSede } from '../utils/inventario';
+import { resumirRevisionEquipos } from '../utils/revisionEquipos';
 
 import '../styles/inicio.css';
 
@@ -156,6 +157,7 @@ export default function Inicio({
   const resumen = resumirInicio(equipos, mantenimientos);
 
   const hoy = new Date(ahora);
+  const revision = resumirRevisionEquipos(equipos, hoy.getFullYear());
   const { dia, mes } = diaYMes(hoy);
   const nombre = primerNombre(usuario?.nombre);
 
@@ -301,6 +303,41 @@ export default function Inicio({
           icono={Clock}
           tono="azul"
         />
+      </section>
+
+      <section className="ini-kpi ini-revision-banda" aria-labelledby="ini-revision-titulo">
+        <div className="ini-revision-resumen">
+          <span className="ini-icono ini-icono--rojo">
+            <TriangleAlert size={20} aria-hidden="true" />
+          </span>
+          <div className="ini-kpi-texto">
+            <h2 id="ini-revision-titulo">Equipos por revisar</h2>
+            <strong>{cifra(equiposListos, revision.total)}</strong>
+            <small>Según antigüedad y condición</small>
+          </div>
+        </div>
+
+        <div className="ini-revision-desglose">
+          <dl className="ini-revision-cifras">
+            <div>
+              <dt>Por antigüedad</dt>
+              <dd>{cifra(equiposListos, revision.porAntiguedad)}</dd>
+            </div>
+            <div>
+              <dt>Por condición</dt>
+              <dd>{cifra(equiposListos, revision.porCondicion)}</dd>
+            </div>
+            <div>
+              <dt>Sin año válido</dt>
+              <dd>{cifra(equiposListos, revision.sinAnio)}</dd>
+            </div>
+          </dl>
+          {equiposListos && revision.ambas > 0 && (
+            <p className="ini-revision-coincidencias">
+              {plural(revision.ambas, 'equipo cumple', 'equipos cumplen')} ambos criterios; se cuenta cada equipo una sola vez.
+            </p>
+          )}
+        </div>
       </section>
 
       <div className="ini-fila">

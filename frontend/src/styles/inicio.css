@@ -386,3 +386,70 @@ button.ini-equipo:hover {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+
+
+
+.ini-revision-banda {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(0, 2fr);
+  align-items: center;
+  gap: 28px;
+}
+
+.ini-revision-resumen {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 0;
+}
+
+.ini-revision-desglose { min-width: 0; }
+
+.ini-revision-cifras {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0;
+}
+
+.ini-revision-cifras > div {
+  padding-left: 20px;
+  border-left: 1px solid var(--borde, #d3e2db);
+}
+
+.ini-revision-cifras dt {
+  color: var(--texto-secundario, #70857b);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.ini-revision-cifras dd {
+  margin: 6px 0 0;
+  color: var(--texto-fuerte, #16392e);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.ini-revision-coincidencias {
+  margin: 14px 0 0;
+  color: var(--texto-secundario, #70857b);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+@media (max-width: 650px) {
+  .ini-revision-banda { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .ini-revision-cifras { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .ini-revision-cifras > div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 0 0;
+    border-left: 0;
+    border-top: 1px solid var(--borde, #d3e2db);
+  }
+  .ini-revision-cifras dd { margin: 0; }
+}

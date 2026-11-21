@@ -49,6 +49,7 @@ function formularioInicial() {
     contrasena: '',
     activo: true,
     permiso_inventario: 'consulta',
+    puede_eliminar_equipos: false,
     sedes: [],
     laboratorios: [],
   };
@@ -153,6 +154,7 @@ export default function Usuarios({ token, usuarioActual }) {
       activo: usuario.activo,
       permiso_inventario:
         usuario.permiso_inventario ?? 'consulta',
+      puede_eliminar_equipos: usuario.puede_eliminar_equipos === true,
       sedes: (usuario.sedes || []).map(Number),
       laboratorios: (usuario.laboratorios || []).map(Number),
     });
@@ -284,6 +286,7 @@ export default function Usuarios({ token, usuarioActual }) {
         id_rol: Number(formulario.id_rol),
         activo: formulario.activo,
         permiso_inventario: permisoInventario,
+        puede_eliminar_equipos: esRolSuperadministrador || formulario.puede_eliminar_equipos,
         sedes: formulario.sedes,
         laboratorios: formulario.laboratorios,
       };
@@ -747,6 +750,18 @@ export default function Usuarios({ token, usuarioActual }) {
                       ? 'El Superadministrador conserva acceso completo.'
                       : 'La edición incluye modificar equipos, trasladarlos y cambiar su estado.'}
                   </small>
+                </label>
+
+                <label className="cfg-campo">
+                  <span>
+                    <input
+                      type="checkbox"
+                      checked={esSuperadministrador || formulario.puede_eliminar_equipos}
+                      disabled={esSuperadministrador}
+                      onChange={(e) => cambiarCampo('puede_eliminar_equipos', e.target.checked)}
+                    />{' '}Permitir eliminar y restaurar equipos
+                  </span>
+                  <small>Los equipos se ocultan del inventario conservando sus datos e historial. Solo aplica a los laboratorios asignados; el Superadministrador tiene acceso completo.</small>
                 </label>
 
                 {editandoCuentaPropia && (

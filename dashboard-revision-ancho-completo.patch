@@ -1,0 +1,147 @@
+--- a/frontend/src/pages/Inicio.jsx
++++ b/frontend/src/pages/Inicio.jsx
+@@ -303,25 +303,42 @@
+           icono={Clock}
+           tono="azul"
+         />
+-        <TarjetaResumen
+-          titulo="Equipos por revisar"
+-          valor={cifra(equiposListos, revision.total)}
+-          detalle={equiposListos ? (
+-            <>
+-              <span>{revision.porAntiguedad} por antigüedad · {revision.porCondicion} por condición</span>
+-              <br />
+-              <span>{revision.ambas} cumplen ambos criterios; el total no los duplica.</span>
+-              {revision.sinAnio > 0 && <><br /><span>{revision.sinAnio} sin año válido para evaluar antigüedad.</span></>}
+-            </>
+-          ) : 'Consultando…'}
+-          icono={TriangleAlert}
+-          tono="rojo"
+-        />
+       </section>
+-      <p className="ini-revision-nota">
+-        Alerta orientativa según el año registrado y los criterios de Configuración.
+-        No declara obsoleto un equipo ni cambia su estado.
+-      </p>
++
++      <section className="ini-kpi ini-revision-banda" aria-labelledby="ini-revision-titulo">
++        <div className="ini-revision-resumen">
++          <span className="ini-icono ini-icono--rojo">
++            <TriangleAlert size={20} aria-hidden="true" />
++          </span>
++          <div className="ini-kpi-texto">
++            <h2 id="ini-revision-titulo">Equipos por revisar</h2>
++            <strong>{cifra(equiposListos, revision.total)}</strong>
++            <small>Según antigüedad y condición</small>
++          </div>
++        </div>
++
++        <div className="ini-revision-desglose">
++          <dl className="ini-revision-cifras">
++            <div>
++              <dt>Por antigüedad</dt>
++              <dd>{cifra(equiposListos, revision.porAntiguedad)}</dd>
++            </div>
++            <div>
++              <dt>Por condición</dt>
++              <dd>{cifra(equiposListos, revision.porCondicion)}</dd>
++            </div>
++            <div>
++              <dt>Sin año válido</dt>
++              <dd>{cifra(equiposListos, revision.sinAnio)}</dd>
++            </div>
++          </dl>
++          {equiposListos && revision.ambas > 0 && (
++            <p className="ini-revision-coincidencias">
++              {plural(revision.ambas, 'equipo cumple', 'equipos cumplen')} ambos criterios; se cuenta cada equipo una sola vez.
++            </p>
++          )}
++        </div>
++      </section>
+ 
+       <div className="ini-fila">
+         {/* MANTENIMIENTOS RECIENTES */}
+--- a/frontend/src/styles/inicio.css
++++ b/frontend/src/styles/inicio.css
+@@ -45,7 +45,7 @@
+ 
+ .ini-kpis {
+   display: grid;
+-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
++  grid-template-columns: repeat(4, minmax(0, 1fr));
+   gap: 16px;
+ }
+ 
+@@ -387,9 +387,69 @@
+   }
+ }
+ 
+-.ini-revision-nota {
+-  margin: -4px 0 0;
+-  color: var(--texto-suave, #70857b);
++
++
++
++.ini-revision-banda {
++  display: grid;
++  grid-template-columns: minmax(220px, 1fr) minmax(0, 2fr);
++  align-items: center;
++  gap: 28px;
++}
++
++.ini-revision-resumen {
++  display: flex;
++  align-items: flex-start;
++  gap: 14px;
++  min-width: 0;
++}
++
++.ini-revision-desglose { min-width: 0; }
++
++.ini-revision-cifras {
++  display: grid;
++  grid-template-columns: repeat(3, minmax(0, 1fr));
++  gap: 16px;
++  margin: 0;
++}
++
++.ini-revision-cifras > div {
++  padding-left: 20px;
++  border-left: 1px solid var(--borde, #d3e2db);
++}
++
++.ini-revision-cifras dt {
++  color: var(--texto-secundario, #70857b);
+   font-size: 12px;
+   line-height: 1.5;
+ }
++
++.ini-revision-cifras dd {
++  margin: 6px 0 0;
++  color: var(--texto-fuerte, #16392e);
++  font-size: 24px;
++  font-weight: 600;
++  line-height: 1.2;
++}
++
++.ini-revision-coincidencias {
++  margin: 14px 0 0;
++  color: var(--texto-secundario, #70857b);
++  font-size: 12px;
++  line-height: 1.5;
++}
++
++@media (max-width: 650px) {
++  .ini-revision-banda { grid-template-columns: minmax(0, 1fr); gap: 20px; }
++  .ini-revision-cifras { grid-template-columns: minmax(0, 1fr); gap: 14px; }
++  .ini-revision-cifras > div {
++    display: flex;
++    align-items: center;
++    justify-content: space-between;
++    gap: 16px;
++    padding: 12px 0 0;
++    border-left: 0;
++    border-top: 1px solid var(--borde, #d3e2db);
++  }
++  .ini-revision-cifras dd { margin: 0; }
++}

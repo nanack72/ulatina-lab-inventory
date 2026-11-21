@@ -28,7 +28,7 @@ async function conAcceso(pool, equipo, actor, accion, operar) {
     if (accion === 'eliminar' && !puedeEditarInventario(usuario)) throw fallo('No tiene permisos para eliminar fotos.',403);
     const visible = await cliente.query(`SELECT e.id_equipo FROM public.equipo e
       JOIN public.laboratorio l ON l.id_laboratorio=e.id_laboratorio
-      WHERE e.id_equipo=$1 AND ($3::boolean OR EXISTS (
+      WHERE e.id_equipo=$1 AND e.eliminado_en IS NULL AND ($3::boolean OR EXISTS (
         SELECT 1 FROM public.usuario_sede us JOIN public.usuario_laboratorio ul ON ul.id_usuario_sede=us.id_usuario_sede
         WHERE us.id_usuario=$2 AND us.id_sede=l.id_sede AND ul.id_sede=l.id_sede AND ul.id_laboratorio=e.id_laboratorio))
       FOR UPDATE OF e`, [Number(equipo), actor, String(usuario.rol).trim().toLowerCase() === 'superadministrador']);

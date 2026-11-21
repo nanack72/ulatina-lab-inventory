@@ -201,7 +201,7 @@ const responderErrorEscritura = (
 
 const obtenerEquipos = async (req, res) => {
   try {
-    const condiciones = [];
+    const condiciones = ['e.eliminado_en IS NULL'];
     const valores = [];
 
     if (
@@ -285,6 +285,8 @@ const obtenerEquipos = async (req, res) => {
         e.marca,
         e.modelo,
         e.anio,
+        c.anios_revision,
+        es.requiere_revision,
         e.caracteristicas,
         e.comentarios,
         e.ubicacion_detalle,
@@ -366,7 +368,7 @@ const obtenerEquipoPorId = async (req, res) => {
       });
     }
 
-    const condiciones = ['e.id_equipo = $1'];
+    const condiciones = ['e.id_equipo = $1', 'e.eliminado_en IS NULL'];
     const valores = [Number(id)];
 
     if (
@@ -391,6 +393,8 @@ const obtenerEquipoPorId = async (req, res) => {
         e.marca,
         e.modelo,
         e.anio,
+        c.anios_revision,
+        es.requiere_revision,
         e.caracteristicas,
         e.comentarios,
         e.ubicacion_detalle,
@@ -912,7 +916,7 @@ const actualizarEquipo = async (req, res) => {
          id_equipo,
          id_laboratorio
        FROM public.equipo
-       WHERE id_equipo = $1
+       WHERE id_equipo = $1 AND eliminado_en IS NULL
        FOR UPDATE`,
       [idEquipo]
     );

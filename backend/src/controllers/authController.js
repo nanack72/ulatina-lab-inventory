@@ -33,6 +33,7 @@ const login = async (req, res) => {
                 u.contrasena_hash,
                 u.activo,
                 u.permiso_inventario,
+                u.puede_eliminar_equipos,
                 r.nombre AS rol
             FROM public.usuario u
             INNER JOIN public.rol r
@@ -100,7 +101,8 @@ const login = async (req, res) => {
                 nombre: usuario.nombre_completo,
                 correo: usuario.correo_institucional,
                 rol: usuario.rol,
-                permiso_inventario: usuario.permiso_inventario
+                permiso_inventario: usuario.permiso_inventario,
+                puede_eliminar_equipos: usuario.puede_eliminar_equipos
             }
         });
     } catch (error) {

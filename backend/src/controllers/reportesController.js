@@ -52,7 +52,7 @@ const consultarInventario = async (usuario) => {
        l.nombre AS laboratorio,
        s.nombre AS sede,
        e.ubicacion_detalle
-     FROM public.equipo e
+     FROM (SELECT * FROM public.equipo WHERE eliminado_en IS NULL) e
      INNER JOIN public.laboratorio l ON e.id_laboratorio = l.id_laboratorio
      INNER JOIN public.sede s ON l.id_sede = s.id_sede
      INNER JOIN public.categoria c ON e.id_categoria = c.id_categoria
@@ -117,14 +117,14 @@ const obtenerResumenGeneral = async (req, res) => {
     const [totalRes, estadosRes, tiposRes, labsRes] = await Promise.all([
       pool.query(
         `SELECT COUNT(*)::int AS total
-         FROM public.equipo e
+         FROM (SELECT * FROM public.equipo WHERE eliminado_en IS NULL) e
          INNER JOIN public.laboratorio l ON e.id_laboratorio = l.id_laboratorio
          WHERE ${condicion}`,
         params
       ),
       pool.query(
         `SELECT es.nombre AS estado, COUNT(*)::int AS cantidad
-         FROM public.equipo e
+         FROM (SELECT * FROM public.equipo WHERE eliminado_en IS NULL) e
          INNER JOIN public.laboratorio l ON e.id_laboratorio = l.id_laboratorio
          INNER JOIN public.estado es ON e.id_estado = es.id_estado
          WHERE ${condicion}
@@ -148,7 +148,7 @@ const obtenerResumenGeneral = async (req, res) => {
            l.nombre,
            COUNT(e.id_equipo)::int AS cantidad_equipos
          FROM public.laboratorio l
-         LEFT JOIN public.equipo e ON e.id_laboratorio = l.id_laboratorio
+         LEFT JOIN public.equipo e ON e.id_laboratorio = l.id_laboratorio AND e.eliminado_en IS NULL
          WHERE ${condicion}
          GROUP BY l.id_laboratorio, l.codigo, l.nombre
          ORDER BY cantidad_equipos DESC, l.codigo`,

@@ -11,6 +11,8 @@ import {
 
 import FiltroSelect from '../components/inventario/FiltroSelect';
 import FilaEquipo from '../components/inventario/FilaEquipo';
+import FilaEquipoEliminado from '../components/inventario/FilaEquipoEliminado';
+import RestaurarEquipo from '../components/inventario/RestaurarEquipo';
 import Paginacion from '../components/inventario/Paginacion';
 import ImportarEquipos from '../components/inventario/ImportarEquipos';
 
@@ -32,6 +34,7 @@ import '../styles/inventario.css';
 export default function Inventario({
   token,
   puedeRegistrar = false,
+  puedeGestionarEliminados = false,
   onRegistrarEquipo,
   onVerEquipo,
   onSesionExpirada,
@@ -44,11 +47,17 @@ export default function Inventario({
     FILTROS_INICIALES
   );
 
+  const [vista, setVista] = useState('activos');
+  const [equipoRestaurar, setEquipoRestaurar] = useState(null);
+  const [avisoRestauracion, setAvisoRestauracion] = useState('');
+  const verEliminados = puedeGestionarEliminados && vista === 'eliminados';
+  const filtrosConsulta = { ...filtros, vista: verEliminados ? 'eliminados' : 'activos' };
+
   const [pagina, setPagina] = useState(1);
   const [limite, setLimite] = useState(EQUIPOS_POR_PAGINA);
 
   const { equipos: equiposPagina, total, totalAutorizados, paginaActual, opciones,
-    cargando, error, recargar } = useInventarioPaginado(token, filtros, pagina, limite, onSesionExpirada);
+    cargando, error, recargar } = useInventarioPaginado(token, filtrosConsulta, pagina, limite, onSesionExpirada);
 
   const tablaRef = useRef(null);
   const enfocarPaginaRef = useRef(false);
@@ -64,6 +73,27 @@ export default function Inventario({
   // ========================================
   // FILTROS Y NAVEGACIÓN
   // ========================================
+
+  function cambiarVista(nuevaVista) {
+    if (nuevaVista === (verEliminados ? 'eliminados' : 'activos')) return;
+    setVista(nuevaVista);
+    setFiltros({ ...FILTROS_INICIALES });
+    setPagina(1);
+    setAvisoRestauracion('');
+  }
+
+  function navegarVistas(evento) {
+    const teclas = ['ArrowLeft', 'ArrowRight', 'Home', 'End'];
+    if (!teclas.includes(evento.key)) return;
+    evento.preventDefault();
+    const botones = Array.from(evento.currentTarget.querySelectorAll('[role="tab"]'));
+    const indice = botones.indexOf(document.activeElement);
+    const siguiente = evento.key === 'Home' ? 0
+      : evento.key === 'End' ? botones.length - 1
+      : (indice + (evento.key === 'ArrowRight' ? 1 : -1) + botones.length) % botones.length;
+    botones[siguiente]?.focus();
+    botones[siguiente]?.click();
+  }
 
   function cambiarFiltro(clave, valor) {
     setFiltros((anteriores) => ({
@@ -207,7 +237,50 @@ export default function Inventario({
           CONTENEDOR PRINCIPAL
           ================================== */}
 
-      <section className="inv-contenedor">
+      {equipoRestaurar && puedeGestionarEliminados && (
+        <RestaurarEquipo equipo={equipoRestaurar} token={token}
+          onCerrar={() => setEquipoRestaurar(null)}
+          onRestaurado={(mensaje) => {
+            setEquipoRestaurar(null);
+            setAvisoRestauracion(mensaje);
+            recargar();
+          }}
+          onSesionExpirada={onSesionExpirada}
+        />
+      )}
+      {avisoRestauracion && <p className="inv-mensaje" role="status">{avisoRestauracion}</p>}
+      {puedeGestionarEliminados && (
+        <div className="inv-pestanas" role="tablist" aria-label="Vista del inventario" onKeyDown={navegarVistas}>
+          {[
+            ['activos', 'Activos'],
+            ['eliminados', 'Eliminados'],
+          ].map(([valor, etiqueta]) => {
+            const seleccionada = valor === (verEliminados ? 'eliminados' : 'activos');
+            return (
+              <button
+                key={valor}
+                id={`inv-pestana-${valor}`}
+                type="button"
+                role="tab"
+                aria-selected={seleccionada}
+                aria-controls="inv-panel-vista"
+                tabIndex={seleccionada ? 0 : -1}
+                className={`inv-pestana${seleccionada ? ' activa' : ''}`}
+                onClick={() => cambiarVista(valor)}
+              >
+                {etiqueta}
+              </button>
+            );
+          })}
+        </div>
+      )}
+      <section
+        id="inv-panel-vista"
+        className="inv-contenedor"
+        role={puedeGestionarEliminados ? 'tabpanel' : undefined}
+        aria-labelledby={puedeGestionarEliminados ? `inv-pestana-${verEliminados ? 'eliminados' : 'activos'}` : undefined}
+        tabIndex={puedeGestionarEliminados ? 0 : undefined}
+      >
 
         {/* ==================================
             BUSCADOR Y FILTROS
@@ -241,6 +314,7 @@ export default function Inventario({
           {/* SELECTORES */}
           <div className="inv-selectores">
 
+
             {FILTROS_SELECT.map(
               ({ clave, etiqueta }) => (
                 <FiltroSelect
@@ -254,6 +328,8 @@ export default function Inventario({
                 />
               )
             )}
+
+
 
           </div>
         </div>
@@ -350,9 +426,17 @@ export default function Inventario({
             <div ref={tablaRef} className="inv-tabla-contenedor" tabIndex={0} role="region" aria-label="Tabla del inventario">
 
               <table className="inv-tabla">
-                <caption className="inv-sr-only">Equipos del inventario autorizado</caption>
+                <caption className="inv-sr-only">{verEliminados ? 'Equipos eliminados de los laboratorios autorizados' : 'Equipos del inventario autorizado'}</caption>
 
                 {/* ENCABEZADOS */}
+                {verEliminados ? (
+                  <thead><tr>
+                    <th scope="col">Placa</th><th scope="col">Equipo</th>
+                    <th scope="col">Ubicación</th><th scope="col">Fecha de eliminación</th>
+                    <th scope="col">Eliminado por</th><th scope="col">Motivo</th>
+                    <th scope="col">Acciones</th>
+                  </tr></thead>
+                ) : (
                 <thead>
                   <tr>
                     <th scope="col">Placa</th>
@@ -375,6 +459,7 @@ export default function Inventario({
                     </th>
                   </tr>
                 </thead>
+                )}
 
                 {/* FILAS */}
                 <tbody>
@@ -386,17 +471,17 @@ export default function Inventario({
                         className="inv-tabla-vacia"
                       >
                         {totalAutorizados === 0
-                          ? 'No hay equipos disponibles para tu usuario.'
+                          ? (verEliminados ? 'No hay equipos eliminados en tus laboratorios autorizados.' : 'No hay equipos disponibles para tu usuario.')
                           : 'No se encontraron equipos con los filtros seleccionados.'}
                       </td>
                     </tr>
                   ) : (
                     equiposPagina.map((equipo) => (
-                      <FilaEquipo
-                        key={equipo.clave}
-                        equipo={equipo}
-                        onVer={abrirDetalle}
-                      />
+                      verEliminados ? (
+                        <FilaEquipoEliminado key={equipo.clave} equipo={equipo} onRestaurar={setEquipoRestaurar} />
+                      ) : (
+                        <FilaEquipo key={equipo.clave} equipo={equipo} onVer={abrirDetalle} />
+                      )
                     ))
                   )}
 

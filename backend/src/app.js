@@ -145,7 +145,7 @@ app.use((error, req, res, next) => {
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
+const servidor = app.listen(PORT, () => {
     console.log(
         `Servidor PES ejecutándose en http://localhost:${PORT}`
     );
@@ -153,3 +153,11 @@ app.listen(PORT, () => {
     // Iniciar la limpieza automática de tokens
     iniciarLimpiezaTokens();
 });
+
+// Node cierra las conexiones inactivas a los 5 s. Si el proxy (Vite, nginx)
+// reutiliza justo una de esas conexiones, la primera petición falla con un
+// 500 vacío. Se mantienen abiertas más tiempo que cualquier proxy habitual.
+if (servidor) {
+    servidor.keepAliveTimeout = 65000;
+    servidor.headersTimeout = 66000;
+}
