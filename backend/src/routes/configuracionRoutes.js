@@ -21,6 +21,7 @@ const CATALOGOS = {
     campos: {
       nombre: { max: 100, obligatorio: true },
       descripcion: { max: 255, obligatorio: false },
+      anios_revision: { tipo: 'anios', obligatorio: false },
     },
   },
   estados: {
@@ -29,6 +30,7 @@ const CATALOGOS = {
     campos: {
       nombre: { max: 100, obligatorio: true },
       descripcion: { max: 255, obligatorio: false },
+      requiere_revision: { tipo: 'booleano', obligatorio: false },
     },
   },
   sedes: {
@@ -84,6 +86,26 @@ function validarDatos(configuracion, body) {
 
   for (const [campo, reglas] of Object.entries(configuracion.campos)) {
     const valor = body[campo];
+
+    if (reglas.tipo === 'anios') {
+      if (valor === '' || valor === null || valor === undefined) {
+        datos[campo] = null;
+      } else if ((typeof valor !== 'number' && typeof valor !== 'string') ||
+          !/^[1-9]\d*$/.test(String(valor)) || Number(valor) > 100) {
+        return { error: 'Los años para revisión deben ser un entero entre 1 y 100, o quedar vacíos.' };
+      } else {
+        datos[campo] = Number(valor);
+      }
+      continue;
+    }
+
+    if (reglas.tipo === 'booleano') {
+      if (valor !== undefined && typeof valor !== 'boolean') {
+        return { error: 'Indique si el estado requiere revisión.' };
+      }
+      datos[campo] = valor === true;
+      continue;
+    }
 
     if (reglas.tipo === 'id') {
       const id =

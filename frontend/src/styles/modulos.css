@@ -104,6 +104,35 @@
   padding: 8px;
   border: 1px solid var(--borde);
 }
+/* Selector de estado con el color de la insignia (mismo tono que el estado) */
+.mod-tabla select.mod-select-estado {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+  color: #456052;
+  background-color: #f0f5f2;
+  border-color: var(--borde);
+}
+.mod-tabla select.mod-select-estado.mod-insignia-verde {
+  color: #286433;
+  background-color: #e9f5e4;
+  border-color: #c8e4b8;
+}
+.mod-tabla select.mod-select-estado.mod-insignia-ambar {
+  color: #845212;
+  background-color: #fff6e6;
+  border-color: #e9d8b5;
+}
+.mod-tabla select.mod-select-estado.mod-insignia-rojo {
+  color: #a12d25;
+  background-color: #fff0ed;
+  border-color: #eec7c0;
+}
+.mod-tabla select.mod-select-estado option {
+  color: var(--texto);
+  background: #fff;
+  white-space: nowrap;
+}
 .mod-insignia {
   display: inline-flex;
   align-items: center;

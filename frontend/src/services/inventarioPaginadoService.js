@@ -4,7 +4,7 @@ export async function obtenerPaginaInventario(token, filtros, pagina, limite, si
   if (!token) throw new Error('Debés iniciar sesión para consultar el inventario.');
   if (![10, 20, 50].includes(limite)) throw new Error('Cantidad de equipos por página inválida.');
   const parametros = new URLSearchParams({ pagina: String(pagina), limite: String(limite) });
-  for (const campo of ['busqueda', 'sede', 'laboratorio', 'categoria', 'estado']) {
+  for (const campo of ['busqueda', 'sede', 'laboratorio', 'categoria', 'estado', 'vista']) {
     if (filtros[campo]) parametros.set(campo, filtros[campo]);
   }
   const { respuesta, resultado } = await solicitarInventario(

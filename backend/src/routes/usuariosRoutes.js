@@ -152,7 +152,12 @@ function validarDatos(body, creando) {
     }
   }
 
+  if (typeof body.puede_eliminar_equipos !== 'boolean') {
+    throw errorSolicitud('Debe indicar el permiso para eliminar equipos.');
+  }
+
   return {
+    puedeEliminarEquipos: body.puede_eliminar_equipos,
     nombre: body.nombre_completo.trim(),
     correo,
     idRol: body.id_rol,
@@ -354,6 +359,7 @@ router.get('/', async (req, res) => {
         u.correo_institucional,
         u.activo,
         u.permiso_inventario,
+                u.puede_eliminar_equipos,
         u.fecha_creacion,
         r.nombre AS rol,
         ARRAY(
@@ -435,9 +441,10 @@ router.post('/', async (req, res) => {
           correo_institucional,
           contrasena_hash,
           activo,
-          permiso_inventario
+          permiso_inventario,
+          puede_eliminar_equipos
         )
-        VALUES ($1, $2, $3, $4, $5, $6)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING id_usuario
       `,
       [
@@ -447,6 +454,7 @@ router.post('/', async (req, res) => {
         hash,
         datos.activo,
         permisoInventario,
+        esSuperadministrador(referencias.rol.nombre) || datos.puedeEliminarEquipos,
       ]
     );
 
@@ -593,7 +601,8 @@ router.put('/:id', async (req, res) => {
           nombre_completo = $2,
           correo_institucional = $3,
           activo = $4,
-          permiso_inventario = $5
+          permiso_inventario = $5,
+          puede_eliminar_equipos = $7
         WHERE id_usuario = $6
       `,
       [
@@ -603,6 +612,7 @@ router.put('/:id', async (req, res) => {
         datos.activo,
         nuevoEsSuper ? 'edicion' : datos.permisoInventario,
         idUsuario,
+        nuevoEsSuper || datos.puedeEliminarEquipos,
       ]
     );
 

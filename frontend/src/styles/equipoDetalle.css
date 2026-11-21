@@ -573,3 +573,14 @@
   outline: 2px solid var(--verde);
   outline-offset: 2px;
 }
+
+
+.detalle-menu-opciones button.detalle-accion-eliminar {
+  color: #b42318;
+  border-top: 1px solid #e2e8e5;
+  margin-top: 4px;
+}
+.detalle-menu-opciones button.detalle-accion-eliminar:hover {
+  background: #fff1f0;
+  color: #b42318;
+}

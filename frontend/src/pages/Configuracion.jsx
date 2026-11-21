@@ -37,6 +37,7 @@ const CATALOGOS = {
     campos: [
       { campo: 'nombre', titulo: 'Nombre', max: 100, obligatorio: true },
       { campo: 'descripcion', titulo: 'Descripción', max: 255 },
+      { campo: 'anios_revision', titulo: 'Revisar por antigüedad a partir de (años)', tipo: 'anios', ayuda: 'De 1 a 100 años. Dejar vacío para no evaluar esta categoría por antigüedad.' },
     ],
   },
   estados: {
@@ -50,6 +51,7 @@ const CATALOGOS = {
     campos: [
       { campo: 'nombre', titulo: 'Nombre', max: 100, obligatorio: true },
       { campo: 'descripcion', titulo: 'Descripción', max: 255 },
+      { campo: 'requiere_revision', titulo: 'Requiere revisión por condición', tipo: 'booleano', ayuda: 'Marcar para estados como dañado, inservible u obsoleto. No marcar por mantenimiento rutinario.' },
     ],
   },
   sedes: {
@@ -170,8 +172,8 @@ export default function Configuracion({ token, soloRoles = false }) {
   function abrirFormulario(registro = null) {
     const datos = {};
 
-    for (const { campo } of config.campos) {
-      datos[campo] = registro?.[campo] ?? '';
+    for (const { campo, tipo } of config.campos) {
+      datos[campo] = registro?.[campo] ?? (tipo === 'booleano' ? false : '');
     }
 
     setFormulario(datos);
@@ -212,9 +214,13 @@ export default function Configuracion({ token, soloRoles = false }) {
 
       for (const { campo, tipo } of config.campos) {
         datos[campo] =
-          tipo === 'sede'
-            ? Number(formulario[campo])
-            : String(formulario[campo] ?? '').trim();
+          tipo === 'booleano'
+            ? formulario[campo] === true
+            : tipo === 'sede'
+              ? Number(formulario[campo])
+              : tipo === 'anios'
+                ? (formulario[campo] === '' || formulario[campo] == null ? null : Number(formulario[campo]))
+                : String(formulario[campo] ?? '').trim();
       }
 
       const id = modal.registro?.[config.id];
@@ -553,13 +559,25 @@ export default function Configuracion({ token, soloRoles = false }) {
               <form onSubmit={guardar}>
                 <fieldset className="cfg-formulario" disabled={guardando}>
                   {config.campos.map(
-                    ({ campo, titulo, max, obligatorio, tipo }, indice) => (
+                    ({ campo, titulo, max, obligatorio, tipo, ayuda }, indice) => (
                       <label key={campo} className="cfg-campo">
                         <span>
                           {titulo}{obligatorio ? ' *' : ''}
                         </span>
 
-                        {tipo === 'sede' ? (
+                        {tipo === 'booleano' ? (
+                          <input
+                            type="checkbox"
+                            checked={formulario[campo] === true}
+                            onChange={(e) => setFormulario((anterior) => ({ ...anterior, [campo]: e.target.checked }))}
+                          />
+                        ) : tipo === 'anios' ? (
+                          <input
+                            type="number" min="1" max="100" step="1"
+                            value={formulario[campo] ?? ''}
+                            onChange={(e) => setFormulario((anterior) => ({ ...anterior, [campo]: e.target.value }))}
+                          />
+                        ) : tipo === 'sede' ? (
                           <select
                             required={obligatorio}
                             value={formulario[campo] ?? ''}
@@ -607,6 +625,7 @@ export default function Configuracion({ token, soloRoles = false }) {
                             }
                           />
                         )}
+                        {ayuda && <small>{ayuda}</small>}
                       </label>
                     )
                   )}

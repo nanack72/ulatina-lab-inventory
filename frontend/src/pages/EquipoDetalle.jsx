@@ -15,6 +15,7 @@ import {
   FileClock,
   MessageSquare,
   Pencil,
+  Trash2,
   MoreHorizontal,
   ChevronDown,
 } from 'lucide-react';
@@ -26,6 +27,7 @@ import HistorialUbicaciones from '../components/inventario/HistorialUbicaciones'
 import HistorialEstados from '../components/inventario/HistorialEstados';
 import HistorialCambios from '../components/inventario/HistorialCambios';
 import FotosEquipo from '../components/inventario/FotosEquipo';
+import EliminarEquipo from '../components/inventario/EliminarEquipo';
 
 import '../styles/equipoDetalle.css';
 
@@ -131,6 +133,7 @@ export default function EquipoDetalle({
   onSesionExpirada,
   puedeAgregarFotos = false,
   puedeEliminarFotos = false,
+  puedeEliminar = false,
 }) {
 
   // ========================================
@@ -166,10 +169,11 @@ export default function EquipoDetalle({
     useState(false);
 
   const menuAccionesRef = useRef(null);
+  const [mostrarEliminar, setMostrarEliminar] = useState(false);
 
   const mostrarMenuAcciones =
     typeof onTrasladar === 'function' ||
-    typeof onCambiarEstado === 'function';
+    typeof onCambiarEstado === 'function' || puedeEliminar;
 
   useEffect(() => {
     if (!menuAccionesAbierto) return undefined;
@@ -277,6 +281,16 @@ export default function EquipoDetalle({
 
   return (
     <div className="detalle-pagina detalle-redisenado detalle-distribucion">
+
+      {mostrarEliminar && puedeEliminar && equipo && (
+        <EliminarEquipo
+          equipo={equipo}
+          token={token}
+          onCerrar={() => setMostrarEliminar(false)}
+          onEliminado={onVolver}
+          onSesionExpirada={onSesionExpirada}
+        />
+      )}
 
       {/* VOLVER AL INVENTARIO */}
       <div className="detalle-navegacion">
@@ -437,6 +451,20 @@ export default function EquipoDetalle({
                         >
                           <RefreshCw size={16} />
                           Cambiar estado
+                        </button>
+                      )}
+
+                      {puedeEliminar && (
+                        <button
+                          type="button"
+                          className="detalle-accion-eliminar"
+                          onClick={() => {
+                            setMenuAccionesAbierto(false);
+                            setMostrarEliminar(true);
+                          }}
+                        >
+                          <Trash2 size={16} aria-hidden="true" />
+                          Eliminar equipo
                         </button>
                       )}
 

@@ -16,6 +16,9 @@ test('paginación y filtros contra PostgreSQL temporal', async (t) => {
       id_categoria int, id_estado int, id_laboratorio int);
     CREATE TABLE usuario_sede (id_usuario_sede int, id_usuario int, id_sede int);
     CREATE TABLE usuario_laboratorio (id_usuario_sede int, id_sede int, id_laboratorio int);
+    ALTER TABLE equipo ADD COLUMN eliminado_en timestamptz,
+      ADD COLUMN eliminado_por int, ADD COLUMN motivo_eliminacion text;
+    CREATE TABLE usuario (id_usuario int PRIMARY KEY, nombre_completo text);
     INSERT INTO sede VALUES (1, 'Heredia'), (2, 'San José');
     INSERT INTO laboratorio VALUES (1,1,'H1','Laboratorio A'), (2,1,'H2','Laboratorio B'),
       (3,2,'S1','Laboratorio reservado');
@@ -23,7 +26,7 @@ test('paginación y filtros contra PostgreSQL temporal', async (t) => {
     INSERT INTO estado VALUES (1,'Operativo'), (2,'En mantenimiento');
     INSERT INTO usuario_sede VALUES (1,10,1), (2,20,2), (3,30,1);
     INSERT INTO usuario_laboratorio VALUES (1,1,1), (1,1,2), (2,2,3), (3,1,1);
-    INSERT INTO equipo
+    INSERT INTO equipo (id_equipo, nombre, numero_serie, placa_institucional, marca, modelo, ubicacion_detalle, id_categoria, id_estado, id_laboratorio)
       SELECT i, CASE WHEN i = 1 THEN 'Cámara 100%' ELSE 'Equipo ' || i END,
         'SER-' || i, 'PL_' || i, 'Marca', 'Modelo', 'Estación ' || i,
         CASE WHEN i > 10 THEN 2 ELSE 1 END, CASE WHEN i % 2 = 0 THEN 2 ELSE 1 END,
