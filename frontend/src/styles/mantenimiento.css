@@ -678,3 +678,89 @@
   color: #ffffff;
   cursor: pointer;
 }
+
+/* REGLAS DE NEGOCIO Y EVIDENCIAS EN MODAL */
+.mant-alerta-error {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  background-color: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.mant-badge-estado--cerrado {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.mant-aviso-regla {
+  padding: 0.625rem 0.875rem;
+  margin-bottom: 1rem;
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 0.5rem;
+  color: #1e3a8a;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.mant-evidencias-solo-lectura {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.875rem;
+  margin-bottom: 1rem;
+  background-color: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  color: #475569;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.mant-evidencias-requisitos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.mant-req-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.mant-req-chip--ok {
+  background-color: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.mant-req-chip--pendiente {
+  background-color: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.mant-evidencias-subir {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px dashed #cbd5e1;
+}
+
+.mant-evidencias-subir-acciones {
+  display: flex;
+  justify-content: flex-end;
+}

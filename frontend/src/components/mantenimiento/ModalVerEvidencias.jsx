@@ -1,12 +1,33 @@
-import { useState, useEffect } from 'react';
-import { X, Camera, RefreshCw, ZoomIn, Calendar, FileText, ImageOff } from 'lucide-react';
-import { consultarEvidenciasPorBitacora } from '../../services/evidenciasService';
+import { useState, useEffect, useRef } from 'react';
+import {
+  X,
+  Upload,
+  RefreshCw,
+  ZoomIn,
+  Calendar,
+  ImageOff,
+  Lock,
+  CheckCircle2,
+  AlertCircle
+} from 'lucide-react';
+import {
+  consultarEvidenciasPorBitacora,
+  subirEvidenciaFotografica
+} from '../../services/evidenciasService';
 import { formatearFechaMantenimiento } from '../../utils/mantenimiento';
+
+const normalizarTipo = (texto) =>
+  String(texto || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
 
 export default function ModalVerEvidencias({
   mantenimiento,
   abierto,
   alCerrar,
+  alSubirEvidencia,
   token
 }) {
   const [evidencias, setEvidencias] = useState([]);
@@ -14,44 +35,108 @@ export default function ModalVerEvidencias({
   const [error, setError] = useState(null);
   const [fotoAmpliada, setFotoAmpliada] = useState(null);
 
+  // Estado para adjuntar nuevas evidencias mientras la orden siga abierta
+  const [archivoNuevo, setArchivoNuevo] = useState(null);
+  const [tipoNuevo, setTipoNuevo] = useState('Después');
+  const [descripcionNueva, setDescripcionNueva] = useState('');
+  const [subiendo, setSubiendo] = useState(false);
+  const [errorSubida, setErrorSubida] = useState(null);
+  const inputArchivoRef = useRef(null);
+
+  const cargarEvidencias = async (signal) => {
+    if (!mantenimiento?.id_bitacora) return;
+    try {
+      setCargando(true);
+      setError(null);
+      const data = await consultarEvidenciasPorBitacora(
+        mantenimiento.id_bitacora,
+        token,
+        signal
+      );
+      setEvidencias(data);
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        setError(err.message || 'Error al cargar evidencias');
+      }
+    } finally {
+      setCargando(false);
+    }
+  };
+
   useEffect(() => {
     if (!abierto || !mantenimiento?.id_bitacora) return;
 
-    let cancelado = false;
     const controlador = new AbortController();
-
-    async function cargar() {
-      try {
-        setCargando(true);
-        setError(null);
-        const data = await consultarEvidenciasPorBitacora(
-          mantenimiento.id_bitacora,
-          token,
-          controlador.signal
-        );
-        if (!cancelado) {
-          setEvidencias(data);
-        }
-      } catch (err) {
-        if (!cancelado && err.name !== 'AbortError') {
-          setError(err.message || 'Error al cargar evidencias');
-        }
-      } finally {
-        if (!cancelado) {
-          setCargando(false);
-        }
-      }
-    }
-
-    cargar();
+    setErrorSubida(null);
+    setArchivoNuevo(null);
+    setDescripcionNueva('');
+    cargarEvidencias(controlador.signal);
 
     return () => {
-      cancelado = true;
       controlador.abort();
     };
   }, [abierto, mantenimiento?.id_bitacora, token]);
 
   if (!abierto || !mantenimiento) return null;
+
+  const ordenFinalizada = mantenimiento.estado_mantenimiento === 'Completado';
+  const esCorrectivo = normalizarTipo(mantenimiento.tipo_mantenimiento) === 'correctivo';
+  const tiposCargados = evidencias.map((ev) => normalizarTipo(ev.tipo_evidencia));
+  const tieneAntes = tiposCargados.includes('antes');
+  const tieneDespues = tiposCargados.includes('despues');
+
+  const manejarSeleccionArchivo = (e) => {
+    const file = e.target.files?.[0];
+    setErrorSubida(null);
+    if (!file) return;
+
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setErrorSubida('Solo se admiten imágenes JPG, PNG o WEBP.');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setErrorSubida('La imagen supera el límite máximo de 5 MB.');
+      return;
+    }
+
+    setArchivoNuevo(file);
+  };
+
+  const manejarSubida = async (e) => {
+    e.preventDefault();
+    if (!archivoNuevo) {
+      setErrorSubida('Seleccione una imagen antes de subirla.');
+      return;
+    }
+
+    try {
+      setSubiendo(true);
+      setErrorSubida(null);
+      await subirEvidenciaFotografica(
+        {
+          foto: archivoNuevo,
+          id_bitacora: mantenimiento.id_bitacora,
+          tipo_evidencia: tipoNuevo,
+          descripcion: descripcionNueva.trim() || `Evidencia (${tipoNuevo})`
+        },
+        token
+      );
+      setArchivoNuevo(null);
+      setDescripcionNueva('');
+      if (inputArchivoRef.current) {
+        inputArchivoRef.current.value = '';
+      }
+      await cargarEvidencias();
+      if (alSubirEvidencia) {
+        alSubirEvidencia();
+      }
+    } catch (err) {
+      setErrorSubida(err.message || 'No fue posible subir la evidencia fotográfica.');
+    } finally {
+      setSubiendo(false);
+    }
+  };
 
   return (
     <div className="mant-modal-backdrop" onClick={alCerrar}>
@@ -81,6 +166,33 @@ export default function ModalVerEvidencias({
         </header>
 
         <div className="mant-evidencias-cuerpo">
+          {ordenFinalizada ? (
+            <div className="mant-evidencias-solo-lectura" role="note">
+              <Lock size={15} />
+              <span>Orden finalizada — historial técnico de solo consulta.</span>
+            </div>
+          ) : (
+            <div className="mant-evidencias-requisitos">
+              {esCorrectivo ? (
+                <>
+                  <span className={`mant-req-chip ${tieneAntes ? 'mant-req-chip--ok' : 'mant-req-chip--pendiente'}`}>
+                    {tieneAntes ? <CheckCircle2 size={14} /> : <AlertCircle size={14} />}
+                    Foto Antes: {tieneAntes ? 'Lista' : 'Pendiente'}
+                  </span>
+                  <span className={`mant-req-chip ${tieneDespues ? 'mant-req-chip--ok' : 'mant-req-chip--pendiente'}`}>
+                    {tieneDespues ? <CheckCircle2 size={14} /> : <AlertCircle size={14} />}
+                    Foto Después: {tieneDespues ? 'Lista' : 'Pendiente'}
+                  </span>
+                </>
+              ) : (
+                <span className={`mant-req-chip ${evidencias.length > 0 ? 'mant-req-chip--ok' : 'mant-req-chip--pendiente'}`}>
+                  {evidencias.length > 0 ? <CheckCircle2 size={14} /> : <AlertCircle size={14} />}
+                  Evidencia para cierre: {evidencias.length > 0 ? 'Cumplida' : 'Se requiere al menos 1 foto'}
+                </span>
+              )}
+            </div>
+          )}
+
           {cargando && (
             <div className="mant-evidencias-cargando">
               <RefreshCw className="mant-spinner" size={24} />
@@ -97,7 +209,7 @@ export default function ModalVerEvidencias({
           {!cargando && !error && evidencias.length === 0 && (
             <div className="mant-evidencias-vacio">
               <ImageOff size={40} className="mant-icono-vacio" />
-              <p>No se adjuntaron fotografías para esta orden de mantenimiento.</p>
+              <p>No se han adjuntado fotografías para esta orden de mantenimiento.</p>
             </div>
           )}
 
@@ -136,6 +248,90 @@ export default function ModalVerEvidencias({
                 </article>
               ))}
             </div>
+          )}
+
+          {!ordenFinalizada && (
+            <form className="mant-evidencias-subir" onSubmit={manejarSubida}>
+              <h3 className="mant-evidencia-titulo">
+                <Upload size={16} />
+                <span>Adjuntar nueva evidencia</span>
+              </h3>
+
+              {errorSubida && (
+                <div className="mant-alerta-error" role="alert">
+                  <span>{errorSubida}</span>
+                </div>
+              )}
+
+              <div className="mant-grid-dos-cols">
+                <div className="mant-campo">
+                  <label htmlFor="ev-tipo-nuevo" className="mant-label">
+                    Momento de la fotografía
+                  </label>
+                  <select
+                    id="ev-tipo-nuevo"
+                    className="mant-input"
+                    value={tipoNuevo}
+                    onChange={(e) => setTipoNuevo(e.target.value)}
+                    disabled={subiendo}
+                  >
+                    <option value="Antes">Antes de la intervención</option>
+                    <option value="Durante">Durante el procedimiento</option>
+                    <option value="Después">Después de reparar</option>
+                  </select>
+                </div>
+
+                <div className="mant-campo">
+                  <label htmlFor="ev-archivo-nuevo" className="mant-label">
+                    Archivo (JPG, PNG o WEBP, máx. 5 MB)
+                  </label>
+                  <input
+                    id="ev-archivo-nuevo"
+                    ref={inputArchivoRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="mant-input"
+                    onChange={manejarSeleccionArchivo}
+                    disabled={subiendo}
+                  />
+                </div>
+              </div>
+
+              <div className="mant-campo">
+                <label htmlFor="ev-desc-nueva" className="mant-label">
+                  Descripción (opcional)
+                </label>
+                <input
+                  id="ev-desc-nueva"
+                  type="text"
+                  className="mant-input"
+                  placeholder="Ej. Equipo encendido y operando normalmente tras limpieza..."
+                  value={descripcionNueva}
+                  onChange={(e) => setDescripcionNueva(e.target.value)}
+                  disabled={subiendo}
+                />
+              </div>
+
+              <div className="mant-evidencias-subir-acciones">
+                <button
+                  type="submit"
+                  className="mant-btn-primario"
+                  disabled={subiendo || !archivoNuevo}
+                >
+                  {subiendo ? (
+                    <>
+                      <RefreshCw className="mant-spinner-btn" size={15} />
+                      <span>Subiendo...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload size={15} />
+                      <span>Subir evidencia</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           )}
         </div>
 

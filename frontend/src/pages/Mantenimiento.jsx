@@ -90,6 +90,7 @@ export default function Mantenimiento({ token, usuario }) {
 
   const manejarCambioEstado = async (idBitacora, nuevoEstado) => {
     try {
+      setError(null);
       setActualizandoId(idBitacora);
       await actualizarEstadoMantenimiento(
         idBitacora,
@@ -98,7 +99,7 @@ export default function Mantenimiento({ token, usuario }) {
       );
       await cargarDatos();
     } catch (err) {
-      alert('No se pudo actualizar el estado del mantenimiento: ' + err.message);
+      setError(err.message || 'No se pudo actualizar el estado del mantenimiento.');
     } finally {
       setActualizandoId(null);
     }
@@ -240,6 +241,7 @@ export default function Mantenimiento({ token, usuario }) {
         abierto={Boolean(mantenimientoSeleccionado)}
         mantenimiento={mantenimientoSeleccionado}
         alCerrar={() => setMantenimientoSeleccionado(null)}
+        alSubirEvidencia={() => cargarDatos()}
         token={token}
       />
     </div>

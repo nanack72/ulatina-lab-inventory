@@ -234,19 +234,26 @@ export default function ModalRegistrarMantenimiento({
           </div>
 
           {tipoMantenimiento === 'Correctivo' && (
-            <div className="mant-campo">
-              <label htmlFor="mant-motivo-falla" className="mant-label">
-                Motivo de la Falla Reportada
-              </label>
-              <input
-                id="mant-motivo-falla"
-                type="text"
-                className="mant-input"
-                placeholder="Ej. Pantalla azul, sobrecalentamiento, ventilador ruidoso..."
-                value={motivoFalla}
-                onChange={(e) => setMotivoFalla(e.target.value)}
-              />
-            </div>
+            <>
+              <div className="mant-aviso-regla" role="note">
+                Al registrar un correctivo, el equipo pasará automáticamente a estado{' '}
+                <strong>En mantenimiento</strong>. Para finalizar la orden luego, deberá adjuntar
+                evidencias <strong>Antes</strong> y <strong>Después</strong>.
+              </div>
+              <div className="mant-campo">
+                <label htmlFor="mant-motivo-falla" className="mant-label">
+                  Motivo de la Falla Reportada
+                </label>
+                <input
+                  id="mant-motivo-falla"
+                  type="text"
+                  className="mant-input"
+                  placeholder="Ej. Pantalla azul, sobrecalentamiento, ventilador ruidoso..."
+                  value={motivoFalla}
+                  onChange={(e) => setMotivoFalla(e.target.value)}
+                />
+              </div>
+            </>
           )}
 
           {/* Descripción del Trabajo */}
@@ -265,11 +272,11 @@ export default function ModalRegistrarMantenimiento({
             />
           </div>
 
-          {/* Subida de Evidencia con Multer */}
+          {/* Subida de Evidencia */}
           <div className="mant-seccion-evidencia">
             <h3 className="mant-evidencia-titulo">
               <Camera size={18} />
-              <span>Evidencia Fotográfica (Multer)</span>
+              <span>Evidencia Fotográfica Inicial</span>
             </h3>
 
             <div className="mant-evidencia-dropzone">

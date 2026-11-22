@@ -1,4 +1,4 @@
-import { Camera, Eye, AlertCircle, Wrench } from 'lucide-react';
+import { Camera, Lock, Wrench } from 'lucide-react';
 import {
   formatearFechaMantenimiento,
   formatearHoras,
@@ -97,28 +97,43 @@ export default function TablaMantenimientos({
                   </span>
                 </td>
                 <td>
-                  <select
-                    className="mant-select-estado"
-                    style={{
-                      backgroundColor: estiloEstado.fondo,
-                      color: estiloEstado.texto,
-                      borderColor: estiloEstado.borde
-                    }}
-                    value={item.estado_mantenimiento}
-                    disabled={actualizandoId === item.id_bitacora}
-                    onChange={(e) =>
-                      alCambiarEstado &&
-                      alCambiarEstado(item.id_bitacora, e.target.value)
-                    }
-                    aria-label={`Estado del mantenimiento #${item.id_bitacora}`}
-                    title="Actualizar estado del mantenimiento"
-                  >
-                    {ESTADOS_MANTENIMIENTO.map((est) => (
-                      <option key={est} value={est}>
-                        {est}
-                      </option>
-                    ))}
-                  </select>
+                  {item.estado_mantenimiento === 'Completado' ? (
+                    <span
+                      className="mant-badge-estado mant-badge-estado--cerrado"
+                      style={{
+                        backgroundColor: estiloEstado.fondo,
+                        color: estiloEstado.texto,
+                        borderColor: estiloEstado.borde
+                      }}
+                      title="Orden finalizada (solo consulta)"
+                    >
+                      <Lock size={12} aria-hidden="true" />
+                      <span>Completado</span>
+                    </span>
+                  ) : (
+                    <select
+                      className="mant-select-estado"
+                      style={{
+                        backgroundColor: estiloEstado.fondo,
+                        color: estiloEstado.texto,
+                        borderColor: estiloEstado.borde
+                      }}
+                      value={item.estado_mantenimiento}
+                      disabled={actualizandoId === item.id_bitacora}
+                      onChange={(e) =>
+                        alCambiarEstado &&
+                        alCambiarEstado(item.id_bitacora, e.target.value)
+                      }
+                      aria-label={`Estado del mantenimiento #${item.id_bitacora}`}
+                      title="Actualizar estado del mantenimiento"
+                    >
+                      {ESTADOS_MANTENIMIENTO.map((est) => (
+                        <option key={est} value={est}>
+                          {est}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </td>
                 <td className="mant-celda-tecnico">
                   {item.nombre_tecnico || item.tecnico}
@@ -130,11 +145,16 @@ export default function TablaMantenimientos({
                   <button
                     type="button"
                     className="mant-btn-accion mant-btn-accion--evidencias"
-                    title="Ver evidencias fotográficas"
+                    title="Ver o adjuntar evidencias fotográficas"
                     onClick={() => alSeleccionarEvidencias(item)}
                   >
                     <Camera size={16} />
-                    <span>Evidencias</span>
+                    <span>
+                      Evidencias
+                      {Number(item.total_evidencias) > 0
+                        ? ` (${item.total_evidencias})`
+                        : ''}
+                    </span>
                   </button>
                 </td>
               </tr>

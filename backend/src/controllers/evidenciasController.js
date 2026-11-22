@@ -28,10 +28,10 @@ const tieneAccesoGlobal = (rol) =>
     (rol || '').toLowerCase().trim()
   );
 
-// Busca el equipo asociado a una bitácora (null si no existe)
+// Busca la bitácora y su estado actual (null si no existe)
 const buscarBitacora = async (idBitacora) => {
   const resultado = await pool.query(
-    `SELECT id_bitacora, id_equipo
+    `SELECT id_bitacora, id_equipo, estado_mantenimiento
      FROM public.bitacora_mantenimiento
      WHERE id_bitacora = $1`,
     [idBitacora]
@@ -86,6 +86,13 @@ const subirEvidencia = async (req, res) => {
 
     if (!bitacora) {
       return rechazar(404, 'Registro de mantenimiento no encontrado');
+    }
+
+    if (normalizar(bitacora.estado_mantenimiento) === 'completado') {
+      return rechazar(
+        409,
+        'No se pueden agregar evidencias a un mantenimiento ya finalizado (RN11).'
+      );
     }
 
     if (!tieneAccesoGlobal(req.usuario.rol)) {

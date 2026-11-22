@@ -1,17 +1,121 @@
 const pool = require('../config/database');
 const { verificarAccesoEquipo } = require('../utils/accesoEquipos');
 
+const normalizarTexto = (texto) =>
+    String(texto ?? '')
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+
 /**
- * Verifica si el usuario tiene el rol Superadministrador.
- * Este rol posee acceso global a todas las sedes y laboratorios.
+ * Roles con visibilidad global sobre sedes y laboratorios.
+ * Coherente con incidencias, evidencias y reportes.
  *
  * @param {string} rol - Rol actual del usuario
  * @returns {boolean}
  */
-const esUsuarioAdministrador = (rol) => {
-    const rolNormalizado = String(rol || '').toLowerCase().trim();
+const esUsuarioAdministrador = (rol) =>
+    ['superadministrador', 'administrador', 'admin', 'coordinador', 'director'].includes(
+        normalizarTexto(rol)
+    );
 
-    return rolNormalizado === 'superadministrador';
+const esEstadoBaja = (nombreEstado) => {
+    const n = normalizarTexto(nombreEstado);
+    return n.includes('baja') || n.includes('retirad') || n.includes('eliminad');
+};
+
+/**
+ * Busca un estado en public.estado por nombre (insensible a mayúsculas/tildes).
+ * Si se indica descripcionSiCrear y aún no existe en el catálogo, lo crea.
+ */
+const resolverEstadoPorNombre = async (client, nombreBuscado, descripcionSiCrear = null) => {
+    const consulta = await client.query(
+        `
+        SELECT id_estado, nombre
+        FROM public.estado
+        WHERE LOWER(TRIM(nombre)) = LOWER(TRIM($1))
+        LIMIT 1
+        `,
+        [nombreBuscado]
+    );
+
+    if (consulta.rowCount > 0) {
+        return consulta.rows[0];
+    }
+
+    if (descripcionSiCrear) {
+        const creado = await client.query(
+            `
+            INSERT INTO public.estado (nombre, descripcion)
+            VALUES ($1, $2)
+            ON CONFLICT DO NOTHING
+            RETURNING id_estado, nombre
+            `,
+            [nombreBuscado, descripcionSiCrear]
+        );
+
+        if (creado.rowCount > 0) {
+            return creado.rows[0];
+        }
+
+        const reintento = await client.query(
+            `
+            SELECT id_estado, nombre
+            FROM public.estado
+            WHERE LOWER(TRIM(nombre)) = LOWER(TRIM($1))
+            LIMIT 1
+            `,
+            [nombreBuscado]
+        );
+
+        return reintento.rows[0] || null;
+    }
+
+    return null;
+};
+
+/**
+ * Valida las evidencias fotográficas requeridas antes de marcar una orden
+ * como Completado (RN14 y RU09):
+ * - Correctivo: exige al menos una foto 'Antes' y una foto 'Después'.
+ * - Preventivo: exige al menos una fotografía de evidencia.
+ */
+const validarEvidenciasParaCierre = async (client, idBitacora, tipoMantenimiento) => {
+    const evidenciasRes = await client.query(
+        `
+        SELECT tipo_evidencia
+        FROM public.evidencia_fotografica
+        WHERE id_bitacora = $1
+        `,
+        [idBitacora]
+    );
+
+    const tipos = evidenciasRes.rows.map((fila) => normalizarTexto(fila.tipo_evidencia));
+
+    if (normalizarTexto(tipoMantenimiento) === 'correctivo') {
+        const faltantes = [];
+        if (!tipos.includes('antes')) faltantes.push('Antes');
+        if (!tipos.includes('despues')) faltantes.push('Después');
+
+        if (faltantes.length > 0) {
+            return {
+                valido: false,
+                mensaje: `Para finalizar un mantenimiento correctivo debe adjuntar evidencia fotográfica "Antes" y "Después" (RN14 / RU09). Faltan: ${faltantes.join(' y ')}.`
+            };
+        }
+
+        return { valido: true };
+    }
+
+    if (tipos.length === 0) {
+        return {
+            valido: false,
+            mensaje: 'Para finalizar una orden de mantenimiento debe adjuntar al menos una fotografía de evidencia (RN14).'
+        };
+    }
+
+    return { valido: true };
 };
 
 /**
@@ -81,13 +185,14 @@ const crearMantenimiento = async (req, res) => {
     }
 
     // 4. Validar estado del mantenimiento
+    // Por defecto inicia 'En Proceso' porque requiere evidencia previa al cierre (RN14).
     const estadosMantenimientoValidos = [
         'Completado',
         'En Proceso',
         'Pendiente Repuesto'
     ];
 
-    let estadoMantenimientoFinal = 'Completado';
+    let estadoMantenimientoFinal = 'En Proceso';
 
     if (estado_mantenimiento && estado_mantenimiento.trim()) {
         const estadoEncontrado = estadosMantenimientoValidos.find(
@@ -104,6 +209,13 @@ const crearMantenimiento = async (req, res) => {
         }
 
         estadoMantenimientoFinal = estadoEncontrado;
+    }
+
+    if (estadoMantenimientoFinal === 'Completado') {
+        return res.status(400).json({
+            success: false,
+            message: 'No es posible registrar una orden directamente como Completado porque requiere evidencia fotográfica previa (RN14). Registre la orden en "En Proceso", adjunte la evidencia y luego finalícela.'
+        });
     }
 
     // 5. Validar horas invertidas
@@ -211,11 +323,83 @@ const crearMantenimiento = async (req, res) => {
             }
         }
 
-        // 9. Transacción de mantenimiento y auditoría
+        // 9. Transacción de mantenimiento, concurrencia (RN16), estado automático (RF21/RN12) y auditoría
         const client = await pool.connect();
 
         try {
             await client.query('BEGIN');
+
+            // Bloquear la fila del equipo para proteger contra solicitudes simultáneas (RN16)
+            const equipoBloqueadoRes = await client.query(
+                `
+                SELECT
+                    e.id_equipo,
+                    e.id_estado,
+                    es.nombre AS estado_actual
+                FROM public.equipo e
+                LEFT JOIN public.estado es
+                    ON e.id_estado = es.id_estado
+                WHERE e.id_equipo = $1
+                FOR UPDATE OF e
+                `,
+                [equipoId]
+            );
+
+            if (equipoBloqueadoRes.rowCount === 0) {
+                await client.query('ROLLBACK');
+                return res.status(404).json({
+                    success: false,
+                    message: 'Equipo no encontrado'
+                });
+            }
+
+            const equipoBloqueado = equipoBloqueadoRes.rows[0];
+
+            // Impedir mantenimientos nuevos sobre equipos dados de baja
+            if (esEstadoBaja(equipoBloqueado.estado_actual)) {
+                await client.query('ROLLBACK');
+                return res.status(409).json({
+                    success: false,
+                    message: 'No se pueden registrar mantenimientos sobre un equipo dado de baja'
+                });
+            }
+
+            // RN16: impedir abrir un segundo correctivo mientras ya exista uno en curso
+            if (tipoEncontrado === 'Correctivo') {
+                const correctivoActivo = await client.query(
+                    `
+                    SELECT id_bitacora, estado_mantenimiento
+                    FROM public.bitacora_mantenimiento
+                    WHERE id_equipo = $1
+                      AND LOWER(tipo_mantenimiento) = 'correctivo'
+                      AND LOWER(estado_mantenimiento) IN ('en proceso', 'pendiente repuesto')
+                    LIMIT 1
+                    `,
+                    [equipoId]
+                );
+
+                if (correctivoActivo.rowCount > 0) {
+                    const ordenActiva = correctivoActivo.rows[0];
+                    await client.query('ROLLBACK');
+                    return res.status(409).json({
+                        success: false,
+                        message: `El equipo ya cuenta con un mantenimiento correctivo activo (orden #${ordenActiva.id_bitacora} - ${ordenActiva.estado_mantenimiento}). Debe finalizarlo antes de registrar uno nuevo (RN16).`
+                    });
+                }
+
+                // RF21 / RN12: al abrir un correctivo, pasar el equipo automáticamente a 'En mantenimiento'
+                if (!nuevoEstadoId) {
+                    const estadoMantenimiento = await resolverEstadoPorNombre(
+                        client,
+                        'En mantenimiento',
+                        'Equipo retirado temporalmente del uso por mantenimiento correctivo'
+                    );
+
+                    if (estadoMantenimiento) {
+                        nuevoEstadoId = estadoMantenimiento.id_estado;
+                    }
+                }
+            }
 
             // Usuario responsable para los triggers de auditoría
             await client.query(
@@ -266,7 +450,7 @@ const crearMantenimiento = async (req, res) => {
             // Cambiar estado del equipo si corresponde
             if (
                 nuevoEstadoId &&
-                nuevoEstadoId !== equipoExistente.id_estado
+                nuevoEstadoId !== equipoBloqueado.id_estado
             ) {
                 await client.query(
                     `
@@ -283,7 +467,7 @@ const crearMantenimiento = async (req, res) => {
                     motivo_cambio_estado.trim()
                 )
                     ? motivo_cambio_estado.trim().slice(0, 255)
-                    : `Cambio de estado por mantenimiento #${mantenimientoCreado.id_bitacora} (${tipoEncontrado} - ${estadoMantenimientoFinal})`.slice(0, 255);
+                    : `Cambio automático por mantenimiento #${mantenimientoCreado.id_bitacora} (${tipoEncontrado} - ${estadoMantenimientoFinal})`.slice(0, 255);
 
                 // Completar el motivo del historial generado por el trigger
                 const resultadoHistorial = await client.query(
@@ -314,7 +498,7 @@ const crearMantenimiento = async (req, res) => {
                     ...mantenimientoCreado,
                     cambio_estado: auditoriaEstado
                         ? {
-                            id_estado_anterior: equipoExistente.id_estado,
+                            id_estado_anterior: equipoBloqueado.id_estado,
                             id_estado_nuevo: nuevoEstadoId,
                             historial: auditoriaEstado
                         }
@@ -408,7 +592,13 @@ const obtenerMantenimientos = async (req, res) => {
                 l.nombre AS nombre_laboratorio,
 
                 s.id_sede,
-                s.nombre AS nombre_sede
+                s.nombre AS nombre_sede,
+
+                (
+                    SELECT COUNT(*)::int
+                    FROM public.evidencia_fotografica ev
+                    WHERE ev.id_bitacora = bm.id_bitacora
+                ) AS total_evidencias
 
             FROM public.bitacora_mantenimiento bm
 
@@ -605,7 +795,13 @@ const obtenerMantenimientoPorId = async (req, res) => {
                 l.nombre AS nombre_laboratorio,
 
                 s.id_sede,
-                s.nombre AS nombre_sede
+                s.nombre AS nombre_sede,
+
+                (
+                    SELECT COUNT(*)::int
+                    FROM public.evidencia_fotografica ev
+                    WHERE ev.id_bitacora = bm.id_bitacora
+                ) AS total_evidencias
 
             FROM public.bitacora_mantenimiento bm
 
@@ -1024,11 +1220,80 @@ const actualizarEstadoMantenimiento = async (req, res) => {
             }
         }
 
-        // 8. Transacción para actualizar mantenimiento y equipo
+        // 8. Transacción para proteger finalizados (RN11), validar evidencias (RN14/RU09),
+        // actualizar mantenimiento y devolver el equipo a Operativo al finalizar (RF22/RN13)
         const client = await pool.connect();
 
         try {
             await client.query('BEGIN');
+
+            // Bloquear orden y equipo para evitar ediciones concurrentes
+            const bloqueoRes = await client.query(
+                `
+                SELECT
+                    bm.id_bitacora,
+                    bm.id_equipo,
+                    bm.tipo_mantenimiento,
+                    bm.estado_mantenimiento,
+                    e.id_estado AS id_estado_equipo_actual
+                FROM public.bitacora_mantenimiento bm
+                INNER JOIN public.equipo e
+                    ON bm.id_equipo = e.id_equipo
+                WHERE bm.id_bitacora = $1
+                FOR UPDATE OF bm, e
+                `,
+                [id]
+            );
+
+            if (bloqueoRes.rowCount === 0) {
+                await client.query('ROLLBACK');
+                return res.status(404).json({
+                    success: false,
+                    message: 'Registro de mantenimiento no encontrado'
+                });
+            }
+
+            const ordenBloqueada = bloqueoRes.rows[0];
+
+            // RN11 / RNF06: los mantenimientos finalizados son de solo consulta
+            if (normalizarTexto(ordenBloqueada.estado_mantenimiento) === 'completado') {
+                await client.query('ROLLBACK');
+                return res.status(409).json({
+                    success: false,
+                    message: 'Esta orden de mantenimiento ya fue finalizada y es de solo consulta (RN11).'
+                });
+            }
+
+            // RN14 / RU09: exigir evidencia fotográfica antes de marcar como Completado
+            if (estadoMantenimientoNormalizado === 'Completado') {
+                const validacionEvidencias = await validarEvidenciasParaCierre(
+                    client,
+                    ordenBloqueada.id_bitacora,
+                    ordenBloqueada.tipo_mantenimiento
+                );
+
+                if (!validacionEvidencias.valido) {
+                    await client.query('ROLLBACK');
+                    return res.status(400).json({
+                        success: false,
+                        message: validacionEvidencias.mensaje
+                    });
+                }
+
+                // RF22 / RN13: al finalizar, devolver automáticamente el equipo a 'Operativo'
+                // salvo que el técnico indique explícitamente otro estado (ej. recomendación de baja)
+                if (!nuevoEstadoEquipoId) {
+                    const estadoOperativo = await resolverEstadoPorNombre(
+                        client,
+                        'Operativo',
+                        'Equipo en correcto funcionamiento y disponible en laboratorio'
+                    );
+
+                    if (estadoOperativo) {
+                        nuevoEstadoEquipoId = estadoOperativo.id_estado;
+                    }
+                }
+            }
 
             // Usuario responsable para auditoría
             await client.query(
@@ -1080,7 +1345,7 @@ const actualizarEstadoMantenimiento = async (req, res) => {
             if (
                 nuevoEstadoEquipoId &&
                 nuevoEstadoEquipoId !==
-                    mantenimientoActual.id_estado_equipo_actual
+                    ordenBloqueada.id_estado_equipo_actual
             ) {
                 await client.query(
                     `
@@ -1090,7 +1355,7 @@ const actualizarEstadoMantenimiento = async (req, res) => {
                     `,
                     [
                         nuevoEstadoEquipoId,
-                        mantenimientoActual.id_equipo
+                        ordenBloqueada.id_equipo
                     ]
                 );
 
@@ -1100,7 +1365,7 @@ const actualizarEstadoMantenimiento = async (req, res) => {
                     motivo_cambio_estado.trim()
                 )
                     ? motivo_cambio_estado.trim().slice(0, 255)
-                    : `Actualización por mantenimiento #${id} a estado '${mantenimientoActualizado.estado_mantenimiento}'`.slice(0, 255);
+                    : `Cambio automático por cierre/actualización de mantenimiento #${id} (${mantenimientoActualizado.estado_mantenimiento})`.slice(0, 255);
 
                 const histResult = await client.query(
                     `
@@ -1117,13 +1382,13 @@ const actualizarEstadoMantenimiento = async (req, res) => {
                     `,
                     [
                         motivoTexto,
-                        mantenimientoActual.id_equipo
+                        ordenBloqueada.id_equipo
                     ]
                 );
 
                 cambioEstadoInfo = {
                     id_estado_anterior:
-                        mantenimientoActual.id_estado_equipo_actual,
+                        ordenBloqueada.id_estado_equipo_actual,
                     id_estado_nuevo: nuevoEstadoEquipoId,
                     historial: histResult.rows[0]
                 };
