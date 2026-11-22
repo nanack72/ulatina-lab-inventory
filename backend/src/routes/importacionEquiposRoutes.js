@@ -810,7 +810,7 @@ router.post('/leer', recibirArchivo, async (req, res) => {
     }
 
     const revision = await validarLote(pool, filas, catalogos);
-    const fotos = extraerImagenes(libro, hoja, filas);
+    const fotos = await extraerImagenes(libro, hoja, filas, req.file.buffer);
 
     return res.json({
       success: true,

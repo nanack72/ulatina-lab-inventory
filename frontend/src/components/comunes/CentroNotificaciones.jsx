@@ -49,6 +49,8 @@ export default function CentroNotificaciones() {
   const avisos = useSyncExternalStore(almacenNotificaciones.suscribir, almacenNotificaciones.obtener, almacenNotificaciones.obtener);
   const [destino, setDestino] = useState(() => typeof document === 'undefined' ? null : document.body);
   const capaRef = useRef(null);
+  // La pantalla puede desmontar el diálogo antes de que se ejecute el observador.
+  const contenedor = destino?.isConnected ? destino : (typeof document === 'undefined' ? null : document.body);
 
   useEffect(() => {
     function actualizarDestino() {
@@ -65,7 +67,7 @@ export default function CentroNotificaciones() {
 
   useEffect(() => {
     const capa = capaRef.current;
-    if (!capa) return;
+    if (!capa?.isConnected) return;
     if (typeof capa.showPopover === 'function') {
       if (!capa.matches(':popover-open')) capa.showPopover();
     } else {
@@ -73,14 +75,14 @@ export default function CentroNotificaciones() {
       capa.removeAttribute('popover');
     }
     return () => {
-      if (typeof capa.hidePopover === 'function' && capa.matches(':popover-open')) capa.hidePopover();
+      if (capa.isConnected && typeof capa.hidePopover === 'function' && capa.matches(':popover-open')) capa.hidePopover();
     };
-  }, [destino, avisos.length]);
+  }, [contenedor, avisos.length]);
 
-  if (!destino || avisos.length === 0) return null;
+  if (!contenedor || avisos.length === 0) return null;
   return createPortal(
     <div ref={capaRef} className="notificaciones-capa" popover="manual" role="region" aria-label="Notificaciones del sistema">
       {avisos.map(aviso => <TarjetaNotificacion key={`${aviso.id}:${aviso.clave}`} aviso={aviso} />)}
-    </div>, destino
+    </div>, contenedor
   );
 }

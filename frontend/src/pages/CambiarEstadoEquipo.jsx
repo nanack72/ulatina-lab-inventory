@@ -1,3 +1,4 @@
+import ConfirmacionEquipo from '../components/comunes/ConfirmacionEquipo';
 import { notificar } from '../utils/notificaciones';
 import Notificacion from '../components/comunes/Notificacion';
 import { useEffect, useState, useRef } from 'react';
@@ -478,8 +479,9 @@ export default function CambiarEstadoEquipo({
         </form>
       )}
 
-      {/* CONFIRMACIÓN EN LA MISMA PÁGINA */}
+      {/* CONFIRMACIÓN EN VENTANA MODAL */}
       {confirmando && equipo && (
+        <ConfirmacionEquipo tituloId="confirmacion-estado-titulo" ocupado={guardando} onCerrar={() => setConfirmando(false)}>
         <section
           className="cambio-estado-confirmacion"
           aria-labelledby="confirmacion-estado-titulo"
@@ -511,6 +513,7 @@ export default function CambiarEstadoEquipo({
             <button
               type="button"
               className="btn btn-lg btn-secundario"
+              autoFocus
               disabled={guardando}
               onClick={() => setConfirmando(false)}
             >
@@ -531,6 +534,7 @@ export default function CambiarEstadoEquipo({
             </button>
           </div>
         </section>
+        </ConfirmacionEquipo>
       )}
     </div>
   );

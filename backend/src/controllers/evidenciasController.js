@@ -1,3 +1,4 @@
+const { optimizarFoto } = require('../services/optimizarFoto');
 const path = require('node:path');
 const fs = require('node:fs/promises');
 const pool = require('../config/database');
@@ -105,6 +106,9 @@ const subirEvidencia = async (req, res) => {
       }
     }
 
+    const fotoOptimizada = await optimizarFoto(await fs.readFile(rutaArchivo), req.file.mimetype);
+    await fs.writeFile(rutaArchivo, fotoOptimizada.buffer);
+
     // Se guarda la URL relativa; app.js sirve /uploads de forma estática
     const urlFoto = `/uploads/evidencias/${req.file.filename}`;
     const descripcionLimpia =
@@ -124,10 +128,11 @@ const subirEvidencia = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: 'Evidencia registrada correctamente',
-      data: resultado.rows[0]
+      data: { ...resultado.rows[0], optimizacion: fotoOptimizada.optimizacion }
     });
   } catch (error) {
     eliminarArchivo(rutaArchivo);
+    if (error.status === 400) return res.status(400).json({ success: false, message: error.message });
     console.error('Error al subir evidencia:', error.message);
 
     return res.status(500).json({

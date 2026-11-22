@@ -2,6 +2,8 @@ import Notificacion from '../components/comunes/Notificacion';
 import { useState } from 'react';
 
 import Sidebar from '../components/Sidebar';
+import NavegacionMovil from '../components/NavegacionMovil';
+import '../styles/navegacionMovil.css';
 import Inicio from '../pages/Inicio';
 import Inventario from '../pages/Inventario';
 import EquipoDetalle from '../pages/EquipoDetalle';
@@ -503,6 +505,12 @@ export default function MainLayout({
 
       <main className="main-content">
         <header className="main-header">
+          <NavegacionMovil
+            paginaActual={paginaActual}
+            cambiarPagina={navegarA}
+            usuario={usuario}
+            cerrarSesion={cerrarSesion}
+          />
           <div>
             <span className="main-breadcrumb">
               Sistema /{' '}

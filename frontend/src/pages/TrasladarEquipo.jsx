@@ -1,3 +1,4 @@
+import ConfirmacionEquipo from '../components/comunes/ConfirmacionEquipo';
 import { notificar } from '../utils/notificaciones';
 import Notificacion from '../components/comunes/Notificacion';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -544,12 +545,9 @@ export default function TrasladarEquipo({
 
       {/* CONFIRMACIÓN DEL TRASLADO */}
       {confirmar && (
-        <div className="traslado-confirmacion-fondo">
+        <ConfirmacionEquipo tituloId="traslado-confirmacion-titulo" ocupado={guardando} onCerrar={() => setConfirmar(false)}>
           <div
             className="traslado-confirmacion"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="traslado-confirmacion-titulo"
           >
             <div className="traslado-confirmacion-icono">
               <ArrowLeftRight size={23} />
@@ -598,6 +596,7 @@ export default function TrasladarEquipo({
               <button
                 type="button"
                 className="btn btn-lg btn-secundario"
+                autoFocus
                 disabled={guardando}
                 onClick={() => setConfirmar(false)}
               >
@@ -616,7 +615,7 @@ export default function TrasladarEquipo({
               </button>
             </div>
           </div>
-        </div>
+        </ConfirmacionEquipo>
       )}
     </div>
   );
