@@ -7,6 +7,11 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  Check,
+  Images,
+  RefreshCw,
+  TriangleAlert,
   X,
 } from 'lucide-react';
 
@@ -25,6 +30,12 @@ import '../../styles/importarEquipos.css';
 
 const POR_PAGINA = 5;
 
+const PASOS = [
+  { id: 'archivo', texto: 'Elegir Excel' },
+  { id: 'revision', texto: 'Revisar datos y fotos' },
+  { id: 'resultado', texto: 'Resultado' },
+];
+
 const CAMPOS_TEXTO = [
   { campo: 'nombre', etiqueta: 'Nombre del equipo', max: 150 },
   { campo: 'placa_institucional', etiqueta: 'Placa institucional', max: 100 },
@@ -42,13 +53,15 @@ export default function ImportarEquipos({
 }) {
   const dialogoRef = useRef(null);
   const operandoRef = useRef(false);
+  const cuerpoRef = useRef(null);
 
   const [arrastrando, setArrastrando] = useState(false);
   const [avisosFotos, setAvisosFotos] = useState([]);
   const [fotosPendientes, setFotosPendientes] = useState([]);
-  const [valoresComunes, setValoresComunes] = useState({});
   const [archivo, setArchivo] = useState(null);
   const [filas, setFilas] = useState([]);
+  const [caracteristicasAmpliadas, setCaracteristicasAmpliadas] = useState({});
+  const [comentariosAmpliados, setComentariosAmpliados] = useState({});
   const [catalogos, setCatalogos] = useState({
     categorias: [],
     estados: [],
@@ -61,6 +74,7 @@ export default function ImportarEquipos({
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState('');
   const [resumen, setResumen] = useState(null);
+  const [soloObservaciones, setSoloObservaciones] = useState(false);
 
 useEffect(() => {
   const dialogo = dialogoRef.current;
@@ -80,6 +94,9 @@ useEffect(() => {
   };
 }, [abierto]);
   useEffect(() => { if (abierto) dialogoRef.current?.querySelector('h2')?.focus(); }, [paso, abierto]);
+  // Cada cambio de paso o de página vuelve al inicio del contenido.
+  useEffect(() => { cuerpoRef.current?.scrollTo({ top: 0 }); }, [paso, pagina, soloObservaciones]);
+  useEffect(() => { if (error) cuerpoRef.current?.scrollTo({ top: 0 }); }, [error]);
   useEffect(() => { if (error) dialogoRef.current?.querySelector('[role="alert"]')?.focus(); }, [error]);
   function cerrar() {
     if (operandoRef.current) return;
@@ -142,6 +159,68 @@ useEffect(() => {
           ? {
               ...fila,
               [campo]: valor,
+              modificado: true,
+            }
+          : fila
+      )
+    );
+  }
+
+  // Sedes distintas de los laboratorios autorizados
+  const sedes = [
+    ...new Map(
+      catalogos.laboratorios.map((lab) => [
+        lab.id_sede,
+        { id_sede: lab.id_sede, nombre: lab.nombre_sede },
+      ])
+    ).values(),
+  ];
+
+  function sedeDeFila(fila) {
+    return (
+      catalogos.laboratorios.find(
+        (lab) => lab.id_laboratorio === fila.id_laboratorio
+      )?.id_sede ??
+      fila.id_sede ??
+      null
+    );
+  }
+
+  function cambiarSede(numeroFila, idSede) {
+    const delaSede = catalogos.laboratorios.filter(
+      (lab) => lab.id_sede === idSede
+    );
+
+    setFilas((anteriores) =>
+      anteriores.map((fila) =>
+        fila.fila === numeroFila
+          ? {
+              ...fila,
+              id_sede: idSede,
+              // Con una sola opción se elige sola; si no, se vuelve a escoger.
+              id_laboratorio:
+                idSede && delaSede.length === 1
+                  ? delaSede[0].id_laboratorio
+                  : null,
+              modificado: true,
+            }
+          : fila
+      )
+    );
+  }
+
+  function cambiarLaboratorio(numeroFila, idLaboratorio) {
+    const laboratorio = catalogos.laboratorios.find(
+      (lab) => lab.id_laboratorio === idLaboratorio
+    );
+
+    setFilas((anteriores) =>
+      anteriores.map((fila) =>
+        fila.fila === numeroFila
+          ? {
+              ...fila,
+              id_laboratorio: idLaboratorio,
+              id_sede: laboratorio?.id_sede ?? fila.id_sede ?? null,
               modificado: true,
             }
           : fila
@@ -293,14 +372,18 @@ useEffect(() => {
     }
   }
 
+  const filasMostradas = soloObservaciones
+    ? filas.filter((fila) => fila.errores?.length > 0 || fila.modificado)
+    : filas;
+
   const totalPaginas = Math.max(
     1,
-    Math.ceil(filas.length / POR_PAGINA)
+    Math.ceil(filasMostradas.length / POR_PAGINA)
   );
 
   const paginaActual = Math.min(pagina, totalPaginas);
   const inicio = (paginaActual - 1) * POR_PAGINA;
-  const visibles = filas.slice(inicio, inicio + POR_PAGINA);
+  const visibles = filasMostradas.slice(inicio, inicio + POR_PAGINA);
   const todasSeleccionadas =
     filas.length > 0 &&
     filas.every((fila) => seleccionadas.includes(fila.fila));
@@ -313,47 +396,89 @@ useEffect(() => {
     <dialog
       ref={dialogoRef}
       className="imp-dialogo"
+      data-paso={paso}
       aria-labelledby="imp-titulo"
       onCancel={(evento) => {
         evento.preventDefault();
         cerrar();
       }}
     >
-      <div className="imp-encabezado">
-        <div>
-          <h2 id="imp-titulo" tabIndex={-1}>
-            {paso === 'archivo'
-              ? 'Importar equipos'
-              : paso === 'revision'
-                ? 'Revisar equipos'
-                : 'Resultado de la importación'}
-          </h2>
+      <header className="imp-cabecera">
+        <div className="imp-encabezado">
+          <div>
+            <h2 id="imp-titulo" tabIndex={-1}>
+              {paso === 'archivo'
+                ? 'Importar equipos'
+                : paso === 'revision'
+                  ? 'Revisar equipos'
+                  : 'Resultado de la importación'}
+            </h2>
 
-          <p>
-            {paso === 'archivo'
-              ? 'Seleccione un Excel para revisar sus datos antes de guardarlos.'
-              : paso === 'revision'
-                ? 'Corrija los campos y seleccione los equipos que desea importar.'
-                : 'Los equipos guardados se han retirado de la revisión.'}
-          </p>
+            <p>
+              {paso === 'archivo'
+                ? 'Seleccione un Excel para revisar sus datos antes de guardarlos.'
+                : paso === 'revision'
+                  ? 'Corrija los campos y marque los equipos que desea importar.'
+                  : 'Los equipos guardados se han retirado de la revisión.'}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            className="btn btn-icono btn-sm"
+            aria-label="Cerrar importación"
+            disabled={ocupado}
+            onClick={cerrar}
+          >
+            <X size={16} aria-hidden="true" />
+          </button>
         </div>
 
-        <button
-          type="button"
-          className="imp-cerrar"
-          aria-label="Cerrar importación"
-          disabled={ocupado}
-          onClick={cerrar}
-        >
-          <X size={20} />
-        </button>
-      </div>
+        <ol className="imp-pasos" aria-label="Pasos de importación">
+          {PASOS.map(({ id, texto }, indice) => {
+            const actual = PASOS.findIndex((p) => p.id === paso);
+            const estado =
+              indice < actual ? 'hecho' : indice === actual ? 'actual' : '';
 
-      <ol className="imp-pasos" aria-label="Pasos de importación">{[['archivo','1. Elegir Excel'],['revision','2. Revisar datos y fotos'],['resultado','3. Resultado']].map(([id,texto]) => <li key={id} aria-current={paso===id?'step':undefined}>{texto}</li>)}</ol>
-      {avisosFotos.length > 0 && <details><summary>Avisos sobre imágenes ({avisosFotos.length})</summary><ul>{avisosFotos.map((aviso,i)=><li key={i}>{aviso}</li>)}</ul></details>}
+            return (
+              <li
+                key={id}
+                className={`imp-paso${estado ? ` imp-paso--${estado}` : ''}`}
+                aria-current={estado === 'actual' ? 'step' : undefined}
+              >
+                <span className="imp-paso-numero">
+                  {estado === 'hecho' ? (
+                    <Check size={12} aria-hidden="true" />
+                  ) : (
+                    indice + 1
+                  )}
+                </span>
+                {texto}
+              </li>
+            );
+          })}
+        </ol>
+      </header>
+
+      <div className="imp-cuerpo" ref={cuerpoRef}>
+      {paso === 'revision' && avisosFotos.length > 0 && (
+        <details className="imp-aviso">
+          <summary>
+            <TriangleAlert size={16} aria-hidden="true" />
+            Avisos sobre imágenes ({avisosFotos.length})
+            <ChevronDown size={16} aria-hidden="true" />
+          </summary>
+          <ul>
+            {avisosFotos.map((aviso, i) => (
+              <li key={i}>{aviso}</li>
+            ))}
+          </ul>
+        </details>
+      )}
+
       {error && (
         <div className="imp-alerta imp-error" role="alert" tabIndex={-1}>
-          <AlertCircle size={18} />
+          <AlertCircle size={18} aria-hidden="true" />
           <span>{error}</span>
         </div>
       )}
@@ -384,27 +509,33 @@ useEffect(() => {
               }}
             />
 
-            <p role="status">{archivo ? `Seleccionado: ${archivo.name}` : "Ningún archivo seleccionado"}</p>
-            <p>
-              Formato .xlsx · Máximo 5 MB y 200 equipos.
+            <p role="status" className={archivo ? 'imp-archivo-elegido' : ''}>
+              {archivo ? (
+                <>
+                  <Check size={14} aria-hidden="true" />
+                  {archivo.name}
+                </>
+              ) : (
+                'Ningún archivo seleccionado'
+              )}
             </p>
+            <p>Formato .xlsx · Máximo 5 MB y 200 equipos.</p>
           </div>
 
-          <div className="imp-instrucciones">
-            <p>
-              Se leerá la hoja <strong>Inventario</strong>.
-              Las filas que solo tengan numeración se ignorarán.
-            </p>
-
-            <p>
-              Categoría, estado y laboratorio podrán seleccionarse
-              en la revisión. Extraeremos las fotos pegadas en la hoja y podrá adjuntar más a cada equipo.
-            </p>
-
-            <p>
-              Cada foto se asocia a la fila donde comienza su esquina superior izquierda. Revise la asociación antes de guardar. Los tickets no se importan.
-            </p>
-          </div>
+          <ul className="imp-instrucciones">
+            <li>
+              Se lee la hoja <strong>Inventario</strong>; las filas que solo
+              tienen numeración se ignoran.
+            </li>
+            <li>
+              Categoría, estado y laboratorio se pueden ajustar en la revisión.
+            </li>
+            <li>
+              Las fotos pegadas en la hoja se asocian a la fila donde empieza
+              su esquina superior izquierda. Revíselas antes de guardar. Los
+              tickets no se importan.
+            </li>
+          </ul>
         </>
       )}
 
@@ -413,32 +544,12 @@ useEffect(() => {
           <div className="imp-resumen">
             <span>{filas.length} equipos por revisar</span>
             <span>{seleccionadas.length} seleccionados</span>
-            <span>{erroresPendientes} con observaciones</span>
+            <span className={erroresPendientes ? 'imp-resumen-alerta' : ''}>
+              {erroresPendientes} con observaciones
+            </span>
           </div>
 
-          <details className="imp-valores-comunes">
-            <summary>Completar campos vacíos de varios equipos a la vez</summary>
-            <p>Elija valores comunes y aplíquelos a los equipos seleccionados. Los datos que ya tengan un valor se conservan.</p>
-            <div className="imp-campos">
-              {[
-                ['id_categoria', 'Categoría', catalogos.categorias],
-                ['id_estado', 'Estado', catalogos.estados],
-                ['id_laboratorio', 'Laboratorio', catalogos.laboratorios],
-              ].map(([campo, etiqueta, opciones]) => <div className="imp-campo" key={campo}>
-                <label htmlFor={`comun-${campo}`}>{etiqueta}</label>
-                <select id={`comun-${campo}`} name={campo} disabled={ocupado} value={valoresComunes[campo] || ''}
-                  onChange={e => setValoresComunes(v => ({...v, [campo]:Number(e.target.value) || null}))}>
-                  <option value="">Sin cambios</option>
-                  {opciones.map(o => <option key={o[campo]} value={o[campo]}>{o.nombre_sede ? `${o.nombre_sede} · ` : ''}{o.nombre}</option>)}
-                </select>
-              </div>)}
-            </div>
-            <button type="button" className="btn btn-contorno" disabled={ocupado} onClick={() => setFilas(anteriores => anteriores.map(f => {
-              if (!seleccionadas.includes(f.fila)) return f;
-              const cambios = Object.fromEntries(Object.entries(valoresComunes).filter(([campo,valor]) => valor && !f[campo]));
-              return Object.keys(cambios).length ? {...f,...cambios,modificado:true} : f;
-            }))}>Aplicar a campos vacíos seleccionados</button>
-          </details>
+
 
           <div className="imp-seleccion">
             <label>
@@ -457,11 +568,23 @@ useEffect(() => {
               Seleccionar todos
             </label>
 
-            <small>
-              Se guardarán únicamente los equipos seleccionados
-              que superen la validación del servidor.
-            </small>
+            <label className="imp-filtro-check">
+              <input
+                type="checkbox"
+                checked={soloObservaciones}
+                disabled={ocupado || erroresPendientes === 0}
+                onChange={(evento) => {
+                  setSoloObservaciones(evento.target.checked);
+                  setPagina(1);
+                }}
+              />
+              Mostrar solo los que requieren revisión
+            </label>
           </div>
+
+          {visibles.length === 0 && (
+            <p className="imp-vacio">No hay equipos que requieran revisión.</p>
+          )}
 
           <fieldset
             className="imp-lista"
@@ -538,10 +661,13 @@ useEffect(() => {
                   ) || 'Sin laboratorio'}
                 </p>
 
-                <details className="imp-fotos-revision"><summary>Fotos ({(fila.imagenes?.length || 0)+(fila.adjuntos?.length || 0)}) · Ver, agregar o quitar</summary>
+                <details className="imp-fotos-revision"><summary>
+                    <span><Images size={15} aria-hidden="true" /> Fotos ({(fila.imagenes?.length || 0)+(fila.adjuntos?.length || 0)}) · ver, agregar o quitar</span>
+                    <ChevronDown size={16} aria-hidden="true" />
+                  </summary>
                   <div className="fotos-galeria">{(fila.imagenes || []).map((imagen,i)=><figure key={i}>
                     <img src={`data:${imagen.mime};base64,${imagen.base64}`} alt={`Foto extraída del Excel para ${fila.nombre || 'este equipo'}`} />
-                    <figcaption>{imagen.nombre}</figcaption><button type="button" onClick={()=>setFilas(anteriores=>anteriores.map(f=>f.fila===fila.fila?{...f,imagenes:f.imagenes.filter((_,n)=>n!==i)}:f))}>Quitar foto del Excel</button>
+                    <figcaption>{imagen.nombre}</figcaption><button type="button" className="btn btn-secundario btn-sm" onClick={()=>setFilas(anteriores=>anteriores.map(f=>f.fila===fila.fila?{...f,imagenes:f.imagenes.filter((_,n)=>n!==i)}:f))}>Quitar foto del Excel</button>
                   </figure>)}</div>
                   <AdjuntarFotos archivos={fila.adjuntos || []} disabled={ocupado} onChange={archivos=>{
                     if(archivos.length+(fila.imagenes?.length||0)>MAX_FOTOS_EQUIPO){setError(`Máximo ${MAX_FOTOS_EQUIPO} fotos por equipo, contando las del Excel.`);return;}
@@ -549,7 +675,10 @@ useEffect(() => {
                   }}/>
                 </details>
                 <details className="imp-detalles">
-                  <summary>Ver y editar datos</summary>
+                  <summary>
+                  <span>Ver y editar datos</span>
+                  <ChevronDown size={16} aria-hidden="true" />
+                </summary>
 
                   {Object.values(fila.originales || {}).some(Boolean) && (
                     <div className="imp-originales">
@@ -678,14 +807,37 @@ useEffect(() => {
                     </label>
 
                     <label className="imp-campo">
-                      <span>Sede / laboratorio autorizado *</span>
+                      <span>Sede</span>
+
+                      <select
+                        value={sedeDeFila(fila) ?? ''}
+                        onChange={(evento) =>
+                          cambiarSede(
+                            fila.fila,
+                            evento.target.value
+                              ? Number(evento.target.value)
+                              : null
+                          )
+                        }
+                      >
+                        <option value="">Seleccione una sede</option>
+
+                        {sedes.map((sede) => (
+                          <option key={sede.id_sede} value={sede.id_sede}>
+                            {sede.nombre}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <label className="imp-campo">
+                      <span>Laboratorio autorizado *</span>
 
                       <select
                         value={fila.id_laboratorio ?? ''}
                         onChange={(evento) =>
-                          cambiarCampo(
+                          cambiarLaboratorio(
                             fila.fila,
-                            'id_laboratorio',
                             evento.target.value
                               ? Number(evento.target.value)
                               : null
@@ -694,45 +846,63 @@ useEffect(() => {
                       >
                         <option value="">Seleccione un laboratorio</option>
 
-                        {catalogos.laboratorios.map((laboratorio) => (
-                          <option
-                            key={laboratorio.id_laboratorio}
-                            value={laboratorio.id_laboratorio}
-                          >
-                            {laboratorio.nombre_sede}
-                            {' · '}
-                            {laboratorio.nombre}
-                            {' · '}
-                            {laboratorio.codigo}
-                          </option>
-                        ))}
+                        {catalogos.laboratorios
+                          .filter(
+                            (laboratorio) =>
+                              !sedeDeFila(fila) ||
+                              laboratorio.id_sede === sedeDeFila(fila)
+                          )
+                          .map((laboratorio) => (
+                            <option
+                              key={laboratorio.id_laboratorio}
+                              value={laboratorio.id_laboratorio}
+                            >
+                              {laboratorio.codigo} · {laboratorio.nombre}
+                            </option>
+                          ))}
                       </select>
                     </label>
 
                     {[
                       ['caracteristicas', 'Características'],
                       ['comentarios', 'Comentarios'],
-                    ].map(([campo, etiqueta]) => (
-                      <label
-                        className="imp-campo imp-campo-ancho"
-                        key={campo}
-                      >
-                        <span>{etiqueta}</span>
+                    ].map(([campo, etiqueta]) => {
+                      const ampliado = campo === 'caracteristicas'
+                        ? Boolean(caracteristicasAmpliadas[fila.fila])
+                        : Boolean(comentariosAmpliados[fila.fila]);
+                      const cambiarAmpliado = campo === 'caracteristicas'
+                        ? setCaracteristicasAmpliadas
+                        : setComentariosAmpliados;
+                      const idCampo = `imp-${campo}-${fila.fila}`;
 
-                        <textarea
-                          rows={4}
-                          maxLength={10000}
-                          value={fila[campo] ?? ''}
-                          onChange={(evento) =>
-                            cambiarCampo(
-                              fila.fila,
-                              campo,
-                              evento.target.value
-                            )
-                          }
-                        />
-                      </label>
-                    ))}
+                      return (
+                        <div className="imp-campo imp-campo-ancho" key={campo}>
+                          <label htmlFor={idCampo}>{etiqueta}</label>
+                          <textarea
+                            id={idCampo}
+                            className={`imp-texto-expandible${ampliado ? ' imp-texto-expandible--ampliado' : ''}`}
+                            rows={ampliado ? 12 : 4}
+                            maxLength={10000}
+                            value={fila[campo] ?? ''}
+                            onChange={(evento) => cambiarCampo(fila.fila, campo, evento.target.value)}
+                          />
+                          <button
+                            type="button"
+                            className="imp-ampliar-campo"
+                            aria-controls={idCampo}
+                            aria-expanded={ampliado}
+                            aria-label={`${ampliado ? 'Reducir' : 'Ampliar'} campo de ${etiqueta.toLowerCase()}`}
+                            onClick={() => cambiarAmpliado((anteriores) => ({
+                              ...anteriores,
+                              [fila.fila]: !anteriores[fila.fila],
+                            }))}
+                          >
+                            {ampliado ? 'Reducir campo' : 'Ampliar campo'}
+                            <ChevronDown size={15} aria-hidden="true" className={ampliado ? 'imp-flecha-arriba' : ''} />
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
                 </details>
               </article>
@@ -789,34 +959,84 @@ useEffect(() => {
 
       {paso === 'resultado' && resumen && (
         <div className="imp-resultado" role="status">
-          {fotosPendientes.length>0 && <div className="imp-alerta imp-error"><div><strong>Equipos guardados, fotos pendientes: {fotosPendientes.length}</strong>
-            <p>Reintente sin importar los equipos de nuevo. Si cierra, podrá agregar las fotos desde el detalle del equipo.</p>
-            <ul>{fotosPendientes.map((foto,i)=><li key={i}>{foto.nombre}: {foto.archivo.name} — {foto.error}</li>)}</ul>
-            <button type="button" disabled={ocupado} onClick={reintentarFotos}>Reintentar fotos pendientes</button></div></div>}
+          {fotosPendientes.length > 0 && (
+            <div className="imp-alerta imp-error">
+              <TriangleAlert size={18} aria-hidden="true" />
+              <div>
+                <strong>
+                  Equipos guardados, fotos pendientes: {fotosPendientes.length}
+                </strong>
+                <p>
+                  Reintente sin importar los equipos de nuevo. Si cierra,
+                  podrá agregar las fotos desde el detalle del equipo.
+                </p>
+                <ul>
+                  {fotosPendientes.map((foto, i) => (
+                    <li key={i}>
+                      {foto.nombre}: {foto.archivo.name} — {foto.error}
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  type="button"
+                  className="btn btn-secundario btn-sm"
+                  disabled={ocupado}
+                  onClick={reintentarFotos}
+                >
+                  <RefreshCw size={14} aria-hidden="true" />
+                  Reintentar fotos pendientes
+                </button>
+              </div>
+            </div>
+          )}
+
           {resumen.importados > 0 ? (
             <CheckCircle2 size={38} aria-hidden="true" />
           ) : (
-            <AlertCircle size={38} aria-hidden="true" />
+            <AlertCircle size={38} aria-hidden="true" className="imp-icono-error" />
           )}
 
           <h3>{resumen.mensaje}</h3>
 
+          <div className="imp-cifras">
+            <span className="imp-cifra imp-cifra--ok">
+              <strong>{resumen.importados}</strong> importados
+            </span>
+            <span
+              className={`imp-cifra${resumen.rechazados ? ' imp-cifra--error' : ''}`}
+            >
+              <strong>{resumen.rechazados}</strong> rechazados
+            </span>
+            <span className="imp-cifra">
+              <strong>{filas.length}</strong> sin importar
+            </span>
+          </div>
+
           <p>
             {resumen.rechazados > 0
-              ? 'Puede volver a la revisión para corregir los equipos rechazados. Los equipos ya importados no se enviarán de nuevo.'
-              : 'Los equipos importados ya están disponibles en Inventario.'}
+              ? 'Vuelva a la revisión para corregir los equipos rechazados. Los ya importados no se enviarán de nuevo.'
+              : filas.length > 0
+                ? 'Quedan equipos que no seleccionó; puede revisarlos ahora o cerrar.'
+                : 'Los equipos importados ya están disponibles en Inventario.'}
           </p>
-
-          {filas.length > 0 && (
-            <p>
-              Quedan {filas.length} equipos sin importar,
-              incluyendo los que no seleccionó.
-            </p>
-          )}
         </div>
       )}
+      </div>
 
-      <div className="imp-acciones">
+      <footer className="imp-acciones">
+        <p className="imp-estado-seleccion" aria-live="polite">
+          {paso === 'revision' && (
+            <>
+              <strong>{seleccionadas.length}</strong> de {filas.length}{' '}
+              seleccionados
+              {erroresPendientes > 0 && (
+                <span> · {erroresPendientes} con observaciones</span>
+              )}
+            </>
+          )}
+        </p>
+
+        <div className="imp-acciones-botones">
         <button
           type="button"
           className="btn btn-secundario"
@@ -863,7 +1083,8 @@ useEffect(() => {
             Revisar pendientes
           </button>
         )}
-      </div>
+        </div>
+      </footer>
     </dialog>
   );
 }

@@ -1,6 +1,9 @@
+const path = require('node:path');
+const fs = require('node:fs/promises');
 const pool = require('../config/database');
 const { verificarAccesoEquipo } = require('../utils/accesoEquipos');
 const {
+  DIRECTORIO_EVIDENCIAS,
   eliminarArchivo,
   tieneFirmaDeImagen
 } = require('../middlewares/uploadMiddleware');
@@ -205,7 +208,23 @@ const obtenerEvidenciasPorBitacora = async (req, res) => {
   }
 };
 
+const obtenerArchivoEvidencia = async (req,res) => {
+  try {
+    if(!esIdValido(req.params.id)) return res.status(400).json({success:false,message:'Identificador de evidencia inválido.'});
+    const resultado=await pool.query('SELECT ev.url_foto,bm.id_equipo FROM public.evidencia_fotografica ev JOIN public.bitacora_mantenimiento bm ON bm.id_bitacora=ev.id_bitacora WHERE ev.id_evidencia=$1',[Number(req.params.id)]);
+    const evidencia=resultado.rows[0];
+    if(!evidencia) return res.status(404).json({success:false,message:'Evidencia no encontrada.'});
+    if(!tieneAccesoGlobal(req.usuario.rol) && !await verificarAccesoEquipo(evidencia.id_equipo,req.usuario)) return res.status(403).json({success:false,message:'Sin acceso a esta evidencia.'});
+    const nombre=String(evidencia.url_foto || '').match(/^\/uploads\/evidencias\/([a-zA-Z0-9_-]+\.(?:jpe?g|png|webp))$/i)?.[1];
+    if(!nombre) return res.status(404).json({success:false,message:'Archivo no disponible.'});
+    const ruta=path.join(DIRECTORIO_EVIDENCIAS,nombre);
+    await fs.access(ruta);
+    res.set({'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'});
+    return res.sendFile(ruta);
+  }catch(error){if(error.code==='ENOENT')return res.status(404).json({success:false,message:'Archivo no disponible.'});console.error('Error al abrir evidencia:',error.message);return res.status(500).json({success:false,message:'No se pudo abrir la evidencia.'});}
+};
 module.exports = {
+  obtenerArchivoEvidencia,
   subirEvidencia,
   obtenerEvidenciasPorBitacora
 };

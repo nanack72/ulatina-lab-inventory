@@ -340,6 +340,7 @@ export default function MainLayout({
       if (equipoSeleccionado !== null) {
         return (
           <EquipoDetalle
+          puedeEliminar={normalizarRol(usuario?.rol) === 'superadministrador' || usuario?.puede_eliminar_equipos === true}
             puedeAgregarFotos={usuarioPuedeRegistrar}
             puedeEliminarFotos={usuarioPuedeModificar}
             key={equipoSeleccionado}
@@ -369,6 +370,7 @@ export default function MainLayout({
       return (
         <Inventario
           token={token}
+          puedeGestionarEliminados={normalizarRol(usuario?.rol) === 'superadministrador' || usuario?.puede_eliminar_equipos === true}
           onVerEquipo={verEquipo}
           puedeRegistrar={usuarioPuedeRegistrar}
           onRegistrarEquipo={abrirRegistro}

@@ -1,5 +1,6 @@
 const { puedeRegistrarInventario, puedeEditarInventario } = require('../utils/permisosInventario');
 const fallo = (message, status = 400) => Object.assign(new Error(message), { status });
+const MAX_FOTOS_EQUIPO = 50;
 const MAX_FOTO = 5 * 1024 * 1024;
 function tipoImagen(bytes) {
   if (!Buffer.isBuffer(bytes)) return null;
@@ -27,7 +28,7 @@ async function conAcceso(pool, equipo, actor, accion, operar) {
     if (accion === 'eliminar' && !puedeEditarInventario(usuario)) throw fallo('No tiene permisos para eliminar fotos.',403);
     const visible = await cliente.query(`SELECT e.id_equipo FROM public.equipo e
       JOIN public.laboratorio l ON l.id_laboratorio=e.id_laboratorio
-      WHERE e.id_equipo=$1 AND ($3::boolean OR EXISTS (
+      WHERE e.id_equipo=$1 AND e.eliminado_en IS NULL AND ($3::boolean OR EXISTS (
         SELECT 1 FROM public.usuario_sede us JOIN public.usuario_laboratorio ul ON ul.id_usuario_sede=us.id_usuario_sede
         WHERE us.id_usuario=$2 AND us.id_sede=l.id_sede AND ul.id_sede=l.id_sede AND ul.id_laboratorio=e.id_laboratorio))
       FOR UPDATE OF e`, [Number(equipo), actor, String(usuario.rol).trim().toLowerCase() === 'superadministrador']);
@@ -46,7 +47,7 @@ async function subirFotoEquipo(pool, equipo, actor, archivo) {
   const mime = validarFoto(archivo);
   return conAcceso(pool,equipo,actor,'subir', async cliente => {
     const cantidad = await cliente.query('SELECT count(*)::int AS total FROM public.foto_equipo WHERE id_equipo=$1',[equipo]);
-    if (cantidad.rows[0].total >= 10) throw fallo('Puede guardar hasta 10 fotos por equipo.',409);
+    if (cantidad.rows[0].total >= MAX_FOTOS_EQUIPO) throw fallo('Puede guardar hasta '+MAX_FOTOS_EQUIPO+' fotos por equipo.',409);
     return (await cliente.query(`INSERT INTO public.foto_equipo(id_equipo,id_usuario,nombre_archivo,mime,datos)
       VALUES($1,$2,$3,$4,$5) RETURNING id_foto,nombre_archivo,mime,fecha_creacion`,
       [equipo,actor,String(archivo.originalname || 'foto').slice(0,180),mime,archivo.buffer])).rows[0];
@@ -65,4 +66,4 @@ async function eliminarFoto(pool,equipo,actor,id) {
     if (!foto.rows.length) throw fallo('Foto no encontrada.',404);
   });
 }
-module.exports = { listarFotos, subirFotoEquipo, obtenerFoto, eliminarFoto, tipoImagen, validarFoto };
+module.exports = { MAX_FOTOS_EQUIPO, listarFotos, subirFotoEquipo, obtenerFoto, eliminarFoto, tipoImagen, validarFoto };

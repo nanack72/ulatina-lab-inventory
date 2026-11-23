@@ -3,7 +3,7 @@
 
 const path = require('path');
 const fs = require('fs');
-const XLSX = require('xlsx');
+const {leerLibroComoFilas}=require('../src/utils/leerExcelFilas');
 
 // Cargar variables de entorno desde backend/.env
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
@@ -478,10 +478,7 @@ function leerFilasExcelHeredia(workbook) {
   // 1. Hoja: "Mantenimientos 2026"
   // --------------------------------------------------------------------------
   if (workbook.Sheets['Mantenimientos 2026']) {
-    const filasHoja1 = XLSX.utils.sheet_to_json(workbook.Sheets['Mantenimientos 2026'], {
-      header: 1,
-      defval: ''
-    });
+    const filasHoja1 = workbook.Sheets['Mantenimientos 2026'];
 
     for (let idx = 6; idx < filasHoja1.length; idx++) {
       const fila = filasHoja1[idx];
@@ -561,10 +558,7 @@ function leerFilasExcelHeredia(workbook) {
   // 2. Hoja: "MANT-Anexo 5"
   // --------------------------------------------------------------------------
   if (workbook.Sheets['MANT-Anexo 5']) {
-    const filasAnexo = XLSX.utils.sheet_to_json(workbook.Sheets['MANT-Anexo 5'], {
-      header: 1,
-      defval: ''
-    });
+    const filasAnexo = workbook.Sheets['MANT-Anexo 5'];
 
     for (let idx = 7; idx < filasAnexo.length; idx++) {
       const fila = filasAnexo[idx];
@@ -653,7 +647,7 @@ async function ejecutarSeed() {
   }
 
   console.log(`[1/4] Leyendo archivo Excel:\n      ${EXCEL_PATH}`);
-  const workbook = XLSX.readFile(EXCEL_PATH);
+  const workbook = await leerLibroComoFilas(EXCEL_PATH);
 
   const {
     totalFilasAnalizadas,
@@ -808,4 +802,3 @@ async function ejecutarSeed() {
 }
 
 ejecutarSeed();
-

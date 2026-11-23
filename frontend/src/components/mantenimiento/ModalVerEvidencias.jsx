@@ -1,18 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
-import {
-  X,
-  Upload,
-  RefreshCw,
-  ZoomIn,
-  Calendar,
-  ImageOff,
-  Lock,
-  CheckCircle2,
-  AlertCircle
-} from 'lucide-react';
+import { useCallback, useRef, useState } from 'react';
+import { Lock, CheckCircle2, AlertCircle, Upload } from 'lucide-react';
+import { DialogoModulo, Aviso, Insignia, PaginacionModulo } from '../comunes/Modulo';
+import ImagenProtegida from '../comunes/ImagenProtegida';
+import { useListadoModulo } from '../../hooks/useListadoModulo';
 import {
   consultarEvidenciasPorBitacora,
-  subirEvidenciaFotografica
+  subirEvidenciaFotografica,
 } from '../../services/evidenciasService';
 import { formatearFechaMantenimiento } from '../../utils/mantenimiento';
 
@@ -28,337 +21,218 @@ export default function ModalVerEvidencias({
   abierto,
   alCerrar,
   alSubirEvidencia,
-  token
+  token,
 }) {
-  const [evidencias, setEvidencias] = useState([]);
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState(null);
-  const [fotoAmpliada, setFotoAmpliada] = useState(null);
-
-  // Estado para adjuntar nuevas evidencias mientras la orden siga abierta
-  const [archivoNuevo, setArchivoNuevo] = useState(null);
-  const [tipoNuevo, setTipoNuevo] = useState('Después');
-  const [descripcionNueva, setDescripcionNueva] = useState('');
-  const [subiendo, setSubiendo] = useState(false);
-  const [errorSubida, setErrorSubida] = useState(null);
+  const [ampliada, setAmpliada] = useState(null),
+    [pagina, setPagina] = useState(1);
+  const [archivoNuevo, setArchivoNuevo] = useState(null),
+    [tipoNuevo, setTipoNuevo] = useState('Después'),
+    [descripcionNueva, setDescripcionNueva] = useState(''),
+    [subiendo, setSubiendo] = useState(false),
+    [errorSubida, setErrorSubida] = useState('');
   const inputArchivoRef = useRef(null);
 
-  const cargarEvidencias = async (signal) => {
-    if (!mantenimiento?.id_bitacora) return;
-    try {
-      setCargando(true);
-      setError(null);
-      const data = await consultarEvidenciasPorBitacora(
-        mantenimiento.id_bitacora,
-        token,
-        signal
-      );
-      setEvidencias(data);
-    } catch (err) {
-      if (err.name !== 'AbortError') {
-        setError(err.message || 'Error al cargar evidencias');
-      }
-    } finally {
-      setCargando(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!abierto || !mantenimiento?.id_bitacora) return;
-
-    const controlador = new AbortController();
-    setErrorSubida(null);
-    setArchivoNuevo(null);
-    setDescripcionNueva('');
-    cargarEvidencias(controlador.signal);
-
-    return () => {
-      controlador.abort();
-    };
-  }, [abierto, mantenimiento?.id_bitacora, token]);
-
-  if (!abierto || !mantenimiento) return null;
+  const cargar = useCallback(
+    (signal) => consultarEvidenciasPorBitacora(mantenimiento.id_bitacora, token, signal),
+    [mantenimiento.id_bitacora, token]
+  );
+  const { datos, cargando, error, recargar } = useListadoModulo(cargar);
+  const lista = datos || [],
+    actual = Math.min(pagina, Math.max(1, Math.ceil(lista.length / 6)));
 
   const ordenFinalizada = mantenimiento.estado_mantenimiento === 'Completado';
   const esCorrectivo = normalizarTipo(mantenimiento.tipo_mantenimiento) === 'correctivo';
-  const tiposCargados = evidencias.map((ev) => normalizarTipo(ev.tipo_evidencia));
+  const tiposCargados = lista.map((ev) => normalizarTipo(ev.tipo_evidencia));
   const tieneAntes = tiposCargados.includes('antes');
   const tieneDespues = tiposCargados.includes('despues');
 
-  const manejarSeleccionArchivo = (e) => {
+  function manejarSeleccionArchivo(e) {
     const file = e.target.files?.[0];
-    setErrorSubida(null);
-    if (!file) return;
-
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      setErrorSubida('Solo se admiten imágenes JPG, PNG o WEBP.');
+    setErrorSubida('');
+    if (!file) {
+      setArchivoNuevo(null);
       return;
     }
-
-    if (file.size > 5 * 1024 * 1024) {
-      setErrorSubida('La imagen supera el límite máximo de 5 MB.');
+    if (!/\.(jpe?g|png|webp)$/i.test(file.name) || file.size > 5242880 || !file.size) {
+      setErrorSubida('Adjunte una imagen JPG, PNG o WEBP de hasta 5 MB.');
+      e.target.value = '';
+      setArchivoNuevo(null);
       return;
     }
-
     setArchivoNuevo(file);
-  };
+  }
 
-  const manejarSubida = async (e) => {
+  async function manejarSubida(e) {
     e.preventDefault();
-    if (!archivoNuevo) {
-      setErrorSubida('Seleccione una imagen antes de subirla.');
-      return;
-    }
-
+    if (!archivoNuevo || subiendo) return;
     try {
       setSubiendo(true);
-      setErrorSubida(null);
+      setErrorSubida('');
       await subirEvidenciaFotografica(
         {
           foto: archivoNuevo,
           id_bitacora: mantenimiento.id_bitacora,
           tipo_evidencia: tipoNuevo,
-          descripcion: descripcionNueva.trim() || `Evidencia (${tipoNuevo})`
+          descripcion: descripcionNueva.trim() || `Evidencia (${tipoNuevo})`,
         },
         token
       );
       setArchivoNuevo(null);
       setDescripcionNueva('');
-      if (inputArchivoRef.current) {
-        inputArchivoRef.current.value = '';
-      }
-      await cargarEvidencias();
-      if (alSubirEvidencia) {
-        alSubirEvidencia();
-      }
+      if (inputArchivoRef.current) inputArchivoRef.current.value = '';
+      recargar();
+      if (alSubirEvidencia) alSubirEvidencia();
     } catch (err) {
       setErrorSubida(err.message || 'No fue posible subir la evidencia fotográfica.');
     } finally {
       setSubiendo(false);
     }
-  };
+  }
 
   return (
-    <div className="mant-modal-backdrop" onClick={alCerrar}>
-      <div
-        className="mant-modal-contenido mant-modal-contenido--ancho"
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-labelledby="mant-evidencias-titulo"
+    <>
+      <DialogoModulo
+        abierto={abierto}
+        alCerrar={alCerrar}
+        titulo={'Evidencias del mantenimiento #' + mantenimiento.id_bitacora}
+        descripcion={
+          mantenimiento.nombre_equipo + ' · ' + (mantenimiento.placa_institucional || 'Sin placa')
+        }
+        ocupado={subiendo}
       >
-        <header className="mant-modal-cabecera">
-          <div>
-            <h2 id="mant-evidencias-titulo" className="mant-modal-titulo">
-              Evidencias Fotográficas de la Orden #{mantenimiento.id_bitacora}
-            </h2>
-            <p className="mant-modal-subtitulo">
-              {mantenimiento.nombre_equipo} ({mantenimiento.placa_institucional || 'Sin placa'}) — {mantenimiento.codigo_laboratorio}
-            </p>
+        {ordenFinalizada ? (
+          <div className="mant-evidencias-solo-lectura" role="note">
+            <Lock size={15} aria-hidden="true" />
+            <span>Orden finalizada — historial técnico de solo consulta (RN11).</span>
           </div>
-          <button
-            type="button"
-            className="mant-modal-cerrar"
-            onClick={alCerrar}
-            aria-label="Cerrar ventana"
-          >
-            <X size={20} />
-          </button>
-        </header>
-
-        <div className="mant-evidencias-cuerpo">
-          {ordenFinalizada ? (
-            <div className="mant-evidencias-solo-lectura" role="note">
-              <Lock size={15} />
-              <span>Orden finalizada — historial técnico de solo consulta.</span>
-            </div>
-          ) : (
-            <div className="mant-evidencias-requisitos">
-              {esCorrectivo ? (
-                <>
-                  <span className={`mant-req-chip ${tieneAntes ? 'mant-req-chip--ok' : 'mant-req-chip--pendiente'}`}>
-                    {tieneAntes ? <CheckCircle2 size={14} /> : <AlertCircle size={14} />}
-                    Foto Antes: {tieneAntes ? 'Lista' : 'Pendiente'}
-                  </span>
-                  <span className={`mant-req-chip ${tieneDespues ? 'mant-req-chip--ok' : 'mant-req-chip--pendiente'}`}>
-                    {tieneDespues ? <CheckCircle2 size={14} /> : <AlertCircle size={14} />}
-                    Foto Después: {tieneDespues ? 'Lista' : 'Pendiente'}
-                  </span>
-                </>
-              ) : (
-                <span className={`mant-req-chip ${evidencias.length > 0 ? 'mant-req-chip--ok' : 'mant-req-chip--pendiente'}`}>
-                  {evidencias.length > 0 ? <CheckCircle2 size={14} /> : <AlertCircle size={14} />}
-                  Evidencia para cierre: {evidencias.length > 0 ? 'Cumplida' : 'Se requiere al menos 1 foto'}
+        ) : (
+          <div className="mant-evidencias-requisitos">
+            {esCorrectivo ? (
+              <>
+                <span
+                  className={`mant-req-chip ${tieneAntes ? 'mant-req-chip--ok' : 'mant-req-chip--pendiente'}`}
+                >
+                  {tieneAntes ? <CheckCircle2 size={14} /> : <AlertCircle size={14} />}
+                  Foto Antes: {tieneAntes ? 'Lista' : 'Pendiente'}
                 </span>
-              )}
-            </div>
-          )}
-
-          {cargando && (
-            <div className="mant-evidencias-cargando">
-              <RefreshCw className="mant-spinner" size={24} />
-              <p>Cargando galería de evidencias fotográficas...</p>
-            </div>
-          )}
-
-          {error && (
-            <div className="mant-alerta-error" role="alert">
-              <span>{error}</span>
-            </div>
-          )}
-
-          {!cargando && !error && evidencias.length === 0 && (
-            <div className="mant-evidencias-vacio">
-              <ImageOff size={40} className="mant-icono-vacio" />
-              <p>No se han adjuntado fotografías para esta orden de mantenimiento.</p>
-            </div>
-          )}
-
-          {!cargando && evidencias.length > 0 && (
-            <div className="mant-galeria-grid">
-              {evidencias.map((ev) => (
-                <article key={ev.id_evidencia} className="mant-tarjeta-evidencia">
-                  <div
-                    className="mant-evidencia-img-wrap"
-                    onClick={() => setFotoAmpliada(ev.url_foto)}
+                <span
+                  className={`mant-req-chip ${tieneDespues ? 'mant-req-chip--ok' : 'mant-req-chip--pendiente'}`}
+                >
+                  {tieneDespues ? <CheckCircle2 size={14} /> : <AlertCircle size={14} />}
+                  Foto Después: {tieneDespues ? 'Lista' : 'Pendiente'}
+                </span>
+              </>
+            ) : (
+              <span
+                className={`mant-req-chip ${lista.length > 0 ? 'mant-req-chip--ok' : 'mant-req-chip--pendiente'}`}
+              >
+                {lista.length > 0 ? <CheckCircle2 size={14} /> : <AlertCircle size={14} />}
+                Evidencia para cierre: {lista.length > 0 ? 'Cumplida' : 'Se requiere al menos 1 foto'}
+              </span>
+            )}
+          </div>
+        )}
+        <Aviso error>{error}</Aviso>
+        {cargando ? (
+          <p className="mod-vacio" role="status">
+            Cargando evidencias…
+          </p>
+        ) : !lista.length ? (
+          <p className="mod-vacio">Este mantenimiento no tiene evidencias.</p>
+        ) : (
+          <>
+            <div className="mod-galeria">
+              {lista.slice((actual - 1) * 6, actual * 6).map((e) => (
+                <article className="mod-evidencia" key={e.id_evidencia}>
+                  <button
+                    type="button"
+                    aria-label={'Ampliar evidencia ' + e.id_evidencia}
+                    onClick={() => setAmpliada(e)}
                   >
-                    <img
-                      src={ev.url_foto}
-                      alt={ev.descripcion || 'Evidencia fotográfica'}
-                      className="mant-evidencia-img"
-                      loading="lazy"
-                    />
-                    <div className="mant-evidencia-overlay">
-                      <ZoomIn size={20} />
-                      <span>Ampliar foto</span>
-                    </div>
-                    <span className={`mant-evidencia-badge mant-evidencia-badge--${ev.tipo_evidencia?.toLowerCase()}`}>
-                      {ev.tipo_evidencia}
-                    </span>
-                  </div>
-
-                  <div className="mant-evidencia-pie">
-                    <p className="mant-evidencia-desc">
-                      {ev.descripcion || 'Sin descripción adicional'}
-                    </p>
-                    <span className="mant-evidencia-fecha">
-                      <Calendar size={13} />
-                      {formatearFechaMantenimiento(ev.fecha_subida)}
-                    </span>
-                  </div>
+                    <ImagenProtegida evidencia={e} token={token} />
+                    <span>Ampliar foto</span>
+                  </button>
+                  <Insignia>{e.tipo_evidencia}</Insignia>
+                  <p>{e.descripcion || 'Sin descripción'}</p>
+                  <small>{formatearFechaMantenimiento(e.fecha_subida)}</small>
                 </article>
               ))}
             </div>
-          )}
-
-          {!ordenFinalizada && (
-            <form className="mant-evidencias-subir" onSubmit={manejarSubida}>
-              <h3 className="mant-evidencia-titulo">
-                <Upload size={16} />
-                <span>Adjuntar nueva evidencia</span>
-              </h3>
-
-              {errorSubida && (
-                <div className="mant-alerta-error" role="alert">
-                  <span>{errorSubida}</span>
-                </div>
-              )}
-
-              <div className="mant-grid-dos-cols">
-                <div className="mant-campo">
-                  <label htmlFor="ev-tipo-nuevo" className="mant-label">
-                    Momento de la fotografía
-                  </label>
-                  <select
-                    id="ev-tipo-nuevo"
-                    className="mant-input"
-                    value={tipoNuevo}
-                    onChange={(e) => setTipoNuevo(e.target.value)}
-                    disabled={subiendo}
-                  >
-                    <option value="Antes">Antes de la intervención</option>
-                    <option value="Durante">Durante el procedimiento</option>
-                    <option value="Después">Después de reparar</option>
-                  </select>
-                </div>
-
-                <div className="mant-campo">
-                  <label htmlFor="ev-archivo-nuevo" className="mant-label">
-                    Archivo (JPG, PNG o WEBP, máx. 5 MB)
-                  </label>
-                  <input
-                    id="ev-archivo-nuevo"
-                    ref={inputArchivoRef}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    className="mant-input"
-                    onChange={manejarSeleccionArchivo}
-                    disabled={subiendo}
-                  />
-                </div>
-              </div>
-
-              <div className="mant-campo">
-                <label htmlFor="ev-desc-nueva" className="mant-label">
-                  Descripción (opcional)
-                </label>
+            <PaginacionModulo
+              pagina={actual}
+              total={lista.length}
+              limite={6}
+              alCambiar={setPagina}
+            />
+          </>
+        )}
+        {!ordenFinalizada && (
+          <form className="mod-formulario mant-evidencias-subir" onSubmit={manejarSubida}>
+            <h3 className="mant-evidencia-titulo">
+              <Upload size={16} aria-hidden="true" />
+              <span>Adjuntar nueva evidencia</span>
+            </h3>
+            <Aviso error>{errorSubida}</Aviso>
+            <div className="mod-campos">
+              <label className="mod-campo" htmlFor="ev-tipo-nuevo">
+                Momento de la fotografía
+                <select
+                  id="ev-tipo-nuevo"
+                  value={tipoNuevo}
+                  onChange={(e) => setTipoNuevo(e.target.value)}
+                  disabled={subiendo}
+                >
+                  <option value="Antes">Antes</option>
+                  <option value="Durante">Durante</option>
+                  <option value="Después">Después</option>
+                </select>
+              </label>
+              <label className="mod-campo" htmlFor="ev-archivo-nuevo">
+                Archivo (JPG, PNG o WEBP, máx. 5 MB)
                 <input
-                  id="ev-desc-nueva"
-                  type="text"
-                  className="mant-input"
-                  placeholder="Ej. Equipo encendido y operando normalmente tras limpieza..."
-                  value={descripcionNueva}
-                  onChange={(e) => setDescripcionNueva(e.target.value)}
+                  id="ev-archivo-nuevo"
+                  ref={inputArchivoRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={manejarSeleccionArchivo}
                   disabled={subiendo}
                 />
-              </div>
-
-              <div className="mant-evidencias-subir-acciones">
-                <button
-                  type="submit"
-                  className="mant-btn-primario"
-                  disabled={subiendo || !archivoNuevo}
-                >
-                  {subiendo ? (
-                    <>
-                      <RefreshCw className="mant-spinner-btn" size={15} />
-                      <span>Subiendo...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Upload size={15} />
-                      <span>Subir evidencia</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-          )}
-        </div>
-
-        {/* Lightbox / Zoom modal */}
-        {fotoAmpliada && (
-          <div
-            className="mant-lightbox-backdrop"
-            onClick={() => setFotoAmpliada(null)}
-          >
-            <div className="mant-lightbox-wrap" onClick={(e) => e.stopPropagation()}>
-              <img
-                src={fotoAmpliada}
-                alt="Evidencia ampliada"
-                className="mant-lightbox-img"
+              </label>
+            </div>
+            <label className="mod-campo" htmlFor="ev-desc-nueva">
+              Descripción (opcional)
+              <input
+                id="ev-desc-nueva"
+                type="text"
+                maxLength={1000}
+                placeholder="Ej. Equipo encendido y operando normalmente tras limpieza..."
+                value={descripcionNueva}
+                onChange={(e) => setDescripcionNueva(e.target.value)}
+                disabled={subiendo}
               />
+            </label>
+            <div className="mant-evidencias-subir-acciones">
               <button
-                type="button"
-                className="mant-lightbox-cerrar"
-                onClick={() => setFotoAmpliada(null)}
-                aria-label="Cerrar vista ampliada"
+                type="submit"
+                className="btn btn-primario"
+                disabled={subiendo || !archivoNuevo}
               >
-                <X size={24} />
+                <Upload size={15} aria-hidden="true" />
+                {subiendo ? 'Subiendo…' : 'Subir evidencia'}
               </button>
             </div>
-          </div>
+          </form>
         )}
-      </div>
-    </div>
+      </DialogoModulo>
+      <DialogoModulo
+        abierto={!!ampliada}
+        alCerrar={() => setAmpliada(null)}
+        titulo="Evidencia ampliada"
+      >
+        {ampliada && (
+          <ImagenProtegida key={ampliada.id_evidencia} evidencia={ampliada} token={token} grande />
+        )}
+      </DialogoModulo>
+    </>
   );
 }

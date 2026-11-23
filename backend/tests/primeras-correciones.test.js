@@ -6,6 +6,8 @@ const { pathToFileURL } = require('node:url');
 const vm = require('node:vm');
 const { test } = require('node:test');
 const express = require('express');
+const fs = require('node:fs');
+const { randomUUID } = require('node:crypto');
 
 // Ejecutar el middleware real de app.js sin abrir Neon ni iniciar tareas.
 // Las rutas se sustituyen: estas pruebas verifican parsing, no autorización.
@@ -65,6 +67,20 @@ function cargarApp() {
 
   return modulo.exports;
 }
+
+test('las evidencias existentes no son públicas por /uploads', async (t) => {
+  const carpeta = path.join(__dirname, '../uploads/evidencias');
+  fs.mkdirSync(carpeta, { recursive: true });
+  const nombre = 'prueba-' + randomUUID() + '.png';
+  const archivo = path.join(carpeta, nombre);
+  fs.writeFileSync(archivo, Buffer.from([137,80,78,71,13,10,26,10]));
+  t.after(() => fs.unlinkSync(archivo));
+  const servidor = http.createServer(cargarApp());
+  await new Promise(resolve => servidor.listen(0, '127.0.0.1', resolve));
+  t.after(() => new Promise(resolve => servidor.close(resolve)));
+  const respuesta = await fetch('http://127.0.0.1:' + servidor.address().port + '/uploads/evidencias/' + nombre);
+  assert.equal(respuesta.status, 404);
+});
 
 test('límites JSON de importación y respuestas de error', async (t) => {
   const servidor = http.createServer(cargarApp());

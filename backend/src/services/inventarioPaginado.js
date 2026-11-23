@@ -1,7 +1,7 @@
 const CAMPOS = ['id_equipo', 'nombre', 'numero_serie', 'placa_institucional',
   'marca', 'modelo', 'ubicacion_detalle', 'id_categoria', 'categoria',
   'id_estado', 'estado', 'id_laboratorio', 'codigo_laboratorio', 'laboratorio',
-  'id_sede', 'sede'];
+  'id_sede', 'sede', 'eliminado_en', 'eliminado_por_nombre', 'motivo_eliminacion'];
 const BUSCABLES = ['nombre', 'numero_serie', 'placa_institucional', 'marca',
   'modelo', 'categoria', 'laboratorio', 'sede', 'ubicacion_detalle'];
 const FILTROS = ['sede', 'laboratorio', 'categoria', 'estado'];
@@ -27,18 +27,20 @@ const CONSULTA = `
         e.marca, e.modelo, e.ubicacion_detalle,
         e.id_categoria, c.nombre AS categoria, e.id_estado, es.nombre AS estado,
         e.id_laboratorio, l.codigo AS codigo_laboratorio, l.nombre AS laboratorio,
-        s.id_sede, s.nombre AS sede
+        s.id_sede, s.nombre AS sede,
+        e.eliminado_en, e.motivo_eliminacion, actor.nombre_completo AS eliminado_por_nombre
       FROM public.equipo e
       JOIN public.categoria c ON c.id_categoria = e.id_categoria
       JOIN public.estado es ON es.id_estado = e.id_estado
       JOIN public.laboratorio l ON l.id_laboratorio = e.id_laboratorio
       JOIN public.sede s ON s.id_sede = l.id_sede
-      WHERE $1::boolean OR EXISTS (
+      LEFT JOIN public.usuario actor ON actor.id_usuario = e.eliminado_por
+      WHERE (e.eliminado_en IS NOT NULL) = $10::boolean AND ($1::boolean OR EXISTS (
         SELECT 1 FROM public.usuario_sede us
         JOIN public.usuario_laboratorio ul ON ul.id_usuario_sede = us.id_usuario_sede
         WHERE us.id_usuario = $2 AND us.id_sede = l.id_sede
           AND ul.id_sede = l.id_sede AND ul.id_laboratorio = e.id_laboratorio
-      )
+      ))
     ) base
   ), filtrados AS MATERIALIZED (
     SELECT * FROM visibles
@@ -70,6 +72,14 @@ async function consultarPaginaInventario(db, query, usuario) {
   if (!Number.isSafeInteger(idUsuario) || idUsuario <= 0) {
     throw solicitudInvalida('Usuario sin autorización válida', 403);
   }
+  const vista = query.vista ?? 'activos';
+  if (typeof vista !== 'string' || !['activos', 'eliminados'].includes(vista)) {
+    throw solicitudInvalida('La vista del inventario no es válida');
+  }
+  const global = String(usuario.rol || '').trim().toLowerCase() === 'superadministrador';
+  if (vista === 'eliminados' && !global && usuario.puede_eliminar_equipos !== true) {
+    throw solicitudInvalida('No tiene permiso para consultar equipos eliminados', 403);
+  }
   const textos = ['busqueda', ...FILTROS].map(campo => {
     const valor = query[campo] ?? '';
     if (typeof valor !== 'string' || valor.length > 200) {
@@ -86,8 +96,7 @@ async function consultarPaginaInventario(db, query, usuario) {
   }
   const pagina = entero('pagina', 1, 100000);
   const limite = entero('limite', 5, 100);
-  const global = String(usuario.rol || '').trim().toLowerCase() === 'superadministrador';
-  const resultado = await db.query(CONSULTA, [global, idUsuario, ...textos, pagina, limite]);
+  const resultado = await db.query(CONSULTA, [global, idUsuario, ...textos, pagina, limite, vista === 'eliminados']);
   return { success: true, ...resultado.rows[0] };
 }
 

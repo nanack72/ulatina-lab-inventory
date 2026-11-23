@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ClipboardList, Monitor, Wrench } from 'lucide-react';
 import { iniciarSesion } from '../services/authService';
 
 import logoBlanco from '../assets/images/logo-ulatina-blanco.png';
@@ -53,10 +54,55 @@ export default function Login({ onLogin }) {
   return (
     <div className="login-page">
 
-      {/* PANEL INSTITUCIONAL */}
-      <section className="login-institutional">
-        <div className="login-institutional-content">
+      {/* PANEL INSTITUCIONAL: información e identidad visual. */}
+      <section className="login-institutional" aria-label="Presentación del sistema">
+        <div className="login-light-trail" aria-hidden="true">
+          <svg viewBox="0 0 1000 900" preserveAspectRatio="xMidYMid slice" focusable="false">
+            <defs>
+              <linearGradient id="login-trail-gradient" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stopColor="#b3d334" stopOpacity="0.85" />
+                <stop offset="0.55" stopColor="#adf68a" stopOpacity="0.9" />
+                <stop offset="1" stopColor="#87f4d5" stopOpacity="0.65" />
+              </linearGradient>
+              <filter id="login-trail-blur" x="-50%" y="-200%" width="200%" height="500%">
+                <feGaussianBlur stdDeviation="8" />
+              </filter>
+              <radialGradient id="login-trail-glow">
+                <stop offset="0" stopColor="#d1ff73" stopOpacity="0.8" />
+                <stop offset="1" stopColor="#d1ff73" stopOpacity="0" />
+              </radialGradient>
+            </defs>
+            <path
+              d="M -85 675 C 110 670 250 795 420 735 S 620 640 725 582 S 875 563 930 425"
+              fill="none"
+              stroke="url(#login-trail-gradient)"
+              strokeWidth="13"
+              filter="url(#login-trail-blur)"
+              opacity="0.7"
+            />
+            <path
+              d="M -85 675 C 110 670 250 795 420 735 S 620 640 725 582 S 875 563 930 425"
+              fill="none"
+              stroke="url(#login-trail-gradient)"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+            <path
+              d="M 515 684 C 680 806 915 745 940 605"
+              stroke="#8fdac2"
+              strokeOpacity="0.24"
+              strokeDasharray="2 9"
+              strokeWidth="2"
+              fill="none"
+            />
+            <circle cx="580" cy="681" r="45" fill="url(#login-trail-glow)" />
+            <circle cx="580" cy="681" r="4" fill="#eeffb2" />
+            <circle cx="923" cy="445" r="30" fill="url(#login-trail-glow)" />
+            <circle cx="923" cy="445" r="3" fill="#e9ffda" />
+          </svg>
+        </div>
 
+        <div className="login-institutional-content">
           <div className="login-brand">
             <img
               src={logoBlanco}
@@ -66,21 +112,24 @@ export default function Login({ onLogin }) {
           </div>
 
           <div className="login-presentation">
+            <span className="login-accent-line" aria-hidden="true" />
             <h1>
-              Sistema de Gestión de
-              <br />
-              Inventario Tecnológico
+              Sistema de Gestión de<br className="login-desktop-break" />
+              {' '}Inventario Tecnológico
             </h1>
-
             <h2>Facultad de Ingenierías y TICs</h2>
-
             <p>
-              Plataforma para la gestión y seguimiento de
-              equipos tecnológicos, mantenimientos e
-              incidencias de los laboratorios universitarios.
+              Plataforma para la gestión y seguimiento de equipos
+              tecnológicos, mantenimientos e incidencias de los
+              laboratorios universitarios.
             </p>
-          </div>
 
+            <ul className="login-features" aria-label="Áreas de gestión">
+              <li><Monitor aria-hidden="true" /><span>Control de equipos</span></li>
+              <li><Wrench aria-hidden="true" /><span>Gestión de mantenimientos</span></li>
+              <li><ClipboardList aria-hidden="true" /><span>Registro de incidencias</span></li>
+            </ul>
+          </div>
         </div>
       </section>
 
@@ -198,6 +247,7 @@ export default function Login({ onLogin }) {
                   onClick={() =>
                     setMostrarContrasena((anterior) => !anterior)
                   }
+                  disabled={cargando}
                   aria-label={
                     mostrarContrasena
                       ? 'Ocultar contraseña'

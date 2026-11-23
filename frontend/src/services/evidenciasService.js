@@ -60,3 +60,9 @@ export async function subirEvidenciaFotografica(datos, token) {
 
   return resultado.data;
 }
+
+export async function obtenerArchivoEvidencia(id,token,signal){
+  const respuesta=await fetch(API_URL+'/'+encodeURIComponent(id)+'/archivo',{signal,headers:{Authorization:'Bearer '+token}});
+  if(!respuesta.ok){const datos=await respuesta.json().catch(()=>null);throw Object.assign(new Error(datos?.message || 'No se pudo cargar la evidencia.'),{status:respuesta.status});}
+  return respuesta.blob();
+}

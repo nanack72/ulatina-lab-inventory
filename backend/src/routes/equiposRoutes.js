@@ -64,6 +64,32 @@ router.post('/', crearEquipo);
 // y registra los cambios mediante triggers.
 router.put('/:id', actualizarEquipo);
 
+router.post('/:id/restaurar', async (req, res) => {
+  try {
+    const { restaurarEquipo } = require('../services/restaurarEquipo');
+    const pool = require('../config/database');
+    await restaurarEquipo(pool, req.params.id, req.usuario);
+    return res.json({ success: true, message: 'Equipo restaurado. Ya está disponible en el inventario activo.' });
+  } catch (error) {
+    if (error.status) return res.status(error.status).json({ success: false, message: error.message });
+    console.error('Error al restaurar equipo:', error);
+    return res.status(500).json({ success: false, message: 'No fue posible restaurar el equipo.' });
+  }
+});
+
+router.delete('/:id', async (req, res) => {
+  try {
+    const { eliminarEquipo } = require('../services/eliminarEquipo');
+    const pool = require('../config/database');
+    await eliminarEquipo(pool, req.params.id, req.usuario, req.body?.motivo);
+    return res.json({ success: true, message: 'Equipo eliminado del inventario. Se conservaron sus datos, fotos e historial.' });
+  } catch (error) {
+    if (error.status) return res.status(error.status).json({ success: false, message: error.message });
+    console.error('Error al eliminar equipo:', error);
+    return res.status(500).json({ success: false, message: 'No fue posible eliminar el equipo.' });
+  }
+});
+
 // ==========================================
 // 4. HISTORIAL DE UBICACIÓN
 // GET /api/equipos/:id/historial-ubicacion

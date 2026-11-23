@@ -347,24 +347,90 @@ function buscarId(lista, campoId, nombre) {
     : null;
 }
 
+// "2019", "HP ProDesk 2019" o "2019 - HP ProDesk" -> año y modelo por separado.
+// Solo se toma un año plausible (1990 al año siguiente al actual).
+function separarAnioModelo(texto) {
+  const original = String(texto ?? '').trim();
+  if (!original) return { anio: '', modelo: '' };
+
+  const limite = new Date().getFullYear() + 1;
+  const encontrados = [...original.matchAll(/(?<!\d)(19[9]\d|20\d\d)(?!\d)/g)]
+    .filter((m) => Number(m[1]) <= limite);
+
+  if (encontrados.length === 0) return { anio: '', modelo: original };
+
+  // Si hay varios, el último suele ser el del equipo.
+  const elegido = encontrados[encontrados.length - 1];
+  const modelo = (
+    original.slice(0, elegido.index) +
+    ' ' +
+    original.slice(elegido.index + elegido[1].length)
+  )
+    .replace(/\s+/g, ' ')
+    .replace(/^[\s\-–,;/|:]+|[\s\-–,;/|:]+$/g, '')
+    .trim();
+
+  return { anio: elegido[1], modelo };
+}
+
+// Sede por nombre exacto o contenido ("Sede Heredia" ~ "Heredia").
+function buscarSede(catalogos, sede) {
+  const buscada = normalizar(sede);
+  if (!buscada) return null;
+
+  const sedes = new Map();
+  for (const lab of catalogos.laboratorios) {
+    sedes.set(lab.id_sede, normalizar(lab.nombre_sede));
+  }
+
+  const exactas = [...sedes].filter(([, nombre]) => nombre === buscada);
+  const parciales = [...sedes].filter(
+    ([, nombre]) => nombre.includes(buscada) || buscada.includes(nombre)
+  );
+  const lista = exactas.length ? exactas : parciales;
+
+  return lista.length === 1 ? lista[0][0] : null;
+}
+
 function buscarLaboratorio(catalogos, laboratorio, sede) {
-  if (!laboratorio) return null;
+  const idSede = buscarSede(catalogos, sede);
+  const delaSede = (sede && !idSede)
+    ? []
+    : catalogos.laboratorios.filter(
+        (elemento) => !idSede || elemento.id_sede === idSede
+      );
 
-  const coincidencias = catalogos.laboratorios.filter((elemento) => {
-    const coincideLaboratorio =
-      normalizar(elemento.codigo) === normalizar(laboratorio) ||
-      normalizar(elemento.nombre) === normalizar(laboratorio);
+  // Sin texto de laboratorio (o sin coincidencia) pero con una sede que solo
+  // tiene un laboratorio autorizado, ese es el laboratorio.
+  if (!laboratorio) {
+    return delaSede.length === 1 && idSede ? delaSede[0].id_laboratorio : null;
+  }
 
-    const coincideSede =
-      !sede ||
-      normalizar(elemento.nombre_sede) === normalizar(sede);
+  const texto = normalizar(laboratorio);
+  const exactas = delaSede.filter(
+    (elemento) =>
+      normalizar(elemento.codigo) === texto ||
+      normalizar(elemento.nombre) === texto
+  );
 
-    return coincideLaboratorio && coincideSede;
+  if (exactas.length === 1) return exactas[0].id_laboratorio;
+  if (exactas.length > 1) return null;
+
+  // Coincidencia parcial ("Lab E-MULTIFUNCIONAL" ~ código E-MULTIFUNCIONAL).
+  const parciales = delaSede.filter((elemento) => {
+    const codigo = normalizar(elemento.codigo);
+    const nombre = normalizar(elemento.nombre);
+    return (
+      (codigo && texto.includes(codigo)) ||
+      (nombre && texto.includes(nombre)) ||
+      (nombre.length > 3 && nombre.includes(texto) && texto.length > 3)
+    );
   });
 
-  return coincidencias.length === 1
-    ? coincidencias[0].id_laboratorio
-    : null;
+  if (parciales.length === 1) return parciales[0].id_laboratorio;
+
+  // La sede es válida y solo tiene un laboratorio: se preselecciona.
+  return idSede && delaSede.length === 1 ? delaSede[0].id_laboratorio : null;
 }
 
 // Validaciones que se repiten después de editar la revisión.
@@ -604,6 +670,7 @@ router.post('/leer', recibirArchivo, async (req, res) => {
     const catalogos = await cargarCatalogos(pool, req.usuario);
     const filas = [];
     const originales = new Map();
+    const sedesPorFila = new Map();
 
     for (
       let numero = encabezados.fila + 1;
@@ -651,10 +718,16 @@ router.post('/leer', recibirArchivo, async (req, res) => {
         }
       }
 
-      // Conservar el texto combinado para que la persona
-      // lo revise y separe sin perder información.
+      // El texto combinado se separa en año y modelo. Solo se completan
+      // los campos que el Excel no trae por separado; si no se encontró
+      // un año, el texto original se conserva en las características.
       if (anioModelo) {
-        adicionales.push(`Año y modelo original: ${anioModelo}`);
+        const separado = separarAnioModelo(anioModelo);
+        if (!datos.anio && separado.anio) datos.anio = separado.anio;
+        if (!datos.modelo && separado.modelo) datos.modelo = separado.modelo;
+        if (!separado.anio) {
+          adicionales.push(`Año y modelo original: ${anioModelo}`);
+        }
       }
 
       const tieneInformacion =
@@ -710,6 +783,15 @@ router.post('/leer', recibirArchivo, async (req, res) => {
             sede
           );
 
+      sedesPorFila.set(
+        numero,
+        datos.id_laboratorio
+          ? catalogos.laboratorios.find(
+              (lab) => lab.id_laboratorio === datos.id_laboratorio
+            )?.id_sede ?? null
+          : buscarSede(catalogos, sede)
+      );
+
       originales.set(numero, {
         categoria,
         estado,
@@ -740,6 +822,7 @@ router.post('/leer', recibirArchivo, async (req, res) => {
         filas: revision.map((resultado) => ({
           fila: resultado.fila,
           ...resultado.datos,
+          id_sede: sedesPorFila.get(resultado.fila) ?? null,
           originales: originales.get(resultado.fila),
           imagenes: fotos.porFila.get(resultado.fila) || [],
           errores: resultado.errores,

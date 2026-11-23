@@ -81,7 +81,7 @@ const obtenerActividadReciente = async (req, res) => {
           e.placa_institucional
         FROM public.equipo e
         INNER JOIN public.laboratorio l
-          ON e.id_laboratorio = l.id_laboratorio
+          ON e.id_laboratorio = l.id_laboratorio AND e.eliminado_en IS NULL
         ${restriccion}
       ),
       movimientos AS (
