@@ -1,6 +1,6 @@
-const { optimizarFoto } = require('../services/optimizarFoto');
 const path = require('node:path');
 const fs = require('node:fs/promises');
+const crypto = require('node:crypto');
 const pool = require('../config/database');
 const { verificarAccesoEquipo } = require('../utils/accesoEquipos');
 const {
@@ -8,6 +8,7 @@ const {
   eliminarArchivo,
   tieneFirmaDeImagen,
 } = require('../middlewares/uploadMiddleware');
+const { detectarMimePorFirma, comprimirImagen } = require('../utils/compresionImagen');
 
 const TIPOS_VALIDOS = ['Antes', 'Durante', 'Después'];
 
@@ -49,7 +50,7 @@ const buscarBitacora = async (idBitacora) => {
 const subirEvidencia = async (req, res) => {
   const rutaArchivo = req.file?.path;
 
-  // Cualquier rechazo borra la imagen para no dejar archivos huérfanos
+  // Si algún flujo escribió un archivo temporal en disco, se limpia ante rechazos
   const rechazar = (codigo, mensaje) => {
     eliminarArchivo(rutaArchivo);
     return res.status(codigo).json({ success: false, message: mensaje });
@@ -72,7 +73,13 @@ const subirEvidencia = async (req, res) => {
       return rechazar(400, "El tipo_evidencia debe ser 'Antes', 'Durante' o 'Después'");
     }
 
-    if (!tieneFirmaDeImagen(rutaArchivo)) {
+    const bufferOriginal = Buffer.isBuffer(req.file.buffer)
+      ? req.file.buffer
+      : rutaArchivo
+        ? await fs.readFile(rutaArchivo)
+        : null;
+
+    if (!bufferOriginal || !tieneFirmaDeImagen(bufferOriginal)) {
       return rechazar(400, 'El archivo no es una imagen JPG, PNG o WEBP válida');
     }
 
@@ -94,32 +101,67 @@ const subirEvidencia = async (req, res) => {
       }
     }
 
-    const fotoOptimizada = await optimizarFoto(await fs.readFile(rutaArchivo), req.file.mimetype);
-    await fs.writeFile(rutaArchivo, fotoOptimizada.buffer);
-
-    // La ruta identifica el archivo; su lectura se autoriza mediante la API de evidencias.
-    const urlFoto = `/uploads/evidencias/${req.file.filename}`;
+    // Comprimir y redimensionar la imagen antes de guardarla en PostgreSQL (RNF03)
+    const optimizada = await comprimirImagen(bufferOriginal);
+    const sufijo = crypto.randomBytes(6).toString('hex');
+    const urlFoto = `db://evidencias/${Date.now()}-${sufijo}${optimizada.extension}`;
     const descripcionLimpia =
       typeof descripcion === 'string' && descripcion.trim() ? descripcion.trim() : null;
 
     const resultado = await pool.query(
       `INSERT INTO public.evidencia_fotografica
-         (id_bitacora, tipo_evidencia, url_foto, descripcion)
-       VALUES ($1, $2, $3, $4)
+         (id_bitacora, tipo_evidencia, url_foto, descripcion, mime, datos)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING id_evidencia, id_bitacora, tipo_evidencia,
-                 url_foto, descripcion, fecha_subida`,
-      [bitacora.id_bitacora, tipo, urlFoto, descripcionLimpia]
+                 url_foto, descripcion, mime, fecha_subida`,
+      [
+        bitacora.id_bitacora,
+        tipo,
+        urlFoto,
+        descripcionLimpia,
+        optimizada.mime,
+        optimizada.buffer,
+      ]
     );
+
+    eliminarArchivo(rutaArchivo);
 
     return res.status(201).json({
       success: true,
       message: 'Evidencia registrada correctamente',
-      data: { ...resultado.rows[0], optimizacion: fotoOptimizada.optimizacion },
+      data: {
+        ...resultado.rows[0],
+        tamano_bytes: optimizada.bytesFinales,
+        optimizacion: {
+          bytes_originales: optimizada.bytesOriginales,
+          bytes_guardados: optimizada.bytesFinales,
+          ancho_guardado: optimizada.ancho,
+          alto_guardado: optimizada.alto,
+        },
+      },
     });
   } catch (error) {
     eliminarArchivo(rutaArchivo);
-    if (error.status === 400)
-      return res.status(400).json({ success: false, message: error.message });
+    if (error.status) {
+      return res.status(error.status).json({
+        success: false,
+        message: error.message,
+      });
+    }
+    if (error.code === '42703') {
+      return res.status(503).json({
+        success: false,
+        message:
+          'Falta aplicar la migración 010_evidencias_en_bd.sql para almacenar evidencias en la base de datos.',
+      });
+    }
+    if (error.code === '42501') {
+      return res.status(503).json({
+        success: false,
+        message:
+          'Faltan permisos de base de datos para guardar evidencias. Verifique la migración 010.',
+      });
+    }
     console.error('Error al subir evidencia:', error.message);
 
     return res.status(500).json({
@@ -187,39 +229,104 @@ const obtenerEvidenciasPorBitacora = async (req, res) => {
   }
 };
 
+// 3. OBTENER ARCHIVO BINARIO DE EVIDENCIA (PRIVADO CON JWT)
+// GET /api/evidencias/:id/archivo
+// Sirve desde PostgreSQL (datos bytea) y mantiene respaldo en disco
+// únicamente para registros históricos anteriores a la migración 010.
+
 const obtenerArchivoEvidencia = async (req, res) => {
   try {
-    if (!esIdValido(req.params.id))
-      return res
-        .status(400)
-        .json({ success: false, message: 'Identificador de evidencia inválido.' });
+    if (!esIdValido(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Identificador de evidencia inválido.',
+      });
+    }
+
     const resultado = await pool.query(
-      'SELECT ev.url_foto,bm.id_equipo FROM public.evidencia_fotografica ev JOIN public.bitacora_mantenimiento bm ON bm.id_bitacora=ev.id_bitacora WHERE ev.id_evidencia=$1',
+      `SELECT ev.url_foto, ev.mime, ev.datos, bm.id_equipo
+       FROM public.evidencia_fotografica ev
+       JOIN public.bitacora_mantenimiento bm
+         ON bm.id_bitacora = ev.id_bitacora
+       WHERE ev.id_evidencia = $1`,
       [Number(req.params.id)]
     );
+
     const evidencia = resultado.rows[0];
-    if (!evidencia)
-      return res.status(404).json({ success: false, message: 'Evidencia no encontrada.' });
+    if (!evidencia) {
+      return res.status(404).json({
+        success: false,
+        message: 'Evidencia no encontrada.',
+      });
+    }
+
     if (
       !tieneAccesoGlobal(req.usuario.rol) &&
       !(await verificarAccesoEquipo(evidencia.id_equipo, req.usuario))
-    )
-      return res.status(403).json({ success: false, message: 'Sin acceso a esta evidencia.' });
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: 'Sin acceso a esta evidencia.',
+      });
+    }
+
+    // 1. Evidencia almacenada en PostgreSQL (migración 010)
+    if (evidencia.datos && evidencia.datos.length > 0) {
+      const contenido = Buffer.isBuffer(evidencia.datos)
+        ? evidencia.datos
+        : Buffer.from(evidencia.datos);
+      const tipoMime =
+        evidencia.mime || detectarMimePorFirma(contenido) || 'application/octet-stream';
+
+      res.set({
+        'Content-Type': tipoMime,
+        'Cache-Control': 'private, no-store',
+        'X-Content-Type-Options': 'nosniff',
+      });
+      return res.send(contenido);
+    }
+
+    // 2. Respaldo para registros históricos previos sin datos en BD
     const nombre = String(evidencia.url_foto || '').match(
       /^\/uploads\/evidencias\/([a-zA-Z0-9_-]+\.(?:jpe?g|png|webp))$/i
     )?.[1];
-    if (!nombre) return res.status(404).json({ success: false, message: 'Archivo no disponible.' });
+
+    if (!nombre) {
+      return res.status(404).json({
+        success: false,
+        message: 'Archivo no disponible.',
+      });
+    }
+
     const ruta = path.join(DIRECTORIO_EVIDENCIAS, nombre);
     await fs.access(ruta);
-    res.set({ 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' });
+    res.set({
+      'Cache-Control': 'private, no-store',
+      'X-Content-Type-Options': 'nosniff',
+    });
     return res.sendFile(ruta);
   } catch (error) {
-    if (error.code === 'ENOENT')
-      return res.status(404).json({ success: false, message: 'Archivo no disponible.' });
+    if (error.code === 'ENOENT') {
+      return res.status(404).json({
+        success: false,
+        message: 'Archivo no disponible.',
+      });
+    }
+    if (error.code === '42703') {
+      return res.status(503).json({
+        success: false,
+        message:
+          'Falta aplicar la migración 010_evidencias_en_bd.sql para consultar evidencias en la base de datos.',
+      });
+    }
     console.error('Error al abrir evidencia:', error.message);
-    return res.status(500).json({ success: false, message: 'No se pudo abrir la evidencia.' });
+    return res.status(500).json({
+      success: false,
+      message: 'No se pudo abrir la evidencia.',
+    });
   }
 };
+
 module.exports = {
   obtenerArchivoEvidencia,
   subirEvidencia,
