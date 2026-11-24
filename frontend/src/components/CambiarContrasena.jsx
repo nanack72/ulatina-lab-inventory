@@ -1,3 +1,4 @@
+import Notificacion from './comunes/Notificacion';
 import { useState } from 'react';
 import { LockKeyhole, Eye, EyeOff, X } from 'lucide-react';
 import '../styles/cambiarContrasena.css';
@@ -140,7 +141,7 @@ export default function CambiarContrasena({
             {mostrar ? 'Ocultar contraseñas' : 'Mostrar contraseñas'}
           </button>
 
-          {error && <p className="cc-error" role="alert">{error}</p>}
+          {error && <Notificacion tipo="error" alCerrar={() => setError('')}>{error}</Notificacion>}
 
           <div className="cc-acciones">
             <button

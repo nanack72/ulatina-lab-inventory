@@ -1,3 +1,5 @@
+import { notificar } from '../../utils/notificaciones';
+import Notificacion from '../comunes/Notificacion';
 import { useEffect, useRef, useState } from 'react';
 
 export default function EliminarEquipo({ equipo, token, onCerrar, onEliminado, onSesionExpirada }) {
@@ -31,6 +33,7 @@ export default function EliminarEquipo({ equipo, token, onCerrar, onEliminado, o
       const datos = await respuesta.json().catch(() => null);
       if (respuesta.status === 401) onSesionExpirada?.();
       if (!respuesta.ok || !datos?.success) throw new Error(datos?.message || 'No fue posible eliminar el equipo.');
+      notificar({ tipo: 'exito', mensaje: datos.message });
       onEliminado();
     } catch (error) {
       setError(error.message);
@@ -52,7 +55,7 @@ export default function EliminarEquipo({ equipo, token, onCerrar, onEliminado, o
           rows={3} value={motivo} disabled={ocupado}
           placeholder="Por ejemplo: registrado por error o registro duplicado"
           onChange={(evento) => setMotivo(evento.target.value)} />
-        {error && <p role="alert">{error}</p>}
+        {error && <Notificacion tipo="error" alCerrar={() => setError('')}>{error}</Notificacion>}
         <div className="inv-eliminar-acciones">
           <button ref={cancelar} type="button" className="btn btn-secundario" disabled={ocupado} onClick={onCerrar}>Cancelar</button>
           <button type="submit" className="btn inv-confirmar-eliminar" disabled={ocupado || motivo.trim().length < 5}>

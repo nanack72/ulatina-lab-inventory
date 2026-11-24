@@ -489,3 +489,21 @@
 .cfg-pagina .inv-acciones .btn {
   white-space: nowrap;
 }
+
+.cfg-filtro-sede { display: inline-flex; min-width: 180px; }
+.cfg-filtro-sede select {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--borde, #d6e4de);
+  border-radius: var(--radio-sm, 8px);
+  background: #fff;
+  color: var(--verde, #205c49);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.cfg-filtro-sede select:focus-visible { outline: 2px solid var(--verde, #205c49); outline-offset: 2px; }
+.cfg-filtro-sede select:disabled { opacity: 0.6; cursor: default; }
+@media (max-width: 600px) { .cfg-filtro-sede { width: 100%; } }

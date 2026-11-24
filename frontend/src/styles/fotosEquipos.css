@@ -71,3 +71,24 @@
 .foto-paginas p{font-size:13px;text-align:center;}
 .foto-paginas button:disabled{opacity:.45;cursor:default;}
 @media(max-width:600px){.foto-mosaico{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.foto-controles .foto-papelera{top:54px}.foto-miniatura img{height:110px}.foto-paginas{gap:8px}}
+
+/* Misma flecha y giro que los demás desplegables. */
+.fotos-agregar > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  list-style: none;
+}
+.fotos-agregar > summary::marker { content: ''; }
+.fotos-agregar > summary::-webkit-details-marker { display: none; }
+.fotos-agregar-flecha {
+  flex-shrink: 0;
+  color: inherit;
+  rotate: 0deg;
+  transition: rotate 180ms ease;
+}
+.fotos-agregar[open] > summary .fotos-agregar-flecha { rotate: 90deg; }
+@media (prefers-reduced-motion: reduce) {
+  .fotos-agregar-flecha { transition: none; }
+}

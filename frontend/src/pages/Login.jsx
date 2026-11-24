@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import Notificacion from '../components/comunes/Notificacion';
+import { useEffect, useState } from 'react';
 import { ClipboardList, Monitor, Wrench } from 'lucide-react';
 import { iniciarSesion } from '../services/authService';
 
@@ -20,12 +21,19 @@ export default function Login({ onLogin }) {
   const [error, setError] = useState('');
   const [mostrarModalRecuperacion, setMostrarModalRecuperacion] = useState(false);
 
+  useEffect(() => {
+    const tema = document.querySelector('meta[name="theme-color"]');
+    const anterior = tema?.getAttribute('content');
+    tema?.setAttribute('content', '#075640');
+    return () => { if (tema) tema.setAttribute('content', anterior || '#f5f6f7'); };
+  }, []);
+
   const manejarLogin = async (event) => {
     event.preventDefault();
     setError('');
 
     if (!correo.trim() || !contrasena) {
-      setError('Ingresá tu correo y contraseña.');
+      setError("Ingrese su correo y contraseña.");
       return;
     }
 
@@ -43,7 +51,10 @@ export default function Login({ onLogin }) {
         localStorage.removeItem('ulatina_correo_recordado');
       }
 
+      // Cerrar el teclado antes de entrar y comenzar en el encabezado del sistema.
+      if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
       onLogin(sesion);
+      requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' }));
     } catch (err) {
       setError(err.message || 'Error al iniciar sesión.');
     } finally {
@@ -148,7 +159,7 @@ export default function Login({ onLogin }) {
           <div className="login-heading">
             <h1>Bienvenido</h1>
             <p>
-              Iniciá sesión con tu cuenta institucional
+              Inicie sesión con su cuenta institucional
               para continuar.
             </p>
           </div>
@@ -234,7 +245,7 @@ export default function Login({ onLogin }) {
                   onChange={(event) =>
                     setContrasena(event.target.value)
                   }
-                  placeholder="Ingresá tu contraseña"
+                  placeholder="Ingrese su contraseña"
                   autoComplete="current-password"
                   required
                   disabled={cargando}
@@ -307,18 +318,15 @@ export default function Login({ onLogin }) {
                 className="login-forgot"
                 onClick={() => setMostrarModalRecuperacion(true)}
               >
-                ¿Olvidaste tu contraseña?
+                ¿Olvidó su contraseña?
               </button>
             </div>
 
             {/* MENSAJE DE ERROR */}
             {error && (
-              <div
-                className="login-error"
-                role="alert"
-              >
+              <Notificacion tipo="error" alCerrar={() => setError('')}>
                 {error}
-              </div>
+              </Notificacion>
             )}
 
             {/* BOTÓN */}

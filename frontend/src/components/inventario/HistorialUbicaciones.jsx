@@ -1,14 +1,7 @@
+import Notificacion from '../comunes/Notificacion';
 import { useEffect, useMemo, useState } from 'react';
 
-import {
-  History,
-  MapPin,
-  ArrowRight,
-  ArrowLeftRight,
-  RefreshCw,
-  AlertCircle,
-  PackagePlus,
-} from 'lucide-react';
+import { History, MapPin, ArrowRight, ArrowLeftRight, RefreshCw, PackagePlus } from 'lucide-react';
 
 import {
   obtenerHistorialUbicacion,
@@ -131,7 +124,7 @@ function obtenerLaboratorio(
 
   return (
     nombresLaboratorios?.[id] ||
-    `Laboratorio ${id}`
+    'Laboratorio no disponible'
   );
 }
 
@@ -261,8 +254,8 @@ export default function HistorialUbicaciones({
 
       {/* ERROR */}
       {!cargando && error && (
-        <div className="hist-error" role="alert">
-          <AlertCircle size={18} />
+        <Notificacion tipo="error">
+          
 
           <span>{error}</span>
 
@@ -272,7 +265,7 @@ export default function HistorialUbicaciones({
           >
             Reintentar
           </button>
-        </div>
+        </Notificacion>
       )}
 
       {/* SIN MOVIMIENTOS */}
@@ -346,11 +339,7 @@ export default function HistorialUbicaciones({
 
                 const responsable =
                   texto(movimiento.nombre_usuario) ||
-                  (
-                    movimiento.id_usuario != null
-                      ? `Usuario ${movimiento.id_usuario}`
-                      : 'No disponible'
-                  );
+                  'Responsable no disponible';
 
                 return (
                   <article
@@ -440,11 +429,6 @@ export default function HistorialUbicaciones({
                         <span>
                           Responsable:{' '}
                           <strong>{responsable}</strong>
-                        </span>
-
-                        <span>
-                          Movimiento #
-                          {movimiento.id_historial_ubicacion}
                         </span>
                       </div>
                     </div>

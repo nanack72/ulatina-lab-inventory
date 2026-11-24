@@ -781,6 +781,7 @@
 @media (max-width: 600px) {
   .imp-dialogo {
     width: calc(100% - 16px);
+    max-width: none;
     max-height: calc(100dvh - 16px);
   }
 

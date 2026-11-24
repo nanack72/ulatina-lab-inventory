@@ -1,0 +1,179 @@
+/* ======================================================
+   TABLAS EN TELÉFONO
+   Debajo de 700 px cada fila se muestra como una tarjeta y
+   el nombre de la columna aparece sobre cada dato
+   (data-label lo agrega useTablasEnTarjetas).
+   ====================================================== */
+
+@media (max-width: 700px) {
+  .main-page .inv-tabla-contenedor,
+  .main-page .mod-tabla-wrap,
+  .main-page .cfg-tabla-contenedor {
+    max-height: none;
+    overflow: visible;
+    background: transparent;
+  }
+
+  .main-page .inv-tabla,
+  .main-page .mod-tabla,
+  .main-page .usu-tabla,
+  .main-page .ini-tabla {
+    display: block;
+    min-width: 0;
+    background: transparent;
+  }
+
+  .main-page .inv-tabla thead,
+  .main-page .mod-tabla thead,
+  .main-page .usu-tabla thead,
+  .main-page .ini-tabla thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .main-page .inv-tabla tbody,
+  .main-page .ini-tabla tbody {
+    display: grid;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .main-page .inv-tabla tr,
+  .main-page .ini-tabla tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: hidden;
+    border: 1px solid var(--borde-suave);
+    border-radius: var(--radio-md);
+    background: #fff;
+    box-shadow: var(--sombra-tarjeta);
+  }
+
+  .main-page .inv-tabla td,
+  .main-page .ini-tabla td {
+    display: grid;
+    gap: 3px;
+    padding: 10px 14px;
+    border-top: 1px solid #eef3f0;
+    border-left: 0;
+    background: transparent;
+    overflow-wrap: anywhere;
+  }
+
+  .main-page .inv-tabla td:first-child,
+  .main-page .ini-tabla td:first-child {
+    padding-left: 14px;
+    border-top: 0;
+    border-left: 0;
+  }
+
+  /* Datos cortos van de a dos; el título de la tarjeta, los textos largos,
+     los selectores y los botones ocupan todo el ancho. */
+  .main-page .inv-tabla td:first-child,
+  .main-page .inv-tabla td:nth-child(2),
+  .main-page .inv-tabla td:last-child,
+  .main-page .inv-tabla td:has(select, button, p, .insignia),
+  .main-page .inv-tabla td.inv-tabla-vacia,
+  .main-page .ini-tabla td:first-child {
+    grid-column: 1 / -1;
+  }
+
+  /* La cuadrícula de dos columnas deja huecos en la línea superior */
+  .main-page .inv-tabla td:nth-child(n + 3):not(:last-child):not(:has(select, button, p, .insignia)) {
+    border-top: 1px solid #eef3f0;
+  }
+
+  .main-page .inv-tabla td::before,
+  .main-page .ini-tabla td::before {
+    content: attr(data-label);
+    color: #70857b;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.035em;
+    text-transform: uppercase;
+  }
+
+  /* Celdas sin encabezado (flecha de detalle) y filas vacías */
+  .main-page .inv-tabla td:not([data-label])::before,
+  .main-page .inv-tabla td[data-label=""]::before,
+  .main-page .ini-tabla td:not([data-label])::before,
+  .main-page .ini-tabla td[data-label=""]::before {
+    content: none;
+  }
+
+  /* El nombre del equipo ya abre el detalle; la flecha sobra en tarjeta */
+  .main-page .inv-tabla td.inv-columna-detalle {
+    display: none;
+  }
+
+  .main-page .inv-tabla td.inv-tabla-vacia {
+    display: block;
+    padding: 32px 16px;
+    border: 1px dashed var(--borde);
+    border-radius: var(--radio-md);
+  }
+
+  .main-page .inv-tabla tr:has(td.inv-tabla-vacia),
+  .main-page .inv-tabla tr:has(td.cfg-vacio) {
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+  }
+
+  .main-page .mod-tabla td p {
+    max-width: none;
+  }
+
+  .main-page .mod-tabla select {
+    width: 100%;
+    max-width: none;
+    min-height: 40px;
+  }
+
+  .main-page .inv-tabla .cfg-columna-acciones,
+  .main-page .inv-tabla td.cfg-columna-acciones {
+    width: auto;
+    min-width: 0;
+    text-align: left;
+  }
+
+  .main-page .inv-tabla .cfg-acciones-fila {
+    justify-content: flex-start;
+  }
+
+  /* Botones de acción cómodos al tacto */
+  .main-page .inv-tabla td .btn,
+  .main-page .inv-tabla td .inv-boton-detalle {
+    min-height: 40px;
+  }
+
+  /* Resumen en dos columnas en vez de una tarjeta alta por dato */
+  .main-page .mod-indicadores {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .main-page .mod-indicador {
+    padding: 14px;
+  }
+}
+
+@media (max-width: 700px) {
+  /* Los nombres pueden ser largos: evitar una media fila vacía a su derecha. */
+  .main-page .mod-tabla td[data-label="Reportado por"] {
+    grid-column: 1 / -1;
+  }
+
+  /* En pantallas táctiles Safari puede conservar :hover tras tocar un selector.
+     El color debe ser uniforme, incluidas las zonas vacías de la cuadrícula. */
+  .main-page .inv-tabla tbody tr:hover td {
+    background: transparent;
+  }
+  .main-page .inv-tabla tbody tr:hover td:first-child,
+  .main-page .inv-tabla tbody tr:focus-within td:first-child {
+    border-left: 0;
+  }
+}

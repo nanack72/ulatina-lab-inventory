@@ -40,7 +40,7 @@ export function useEquipo(idEquipo, token, onSesionExpirada) {
         if (controlador.signal.aborted) return;
 
         if (err.status === 401) {
-          setError('Tu sesión expiró o ya no es válida. Iniciá sesión nuevamente.');
+          setError("Su sesión expiró o ya no es válida. Inicie sesión nuevamente.");
           alExpirarSesion.current?.();
         } else {
           setError(err.message || 'No se pudo consultar el equipo.');

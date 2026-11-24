@@ -1,3 +1,4 @@
+const { optimizarFoto } = require('./optimizarFoto');
 const { puedeRegistrarInventario, puedeEditarInventario } = require('../utils/permisosInventario');
 const fallo = (message, status = 400) => Object.assign(new Error(message), { status });
 const MAX_FOTOS_EQUIPO = 50;
@@ -44,13 +45,15 @@ async function listarFotos(pool, equipo, actor) {
     'SELECT id_foto,nombre_archivo,mime,fecha_creacion FROM public.foto_equipo WHERE id_equipo=$1 ORDER BY id_foto', [equipo])).rows);
 }
 async function subirFotoEquipo(pool, equipo, actor, archivo) {
-  const mime = validarFoto(archivo);
+  validarFoto(archivo);
   return conAcceso(pool,equipo,actor,'subir', async cliente => {
     const cantidad = await cliente.query('SELECT count(*)::int AS total FROM public.foto_equipo WHERE id_equipo=$1',[equipo]);
     if (cantidad.rows[0].total >= MAX_FOTOS_EQUIPO) throw fallo('Puede guardar hasta '+MAX_FOTOS_EQUIPO+' fotos por equipo.',409);
-    return (await cliente.query(`INSERT INTO public.foto_equipo(id_equipo,id_usuario,nombre_archivo,mime,datos)
+    const foto = await optimizarFoto(archivo.buffer);
+    const registro = (await cliente.query(`INSERT INTO public.foto_equipo(id_equipo,id_usuario,nombre_archivo,mime,datos)
       VALUES($1,$2,$3,$4,$5) RETURNING id_foto,nombre_archivo,mime,fecha_creacion`,
-      [equipo,actor,String(archivo.originalname || 'foto').slice(0,180),mime,archivo.buffer])).rows[0];
+      [equipo,actor,String(archivo.originalname || 'foto').slice(0,180),foto.mime,foto.buffer])).rows[0];
+    return { ...registro, optimizacion: foto.optimizacion };
   });
 }
 async function obtenerFoto(pool,equipo,actor,id) {

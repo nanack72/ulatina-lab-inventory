@@ -1,3 +1,4 @@
+const { presentarHistorial } = require('../services/nombresHistorial');
 const pool = require('../config/database');
 
 async function obtenerHistorialGeneral(req, res) {
@@ -49,8 +50,15 @@ async function obtenerHistorialGeneral(req, res) {
       });
     }
 
-    const limite = 5;
+    const limite = Number(req.query.limite || 5);
+    if (!Number.isSafeInteger(limite) || limite < 1 || limite > 50) {
+      return res.status(400).json({ success: false, message: 'La cantidad por página debe estar entre 1 y 50.' });
+    }
     const offset = (pagina - 1) * limite;
+    const sede = req.query.id_sede || '', laboratorio = req.query.id_laboratorio || '';
+    if ([sede, laboratorio].some(v => v !== '' && (!/^[1-9]\d*$/.test(String(v)) || !Number.isSafeInteger(Number(v))))) {
+      return res.status(400).json({ success: false, message: 'Seleccione una sede y un laboratorio válidos.' });
+    }
 
     const consulta = `
       WITH equipos_visibles AS (
@@ -61,7 +69,7 @@ async function obtenerHistorialGeneral(req, res) {
         FROM public.equipo e
         INNER JOIN public.laboratorio l
           ON l.id_laboratorio = e.id_laboratorio
-        WHERE $1::boolean OR EXISTS (
+        WHERE ($1::boolean OR EXISTS (
           SELECT 1
           FROM public.usuario_sede us
           INNER JOIN public.usuario_laboratorio ul
@@ -70,7 +78,9 @@ async function obtenerHistorialGeneral(req, res) {
             AND us.id_sede = l.id_sede
             AND ul.id_sede = l.id_sede
             AND ul.id_laboratorio = e.id_laboratorio
-        )
+        ))
+          AND ($9::int IS NULL OR l.id_sede = $9)
+          AND ($10::int IS NULL OR l.id_laboratorio = $10)
       ),
       movimientos AS (
         SELECT
@@ -80,7 +90,7 @@ async function obtenerHistorialGeneral(req, res) {
           ev.id_equipo,
           ev.nombre AS nombre_equipo,
           ev.placa_institucional,
-          COALESCE(u.nombre_completo, 'Sistema') AS usuario,
+          COALESCE(u.nombre_completo, 'Responsable no disponible') AS usuario,
           CASE
             WHEN hu.id_laboratorio_origen IS NULL
              AND hu.ubicacion_detalle_anterior IS NULL
@@ -114,7 +124,7 @@ async function obtenerHistorialGeneral(req, res) {
           ev.id_equipo,
           ev.nombre,
           ev.placa_institucional,
-          COALESCE(u.nombre_completo, 'Sistema'),
+          COALESCE(u.nombre_completo, 'Responsable no disponible'),
           CASE
             WHEN he.id_estado_anterior IS NULL THEN 'Estado inicial'
             ELSE 'Cambio de estado'
@@ -136,7 +146,7 @@ async function obtenerHistorialGeneral(req, res) {
           ev.id_equipo,
           ev.nombre,
           ev.placa_institucional,
-          COALESCE(u.nombre_completo, 'Sistema'),
+          COALESCE(u.nombre_completo, 'Responsable no disponible'),
           'Modificación: ' || hc.campo_modificado,
           COALESCE(hc.valor_anterior, 'Sin valor anterior'),
           COALESCE(hc.valor_nuevo, 'Sin valor')
@@ -169,12 +179,14 @@ async function obtenerHistorialGeneral(req, res) {
       desde || null,
       hasta || null,
       limite,
-      offset
+      offset,
+      sede ? Number(sede) : null,
+      laboratorio ? Number(laboratorio) : null
     ]);
 
     return res.status(200).json({
       success: true,
-      data: resultado.rows.map(({ total_registros, ...registro }) => registro),
+      data: await presentarHistorial(pool, resultado.rows.map(({ total_registros, ...registro }) => registro)),
       total: resultado.rows[0]?.total_registros || 0,
       pagina,
       limite

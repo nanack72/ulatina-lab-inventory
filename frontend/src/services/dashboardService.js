@@ -1,7 +1,7 @@
 // Consulta GET autenticada y devuelve resultado.data (arreglo).
 async function consultar(url, token, signal, mensajeError) {
   if (!token) {
-    throw new Error('Debés iniciar sesión para consultar esta información.');
+    throw new Error("Debe iniciar sesión para consultar esta información.");
   }
 
   let respuesta;

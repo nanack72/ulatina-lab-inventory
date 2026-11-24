@@ -18,6 +18,8 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "sharp": "^0.35.5",
+    "sharp": "^0.35.5",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^18.0.8",
@@ -28,7 +30,9 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.5.0",
     "node-cron": "^4.6.0",
-    "pg": "^8.23.1"
+    "pg": "^8.23.1",
+    "jszip": "^3.10.1",
+    "saxes": "^5.0.1"
   },
   "overrides": {
     "exceljs": {

@@ -1,3 +1,5 @@
+import { notificar } from '../../utils/notificaciones';
+import Notificacion from '../comunes/Notificacion';
 import { useEffect, useRef, useState } from 'react';
 
 import {
@@ -97,7 +99,7 @@ useEffect(() => {
   // Cada cambio de paso o de página vuelve al inicio del contenido.
   useEffect(() => { cuerpoRef.current?.scrollTo({ top: 0 }); }, [paso, pagina, soloObservaciones]);
   useEffect(() => { if (error) cuerpoRef.current?.scrollTo({ top: 0 }); }, [error]);
-  useEffect(() => { if (error) dialogoRef.current?.querySelector('[role="alert"]')?.focus(); }, [error]);
+  
   function cerrar() {
     if (operandoRef.current) return;
     onCerrar?.();
@@ -252,7 +254,11 @@ useEffect(() => {
   async function reintentarFotos() {
     if (operandoRef.current) return;
     operandoRef.current = true; setOcupado(true);
-    try { await guardarFotos(fotosPendientes); }
+    try {
+      const pendientes = await guardarFotos(fotosPendientes);
+      notificar({ id: 'importacion-equipos-resultado', tipo: pendientes.length ? 'advertencia' : 'exito',
+        mensaje: pendientes.length ? 'Todavía hay fotos pendientes. Revise el detalle para reintentarlas.' : 'Todas las fotos pendientes se guardaron correctamente.' });
+    }
     finally { operandoRef.current = false; setOcupado(false); }
   }
   async function confirmar() {
@@ -314,7 +320,7 @@ useEffect(() => {
         }
         for (const archivo of fila.adjuntos || []) cola.push({id:guardado.id_equipo, nombre:fila.nombre, archivo});
       }
-      await guardarFotos([...fotosPendientes, ...cola]);
+      const pendientesFotos = await guardarFotos([...fotosPendientes, ...cola]);
 
       const resultados = resultado.data.resultados;
 
@@ -359,6 +365,11 @@ useEffect(() => {
       });
 
       setPagina(1);
+      notificar({
+        id: 'importacion-equipos-resultado',
+        tipo: resultado.data.importados === 0 ? 'error' : resultado.data.rechazados > 0 || pendientesFotos.length > 0 ? 'advertencia' : 'exito',
+        mensaje: resultado.message + (pendientesFotos.length ? ' Hay fotos pendientes; puede reintentarlas desde el resultado.' : ''),
+      });
       setPaso('resultado');
 
       if (resultado.data.importados > 0) {
@@ -477,10 +488,10 @@ useEffect(() => {
       )}
 
       {error && (
-        <div className="imp-alerta imp-error" role="alert" tabIndex={-1}>
-          <AlertCircle size={18} aria-hidden="true" />
+        <Notificacion tipo="error">
+          
           <span>{error}</span>
-        </div>
+        </Notificacion>
       )}
 
       {paso === 'archivo' && (

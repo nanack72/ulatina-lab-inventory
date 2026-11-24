@@ -1,0 +1,38 @@
+.equipo-confirmacion-dialogo {
+  width: min(560px, calc(100% - 32px));
+  max-width: none;
+  max-height: calc(100svh - 40px);
+  margin: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 16px;
+  background: var(--blanco, #fff);
+  color: var(--texto, #263443);
+  box-shadow: 0 24px 80px rgb(0 0 0 / 22%);
+}
+.equipo-confirmacion-dialogo:modal { overscroll-behavior: contain; }
+.equipo-confirmacion-dialogo::backdrop {
+  background: rgb(13 29 24 / 55%);
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+.equipo-confirmacion-dialogo .traslado-confirmacion,
+.equipo-confirmacion-dialogo .cambio-estado-confirmacion {
+  width: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 28px;
+  border: 0;
+  box-shadow: none;
+  overflow-wrap: anywhere;
+}
+.equipo-confirmacion-dialogo h2 { font-size: 21px; line-height: 1.35; }
+.equipo-confirmacion-dialogo p { line-height: 1.6; }
+.equipo-confirmacion-dialogo button { min-height: 44px; }
+@media (max-width: 600px) {
+  .equipo-confirmacion-dialogo .traslado-confirmacion,
+  .equipo-confirmacion-dialogo .cambio-estado-confirmacion { padding: 22px 18px; }
+  .equipo-confirmacion-dialogo .cambio-estado-confirmacion-botones { flex-direction: column; }
+  .equipo-confirmacion-dialogo .registro-botones button { width: 100%; }
+}

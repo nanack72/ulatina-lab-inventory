@@ -1,3 +1,4 @@
+import Notificacion from './comunes/Notificacion';
 import { useEffect, useRef, useState } from 'react';
 import { darBajaUsuario } from '../services/usuariosService';
 
@@ -46,7 +47,7 @@ export default function BajaUsuario({ usuario, token, onCerrar, onCompletada }) 
         Si tiene actividad, se desactivará y se conservarán sus historiales.
         Una cuenta desactivada no puede iniciar sesión.
       </p>
-      {error && <p className="cfg-mensaje cfg-error" role="alert">{error}</p>}
+      {error && <Notificacion tipo="error" alCerrar={() => setError('')}>{error}</Notificacion>}
       {procesando && <p role="status">Procesando la baja. Espere a que termine.</p>}
       <form onSubmit={confirmar}>
         <label className="cfg-confirmar-check">

@@ -1,3 +1,4 @@
+const { nombreCampo } = require('../utils/nombresCampos');
 const pool = require('../config/database');
 
 const {
@@ -235,7 +236,7 @@ const obtenerEquipos = async (req, res) => {
         ) {
           return res.status(400).json({
             success: false,
-            message: `El filtro ${campo} no es válido`,
+            message: `El filtro ${nombreCampo(campo)} no es válido`,
           });
         }
 
@@ -264,7 +265,7 @@ const obtenerEquipos = async (req, res) => {
         ) {
           return res.status(400).json({
             success: false,
-            message: `El filtro ${campo} debe ser un ID válido`,
+            message: `Seleccione un valor válido para ${nombreCampo(campo)}.`,
           });
         }
 
@@ -475,7 +476,7 @@ const crearEquipo = async (req, res) => {
   }
 
   if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
-    return res.status(400).json({ success: false, message: 'Debe enviar un objeto JSON válido' });
+    return res.status(400).json({ success: false, message: 'Complete los datos del equipo.' });
   }
 
   const {
@@ -533,7 +534,7 @@ const crearEquipo = async (req, res) => {
     ) {
       return res.status(400).json({
         success: false,
-        message: `El campo ${campo} debe ser texto`,
+        message: `El campo ${nombreCampo(campo)} debe ser texto`,
       });
     }
   }
@@ -742,7 +743,7 @@ const actualizarEquipo = async (req, res) => {
   ) {
     return res.status(400).json({
       success: false,
-      message: 'Debe enviar un objeto JSON válido',
+      message: 'Complete los datos del equipo.',
     });
   }
 
@@ -791,7 +792,7 @@ const actualizarEquipo = async (req, res) => {
     ) {
       return res.status(400).json({
         success: false,
-        message: `El campo ${campo} debe ser un ID válido`,
+        message: `Seleccione un valor válido para ${nombreCampo(campo)}.`,
       });
     }
   }
@@ -819,7 +820,7 @@ const actualizarEquipo = async (req, res) => {
     ) {
       return res.status(400).json({
         success: false,
-        message: `El campo ${campo} debe ser texto o null`,
+        message: `El campo ${nombreCampo(campo)} debe contener texto o quedar vacío`,
       });
     }
   }

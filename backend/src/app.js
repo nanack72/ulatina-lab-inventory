@@ -83,6 +83,7 @@ app.use('/api/mantenimientos', mantenimientosRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/reportes', reportesRoutes);
 app.use('/api/evidencias', evidenciasRoutes);
+app.use('/api/filtros-ubicacion', require('./routes/filtrosUbicacionRoutes'));
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/historial-general', historialGeneralRoutes);
 app.use('/api/admin/configuracion', configuracionRoutes);
@@ -136,7 +137,7 @@ app.use((error, req, res, next) => {
     if (error.type === 'entity.parse.failed') {
         return res.status(400).json({
             success: false,
-            message: 'El cuerpo de la solicitud no contiene JSON válido.'
+            message: 'No se pudieron interpretar los datos enviados. Revise el formulario e inténtelo nuevamente.'
         });
     }
 

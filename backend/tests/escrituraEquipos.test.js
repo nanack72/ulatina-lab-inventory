@@ -58,7 +58,7 @@ test('escrituras y permisos de equipos contra PostgreSQL temporal', async (t) =>
       numero_serie text UNIQUE, placa_institucional text UNIQUE, marca text, modelo text,
       anio int, caracteristicas text, comentarios text, ubicacion_detalle text,
       id_categoria int REFERENCES categoria, id_estado int REFERENCES estado,
-      id_laboratorio int REFERENCES laboratorio);
+      id_laboratorio int REFERENCES laboratorio, eliminado_en timestamptz);
     CREATE TABLE prueba_auditoria (operacion text, usuario text);
     CREATE FUNCTION prueba_contexto() RETURNS trigger LANGUAGE plpgsql AS $$
       BEGIN INSERT INTO prueba_auditoria VALUES (TG_OP, current_setting('app.usuario_id', true));

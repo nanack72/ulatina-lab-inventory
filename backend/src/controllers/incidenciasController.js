@@ -30,20 +30,22 @@ const esUsuarioAdmin = (rol) =>
 const crearIncidencia = async (req, res) => {
   const b=req.body;
   if(!b || typeof b!=='object' || Array.isArray(b) || typeof b.titulo!=='string' || typeof b.descripcion_falla!=='string' || b.descripcion_falla.length>10000 || (b.prioridad!==undefined && typeof b.prioridad!=='string'))return res.status(400).json({success:false,message:'Envíe título, descripción y prioridad con tipos válidos.'});
+  let cliente;
+  let confirmado = false;
   try {
     const { id_equipo, titulo, descripcion_falla, prioridad } = req.body;
 
     if (!id_equipo || !titulo?.trim() || !descripcion_falla?.trim()) {
       return res.status(400).json({
         success: false,
-        message: 'Los campos id_equipo, titulo y descripcion_falla son obligatorios'
+        message: "Seleccione un equipo e indique el título y la descripción de la falla."
       });
     }
 
     if (!esIdValido(id_equipo)) {
       return res.status(400).json({
         success: false,
-        message: 'El identificador del equipo (id_equipo) debe ser un entero positivo válido'
+        message: "Seleccione un equipo válido."
       });
     }
 
@@ -69,11 +71,14 @@ const crearIncidencia = async (req, res) => {
     const equipoId = Number(id_equipo);
 
     // Verificar que el equipo exista y no esté dado de baja
-    const equipoRes = await pool.query(
+    cliente = await pool.connect();
+    await cliente.query('BEGIN');
+    const equipoRes = await cliente.query(
       `SELECT e.id_equipo, e.id_laboratorio, e.nombre, es.nombre AS estado_equipo
        FROM public.equipo e
        LEFT JOIN public.estado es ON e.id_estado = es.id_estado
-       WHERE e.id_equipo = $1`,
+       WHERE e.id_equipo = $1 AND e.eliminado_en IS NULL
+       FOR SHARE OF e`,
       [equipoId]
     );
 
@@ -102,12 +107,12 @@ const crearIncidencia = async (req, res) => {
       if (!acceso) {
         return res.status(403).json({
           success: false,
-          message: 'Acceso denegado: no estás asignado al laboratorio de este equipo'
+          message: "Acceso denegado: no está asignado al laboratorio de este equipo"
         });
       }
     }
 
-    const resultado = await pool.query(
+    const resultado = await cliente.query(
       `INSERT INTO public.incidencia_reporte
          (id_equipo, id_usuario_reporta, titulo, descripcion_falla, prioridad, estado_incidencia, fecha_reporte)
        VALUES ($1, $2, $3, $4, $5, 'Abierta', CURRENT_TIMESTAMP)
@@ -122,6 +127,8 @@ const crearIncidencia = async (req, res) => {
       ]
     );
 
+    await cliente.query('COMMIT');
+    confirmado = true;
     return res.status(201).json({
       success: true,
       message: 'Incidencia técnica registrada correctamente',
@@ -133,6 +140,11 @@ const crearIncidencia = async (req, res) => {
       success: false,
       message: 'Error interno al registrar la incidencia'
     });
+  } finally {
+    if (cliente) {
+      if (!confirmado) await cliente.query('ROLLBACK').catch(() => {});
+      cliente.release();
+    }
   }
 };
 
@@ -165,11 +177,17 @@ const obtenerIncidencias = async (req, res) => {
       `);
     }
 
+    if (req.query.id_sede !== undefined && req.query.id_sede !== '') {
+      if (!esIdValido(req.query.id_sede)) return res.status(400).json({ success: false, message: 'Seleccione una sede válida.' });
+      valores.push(Number(req.query.id_sede));
+      condiciones.push(`l.id_sede = $${valores.length}`);
+    }
+
     if (id_laboratorio !== undefined && id_laboratorio !== '') {
       if (!esIdValido(id_laboratorio)) {
         return res.status(400).json({
           success: false,
-          message: 'El filtro id_laboratorio debe ser un entero positivo válido'
+          message: "Seleccione un laboratorio válido."
         });
       }
       valores.push(Number(id_laboratorio));
@@ -262,7 +280,7 @@ const actualizarEstadoIncidencia = async (req, res) => {
     if (!esIdValido(id) || !nuevo_estado) {
       return res.status(400).json({
         success: false,
-        message: 'El id válido de la incidencia y el nuevo_estado son requeridos'
+        message: 'Seleccione una incidencia y el nuevo estado.'
       });
     }
 
@@ -303,7 +321,7 @@ const actualizarEstadoIncidencia = async (req, res) => {
       if (!tieneAcceso) {
         return res.status(403).json({
           success: false,
-          message: 'Acceso denegado: no tienes permisos sobre el laboratorio de este equipo'
+          message: "Acceso denegado: no tiene permisos sobre el laboratorio de este equipo"
         });
       }
     }

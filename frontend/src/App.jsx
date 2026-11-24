@@ -1,3 +1,4 @@
+import Notificacion from './components/comunes/Notificacion';
 import { useRef, useState } from 'react';
 
 import Login from './pages/Login';
@@ -66,17 +67,9 @@ export default function App() {
   return (
     <>
       {errorLogout && (
-        <div
-          role="alert"
-          style={{
-            padding: '12px 16px',
-            backgroundColor: '#fee2e2',
-            color: '#991b1b',
-            textAlign: 'center',
-          }}
-        >
+        <Notificacion tipo="error">
           {errorLogout}
-        </div>
+        </Notificacion>
       )}
 
       <MainLayout

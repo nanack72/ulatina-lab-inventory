@@ -1,13 +1,7 @@
+import { notificar } from '../utils/notificaciones';
+import Notificacion from '../components/comunes/Notificacion';
 import { useEffect, useRef, useState } from 'react';
-import {
-  ArrowLeft,
-  Save,
-  Monitor,
-  Cpu,
-  FileText,
-  AlertCircle,
-  CheckCircle2,
-} from 'lucide-react';
+import { ArrowLeft, Save, Monitor, Cpu, FileText } from 'lucide-react';
 
 import {
   obtenerEquipoPorId,
@@ -48,13 +42,11 @@ export default function EditarEquipo({
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
-  const [exito, setExito] = useState('');
+  
 
   const enviandoRef = useRef(false);
-  const errorRef = useRef(null);
-  useEffect(() => {
-    if (error) errorRef.current?.focus();
-  }, [error]);
+  
+  
 
   // Cargar la información real del equipo.
   useEffect(() => {
@@ -63,7 +55,7 @@ export default function EditarEquipo({
     async function cargarEquipo() {
       setCargando(true);
       setError('');
-      setExito('');
+      
 
       try {
         const equipo = await obtenerEquipoPorId(
@@ -117,7 +109,7 @@ export default function EditarEquipo({
     }));
 
     setError('');
-    setExito('');
+    
   }
 
   async function guardarCambios(evento) {
@@ -132,7 +124,7 @@ export default function EditarEquipo({
     }
 
     if (!formulario.nombre.trim()) {
-      setError('Debés ingresar el nombre del equipo.');
+      setError("Debe ingresar el nombre del equipo.");
       return;
     }
 
@@ -149,7 +141,7 @@ export default function EditarEquipo({
         anio > new Date().getFullYear() + 1
       )
     ) {
-      setError('Ingresá un año válido.');
+      setError("Ingrese un año válido.");
       return;
     }
 
@@ -162,12 +154,12 @@ export default function EditarEquipo({
     enviandoRef.current = true;
     setGuardando(true);
     setError('');
-    setExito('');
+    
 
     try {
       await actualizarEquipo(idEquipo, datosEquipo, token);
 
-      setExito('Equipo actualizado correctamente.');
+      notificar({ tipo: 'exito', mensaje: 'Equipo actualizado correctamente.' });
 
       if (typeof onActualizado === 'function') {
         onActualizado();
@@ -203,24 +195,13 @@ export default function EditarEquipo({
       </div>
 
       {error && (
-        <div
-          className="registro-alerta registro-alerta-error"
-          role="alert" ref={errorRef} tabIndex={-1}
-        >
-          <AlertCircle size={19} />
+        <Notificacion tipo="error">
+          
           <span>{error}</span>
-        </div>
+        </Notificacion>
       )}
 
-      {exito && (
-        <div
-          className="registro-alerta registro-alerta-exito"
-          role="status"
-        >
-          <CheckCircle2 size={19} />
-          <span>{exito}</span>
-        </div>
-      )}
+      
 
       {cargando ? (
         <div className="registro-cargando" role="status">

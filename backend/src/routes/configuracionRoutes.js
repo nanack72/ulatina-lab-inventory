@@ -1,3 +1,4 @@
+const { nombreCampo } = require('../utils/nombresCampos');
 const express = require('express');
 const pool = require('../config/database');
 const { verificarToken } = require('../middlewares/authMiddleware');
@@ -123,7 +124,7 @@ function validarDatos(configuracion, body) {
 
     if (valor === null || valor === undefined) {
       if (reglas.obligatorio) {
-        return { error: `El campo ${campo} es obligatorio.` };
+        return { error: `El campo ${nombreCampo(campo)} es obligatorio.` };
       }
 
       datos[campo] = null;
@@ -131,18 +132,18 @@ function validarDatos(configuracion, body) {
     }
 
     if (typeof valor !== 'string') {
-      return { error: `El campo ${campo} debe ser texto.` };
+      return { error: `El campo ${nombreCampo(campo)} debe ser texto.` };
     }
 
     const texto = valor.trim();
 
     if (reglas.obligatorio && !texto) {
-      return { error: `El campo ${campo} es obligatorio.` };
+      return { error: `El campo ${nombreCampo(campo)} es obligatorio.` };
     }
 
     if (Array.from(texto).length > reglas.max) {
       return {
-        error: `El campo ${campo} admite hasta ${reglas.max} caracteres.`,
+        error: `El campo ${nombreCampo(campo)} admite hasta ${reglas.max} caracteres.`,
       };
     }
 

@@ -17,7 +17,7 @@ const verificarToken = async (req, res, next) => {
     if (typeof authHeader !== 'string' || !authHeader.trim()) {
         return res.status(401).json({
             success: false,
-            message: 'Acceso denegado: falta el token de autenticación'
+            message: "Debe iniciar sesión para continuar."
         });
     }
 
@@ -37,7 +37,7 @@ const verificarToken = async (req, res, next) => {
     } catch {
         return res.status(401).json({
             success: false,
-            message: 'Token inválido o expirado. Inicie sesión nuevamente.'
+            message: "Su sesión venció o ya no es válida. Inicie sesión nuevamente."
         });
     }
 

@@ -1,3 +1,5 @@
+import FiltroSelect from '../components/inventario/FiltroSelect';
+import FiltrosUbicacion from '../components/comunes/FiltrosUbicacion';
 import { useCallback, useState } from 'react';
 import { Plus } from 'lucide-react';
 import {
@@ -23,6 +25,8 @@ export default function Mantenimiento({ token }) {
   const [busqueda, setBusqueda] = useState(''),
     [tipo, setTipo] = useState(''),
     [estado, setEstado] = useState('');
+  const [limite, setLimite] = useState(10);
+  const [ubicacion, setUbicacion] = useState({ sede: '', laboratorio: '' });
   const [pagina, setPagina] = useState(1),
     [registro, setRegistro] = useState(false),
     [seleccionado, setSeleccionado] = useState(null);
@@ -35,7 +39,9 @@ export default function Mantenimiento({ token }) {
       consultarMantenimientos(
         {
           pagina,
-          limite: 10,
+          limite,
+          id_sede: ubicacion.sede,
+          id_laboratorio: ubicacion.laboratorio,
           busqueda: busquedaDiferida,
           tipo_mantenimiento: tipo,
           estado_mantenimiento: estado,
@@ -43,7 +49,7 @@ export default function Mantenimiento({ token }) {
         token,
         signal
       ),
-    [pagina, busquedaDiferida, tipo, estado, token]
+    [ubicacion.sede, ubicacion.laboratorio, pagina, limite, busquedaDiferida, tipo, estado, token]
   );
   const { datos, cargando, error, recargar } = useListadoModulo(cargar);
   const cargarEquipos = useCallback(
@@ -98,29 +104,12 @@ export default function Mantenimiento({ token }) {
             valor={busqueda}
             onChange={(valor) => filtro(setBusqueda, valor)}
           />
-          <div className="mod-selectores">
-            <label>
-              Tipo
-              <select name="tipo" value={tipo} onChange={(e) => filtro(setTipo, e.target.value)}>
-                <option value="">Todos los tipos</option>
-                {TIPOS_MANTENIMIENTO.map((t) => (
-                  <option key={t}>{t}</option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Estado
-              <select
-                name="estado"
-                value={estado}
-                onChange={(e) => filtro(setEstado, e.target.value)}
-              >
-                <option value="">Todos los estados</option>
-                {ESTADOS_MANTENIMIENTO.map((t) => (
-                  <option key={t}>{t}</option>
-                ))}
-              </select>
-            </label>
+          <div className="inv-selectores">
+            <FiltrosUbicacion compacto token={token} valor={ubicacion} onChange={valor => { setUbicacion(valor); setPagina(1); }} />
+            <FiltroSelect etiqueta="Tipo" valor={tipo} opciones={TIPOS_MANTENIMIENTO}
+              onChange={valor => filtro(setTipo, valor)} />
+            <FiltroSelect etiqueta="Estado" valor={estado} opciones={ESTADOS_MANTENIMIENTO}
+              onChange={valor => filtro(setEstado, valor)} />
           </div>
         </div>
         <TablaMantenimientos
@@ -133,6 +122,8 @@ export default function Mantenimiento({ token }) {
         <PaginacionModulo
           pagina={datos?.pagina || pagina}
           total={datos?.total || 0}
+          limite={limite} singular="mantenimiento" plural="mantenimientos"
+          alCambiarLimite={(valor) => { setLimite(valor); setPagina(1); }}
           alCambiar={setPagina}
           cargando={cargando}
         />

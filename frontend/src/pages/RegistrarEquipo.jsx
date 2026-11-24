@@ -1,14 +1,7 @@
+import { notificar } from '../utils/notificaciones';
+import Notificacion from '../components/comunes/Notificacion';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  ArrowLeft,
-  Save,
-  Monitor,
-  Cpu,
-  MapPin,
-  FileText,
-  AlertCircle,
-  CheckCircle2,
-} from 'lucide-react';
+import { ArrowLeft, Save, Monitor, Cpu, MapPin, FileText } from 'lucide-react';
 
 import {
   obtenerCategorias,
@@ -68,7 +61,7 @@ export default function RegistrarEquipo({
   const [guardando, setGuardando] = useState(false);
 
   const [error, setError] = useState('');
-  const [exito, setExito] = useState('');
+  
 
   const enviandoRef = useRef(false);
 
@@ -153,23 +146,23 @@ export default function RegistrarEquipo({
 
   function validarFormulario() {
     if (!formulario.nombre.trim()) {
-      return 'Debés ingresar el nombre del equipo.';
+      return "Debe ingresar el nombre del equipo.";
     }
 
     if (!formulario.id_categoria) {
-      return 'Debés seleccionar una categoría.';
+      return "Debe seleccionar una categoría.";
     }
 
     if (!formulario.id_estado) {
-      return 'Debés seleccionar el estado del equipo.';
+      return "Debe seleccionar el estado del equipo.";
     }
 
     if (!formulario.id_sede) {
-      return 'Debés seleccionar una sede.';
+      return "Debe seleccionar una sede.";
     }
 
     if (!formulario.id_laboratorio) {
-      return 'Debés seleccionar un laboratorio.';
+      return "Debe seleccionar un laboratorio.";
     }
 
     const autorizado = laboratoriosFiltrados.some(
@@ -179,7 +172,7 @@ export default function RegistrarEquipo({
     );
 
     if (!autorizado) {
-      return 'El laboratorio seleccionado no está disponible para tu usuario.';
+      return 'El laboratorio seleccionado no está disponible para su cuenta.';
     }
 
     if (
@@ -190,7 +183,7 @@ export default function RegistrarEquipo({
         Number(formulario.anio) > new Date().getFullYear() + 1
       )
     ) {
-      return 'Ingresá un año válido.';
+      return "Ingrese un año válido.";
     }
 
     return '';
@@ -211,7 +204,7 @@ export default function RegistrarEquipo({
     enviandoRef.current = true;
     setGuardando(true);
     setError('');
-    setExito('');
+    
 
     const datosEquipo = {
       nombre: formulario.nombre.trim(),
@@ -238,7 +231,7 @@ export default function RegistrarEquipo({
     try {
       await registrarEquipo(datosEquipo, token);
 
-      setExito('Equipo registrado correctamente.');
+      notificar({ tipo: 'exito', mensaje: 'Equipo registrado correctamente.' });
 
       if (typeof onRegistrado === 'function') {
         onRegistrado();
@@ -279,19 +272,14 @@ export default function RegistrarEquipo({
 
       {/* ERRORES */}
       {error && (
-        <div className="registro-alerta registro-alerta-error" role="alert">
-          <AlertCircle size={19} />
+        <Notificacion tipo="error">
+          
           <span>{error}</span>
-        </div>
+        </Notificacion>
       )}
 
       {/* CONFIRMACIÓN */}
-      {exito && (
-        <div className="registro-alerta registro-alerta-exito" role="status">
-          <CheckCircle2 size={19} />
-          <span>{exito}</span>
-        </div>
-      )}
+      
 
       {cargandoCatalogos ? (
         <div className="registro-cargando" role="status">

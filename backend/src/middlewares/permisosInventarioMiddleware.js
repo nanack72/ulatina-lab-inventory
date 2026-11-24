@@ -53,7 +53,7 @@ const validarLaboratorioInventario = async (req, res, next) => {
     if (resultado.rowCount === 0) {
       return res.status(403).json({
         success: false,
-        message: 'No tienes autorización para registrar equipos en este laboratorio'
+        message: "No tiene autorización para registrar equipos en este laboratorio"
       });
     }
 

@@ -3,7 +3,7 @@ const API_URL = '/api';
 async function consultarCatalogo(ruta, token, signal) {
   if (!token) {
     throw new Error(
-      'Debés iniciar sesión para consultar los catálogos.'
+      "Debe iniciar sesión para consultar los catálogos."
     );
   }
 

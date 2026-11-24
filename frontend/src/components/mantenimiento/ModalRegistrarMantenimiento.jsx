@@ -1,3 +1,4 @@
+import FiltrosUbicacion from '../comunes/FiltrosUbicacion';
 import { useEffect, useRef, useState } from 'react';
 import { DialogoModulo, Aviso } from '../comunes/Modulo';
 import { registrarMantenimiento } from '../../services/mantenimientosService';
@@ -12,6 +13,10 @@ export default function ModalRegistrarMantenimiento({
   cargandoEquipos,
   token,
 }) {
+  const [ubicacion, setUbicacion] = useState({ sede: '', laboratorio: '' });
+  const equiposFiltrados = equiposDisponibles.filter(eq =>
+    (!ubicacion.sede || String(eq.id_sede) === ubicacion.sede) &&
+    (!ubicacion.laboratorio || String(eq.id_laboratorio) === ubicacion.laboratorio));
   const [equipo, setEquipo] = useState(''),
     [tipo, setTipo] = useState('Preventivo'),
     [motivo, setMotivo] = useState(''),
@@ -111,6 +116,10 @@ export default function ModalRegistrarMantenimiento({
         )}
         <fieldset disabled={guardando || !!idGuardado} className="mod-formulario mod-fieldset">
           <legend className="mod-sr">Datos de mantenimiento</legend>
+          <div className="mod-campos">
+            <FiltrosUbicacion token={token} valor={ubicacion} disabled={guardando || !!idGuardado}
+              onChange={valor => { setUbicacion(valor); setEquipo(''); }} />
+          </div>
           <label className="mod-campo" htmlFor="mant-equipo">
             Equipo *
             <select
@@ -124,7 +133,7 @@ export default function ModalRegistrarMantenimiento({
               <option value="">
                 {cargandoEquipos ? 'Cargando equipos…' : 'Seleccione un equipo'}
               </option>
-              {equiposDisponibles.map((eq) => (
+              {equiposFiltrados.map((eq) => (
                 <option key={eq.id_equipo} value={eq.id_equipo}>
                   {eq.placa_institucional || eq.numero_serie || 'Sin placa'} · {eq.nombre}
                 </option>
@@ -206,7 +215,7 @@ export default function ModalRegistrarMantenimiento({
           </label>
         </fieldset>
         <label className="mod-campo" htmlFor="mant-foto">
-          Evidencia opcional · JPG, PNG o WEBP, hasta 5 MB
+          Foto inicial (puede adjuntarla después) · JPG, PNG o WEBP, hasta 5 MB
           <input
             id="mant-foto"
             name="foto"
@@ -259,7 +268,7 @@ export default function ModalRegistrarMantenimiento({
                 : alCerrar()
             }
           >
-            {idGuardado ? 'Finalizar sin evidencia' : 'Cancelar'}
+            {idGuardado ? 'Guardar y continuar después' : 'Cancelar'}
           </button>
           <button
             type="submit"

@@ -4,8 +4,10 @@ import { generarPaginas } from '../../utils/inventario';
 
 const OPCIONES_LIMITE = [10, 20, 50];
 
-export default function Paginacion({ pagina, total, limite, onCambiar, onCambiarLimite }) {
+export default function Paginacion({ pagina, total, limite, onCambiar, onCambiarLimite, cargando = false, singular = 'equipo', plural = 'equipos' }) {
   const totalPaginas = Math.max(1, Math.ceil(total / limite));
+  pagina = Math.max(1, Math.min(pagina, totalPaginas));
+  const nombre = total === 1 ? singular : plural;
   const inicio = (pagina - 1) * limite;
   const fin = Math.min(inicio + limite, total);
   const [entrada, setEntrada] = useState({ pagina, limite, valor: String(pagina) });
@@ -20,15 +22,15 @@ export default function Paginacion({ pagina, total, limite, onCambiar, onCambiar
 
   function irAPagina(evento) {
     evento.preventDefault();
-    if (destinoValido) onCambiar(paginaDestino);
+    if (!cargando && destinoValido) onCambiar(paginaDestino);
   }
 
   return (
     <div className="inv-paginacion">
       <p className="inv-resumen-paginacion">
         {total === 0
-          ? 'Mostrando 0 equipos'
-          : <>Mostrando <strong>{inicio + 1}–{fin}</strong> de <strong>{total.toLocaleString('es-CR')}</strong> equipos</>}
+          ? `Mostrando 0 ${plural}`
+          : <>Mostrando <strong>{inicio + 1}–{fin}</strong> de <strong>{total.toLocaleString('es-CR')}</strong> {nombre}</>}
       </p>
 
       <div className="inv-paginacion-acciones">
@@ -39,7 +41,8 @@ export default function Paginacion({ pagina, total, limite, onCambiar, onCambiar
               id={idLimite}
               value={limite}
               onChange={(evento) => onCambiarLimite(Number(evento.target.value))}
-              aria-label="Equipos por página"
+              aria-label={`${plural} por página`}
+              disabled={cargando}
             >
               {OPCIONES_LIMITE.map((numero) => (
                 <option value={numero} key={numero}>{numero}</option>
@@ -50,8 +53,8 @@ export default function Paginacion({ pagina, total, limite, onCambiar, onCambiar
           <span>por página</span>
         </div>
 
-        <nav className="inv-controles-paginacion" aria-label="Paginación del inventario">
-          <button type="button" aria-label="Página anterior" disabled={pagina <= 1}
+        <nav className="inv-controles-paginacion" aria-label={`Paginación de ${plural}`}>
+          <button type="button" aria-label="Página anterior" disabled={cargando || pagina <= 1}
             onClick={() => onCambiar(pagina - 1)}>
             <ChevronLeft size={15} aria-hidden="true" />
           </button>
@@ -63,12 +66,13 @@ export default function Paginacion({ pagina, total, limite, onCambiar, onCambiar
               <button type="button" key={numero}
                 className={pagina === numero ? 'inv-pagina-activa' : ''}
                 aria-label={`Ir a la página ${numero}`}
+                disabled={cargando}
                 aria-current={pagina === numero ? 'page' : undefined}
                 onClick={() => onCambiar(numero)}>{numero}</button>
             )
           )}
 
-          <button type="button" aria-label="Página siguiente" disabled={pagina >= totalPaginas}
+          <button type="button" aria-label="Página siguiente" disabled={cargando || pagina >= totalPaginas}
             onClick={() => onCambiar(pagina + 1)}>
             <ChevronRight size={15} aria-hidden="true" />
           </button>
@@ -77,11 +81,11 @@ export default function Paginacion({ pagina, total, limite, onCambiar, onCambiar
         <form className="inv-ir-pagina" onSubmit={irAPagina}>
           <label htmlFor={idDestino}>Ir a página</label>
           <input id={idDestino} type="number" inputMode="numeric" min="1" max={totalPaginas}
-            step="1" value={destino} onChange={(evento) => setEntrada({ pagina, limite, valor: evento.target.value })}
+            disabled={cargando} step="1" value={destino} onChange={(evento) => setEntrada({ pagina, limite, valor: evento.target.value })}
             aria-invalid={destino !== '' && !destinoValido}
             aria-label={`Número de página, entre 1 y ${totalPaginas}`}/>
           <span className="inv-pagina-de">de {totalPaginas}</span>
-          <button className="inv-ir-boton" type="submit" disabled={!destinoValido || paginaDestino === pagina}>Ir</button>
+          <button className="inv-ir-boton" type="submit" disabled={cargando || !destinoValido || paginaDestino === pagina}>Ir</button>
         </form>
       </div>
     </div>

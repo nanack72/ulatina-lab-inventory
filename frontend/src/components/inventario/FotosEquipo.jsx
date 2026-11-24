@@ -1,3 +1,5 @@
+import { ChevronDown } from 'lucide-react';
+import Notificacion from '../comunes/Notificacion';
 import { useEffect, useRef, useState } from 'react';
 import { listarFotos, agregarFoto, borrarFoto } from '../../services/fotosEquipoService';
 import AdjuntarFotos from './AdjuntarFotos';
@@ -23,7 +25,7 @@ export default function FotosEquipo({ idEquipo,token,puedeAgregar=false,puedeEli
     operando.current=true;setOcupado(true);setError('');setMensaje('');
     const pendientes=[];let guardadas=0;
     for(const archivo of archivos){try{await agregarFoto(idEquipo,archivo,token);guardadas++;}catch(error){pendientes.push(archivo);setError(error.message);}}
-    setArchivos(pendientes);setRecarga(v=>v+1);setMensaje(`${guardadas} fotos guardadas.`);
+    setArchivos(pendientes);setRecarga(v=>v+1);setMensaje(guardadas > 0 ? `${guardadas} fotos guardadas.` : '');
     operando.current=false;setOcupado(false);
   }
   async function eliminar() {
@@ -35,16 +37,16 @@ export default function FotosEquipo({ idEquipo,token,puedeAgregar=false,puedeEli
   }
   return <section className="detalle-tarjeta fotos-panel">
     <h2>Fotos del equipo</h2><p>Puede agregarlas después del registro y elegir cuáles conservar.</p>
-    {error&&<p role="alert" className="fotos-error">{error}</p>}{mensaje&&<p role="status">{mensaje}</p>}
+    {error&&!eliminando&&<Notificacion tipo="error">{error}</Notificacion>}{mensaje&&<Notificacion tipo="exito">{mensaje}</Notificacion>}
     <CarruselFotos fotos={fotos} idEquipo={idEquipo} token={token} puedeEliminar={puedeEliminar} ocupado={ocupado}
       onEliminar={foto=>{setError('');setConfirmado(false);setEliminando(foto);}} />
-    {puedeAgregar&&<details className="fotos-agregar"><summary>Agregar fotos al equipo</summary><AdjuntarFotos archivos={archivos} onChange={setArchivos} disabled={ocupado}/>
+    {puedeAgregar&&<details className="fotos-agregar"><summary><span>Agregar fotos al equipo</span><ChevronDown size={16} aria-hidden="true" className="fotos-agregar-flecha" /></summary><AdjuntarFotos archivos={archivos} onChange={setArchivos} disabled={ocupado}/>
       <button type="button" className="btn btn-primario" disabled={ocupado||!archivos.length} onClick={subir}>
         {ocupado?'Guardando…':`Guardar fotos (${archivos.length})`}</button></details>}
     <dialog ref={dialogo} className="cfg-dialogo" aria-labelledby="foto-eliminar-titulo" onClose={()=>setEliminando(null)}
       onCancel={e=>{if(operando.current)e.preventDefault();}}>
       <h2 id="foto-eliminar-titulo">Eliminar foto</h2><p>{eliminando?.nombre_archivo}</p>
-      {error && <p role="alert">{error}</p>}
+      {error && <Notificacion tipo="error">{error}</Notificacion>}
       <label className="cfg-confirmar-check"><input type="checkbox" checked={confirmado} disabled={ocupado}
         onChange={e=>setConfirmado(e.target.checked)}/>Entiendo que esta foto se eliminará permanentemente.</label>
       <div className="cfg-modal-acciones"><button autoFocus type="button" className="btn btn-secundario" disabled={ocupado} onClick={()=>setEliminando(null)}>Cancelar</button>

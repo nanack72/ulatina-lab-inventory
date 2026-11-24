@@ -10,6 +10,7 @@ export async function consultarMantenimientos(params = {}, token, signal) {
   if (params.limite) query.set('limite', params.limite);
   if (params.tipo_mantenimiento) query.set('tipo_mantenimiento', params.tipo_mantenimiento);
   if (params.estado_mantenimiento) query.set('estado_mantenimiento', params.estado_mantenimiento);
+  if (params.id_sede) query.set('id_sede', params.id_sede);
   if (params.id_laboratorio) query.set('id_laboratorio', params.id_laboratorio);
   if (params.busqueda) query.set('busqueda', params.busqueda);
 

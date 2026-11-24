@@ -8,6 +8,7 @@ export async function consultarIncidencias(params = {}, token, signal) {
 
   if (params.estado) query.set('estado', params.estado);
   if (params.prioridad) query.set('prioridad', params.prioridad);
+  if (params.id_sede) query.set('id_sede', params.id_sede);
   if (params.id_laboratorio) query.set('id_laboratorio', params.id_laboratorio);
   if (params.busqueda) query.set('busqueda', params.busqueda);
 
