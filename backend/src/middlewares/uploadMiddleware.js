@@ -1,17 +1,15 @@
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const crypto = require('crypto');
+const { detectarMimePorFirma } = require('../utils/compresionImagen');
 
-// Carpeta física: backend/uploads/evidencias
+// Carpeta física conservada únicamente como respaldo para evidencias históricas previas a la migración 010
 const DIRECTORIO_EVIDENCIAS = path.resolve(
   __dirname,
   '../../uploads/evidencias'
 );
 
-fs.mkdirSync(DIRECTORIO_EVIDENCIAS, { recursive: true });
-
-const TAMANO_MAXIMO = 5 * 1024 * 1024; // 5 MB
+const TAMANO_MAXIMO = 5 * 1024 * 1024; // 5 MB de entrada (se comprime antes de guardar en BD)
 
 // Extensiones permitidas para las fotos de evidencias
 const EXTENSION_POR_MIME = {
@@ -20,15 +18,8 @@ const EXTENSION_POR_MIME = {
   'image/webp': '.webp'
 };
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, DIRECTORIO_EVIDENCIAS),
-  filename: (req, file, cb) => {
-    const extension = EXTENSION_POR_MIME[file.mimetype];
-    // timestamp y sufijo aleatorio para evitar colisiones
-    const sufijo = crypto.randomBytes(6).toString('hex');
-    cb(null, `${Date.now()}-${sufijo}${extension}`);
-  }
-});
+// Se recibe la imagen en memoria para validarla y comprimirla antes de persistirla en PostgreSQL
+const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
   if (!EXTENSION_POR_MIME[file.mimetype]) {
@@ -48,30 +39,28 @@ const upload = multer({
   limits: { fileSize: TAMANO_MAXIMO, files: 1 }
 });
 
-// Revisa los primeros bytes del archivo para confirmar que sea una imagen real
-const tieneFirmaDeImagen = (rutaArchivo) => {
-  const descriptor = fs.openSync(rutaArchivo, 'r');
+// Revisa los primeros bytes (Buffer o ruta en disco) para confirmar que sea una imagen real
+const tieneFirmaDeImagen = (origen) => {
+  if (Buffer.isBuffer(origen) || origen instanceof Uint8Array) {
+    return Boolean(detectarMimePorFirma(origen));
+  }
+
+  if (typeof origen !== 'string' || !origen) {
+    return false;
+  }
+
+  const descriptor = fs.openSync(origen, 'r');
 
   try {
     const cabecera = Buffer.alloc(12);
     fs.readSync(descriptor, cabecera, 0, 12, 0);
-
-    const esJpg =
-      cabecera[0] === 0xff && cabecera[1] === 0xd8 && cabecera[2] === 0xff;
-    const esPng = cabecera
-      .subarray(0, 8)
-      .equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
-    const esWebp =
-      cabecera.subarray(0, 4).toString('ascii') === 'RIFF' &&
-      cabecera.subarray(8, 12).toString('ascii') === 'WEBP';
-
-    return esJpg || esPng || esWebp;
+    return Boolean(detectarMimePorFirma(cabecera));
   } finally {
     fs.closeSync(descriptor);
   }
 };
 
-// Elimina un archivo subido (ignora el error si ya no existe)
+// Elimina un archivo temporal en disco si existiera (conservado por compatibilidad)
 const eliminarArchivo = (rutaArchivo) => {
   if (!rutaArchivo) return;
   fs.unlink(rutaArchivo, () => {});
@@ -116,4 +105,3 @@ module.exports = {
   tieneFirmaDeImagen,
   DIRECTORIO_EVIDENCIAS
 };
-
