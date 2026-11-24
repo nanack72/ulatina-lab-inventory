@@ -5,11 +5,9 @@ const LIMITE_MAXIMO = 20;
 
 // Comprobar acceso global (mismo criterio que equipos)
 const tieneAccesoGlobal = (usuario) => {
-  return usuario?.rol?.toLowerCase().trim() ===
-    'superadministrador';
+  return usuario?.rol?.toLowerCase().trim() === 'superadministrador';
 };
 
-// =====================================================
 // ACTIVIDAD RECIENTE
 // GET /api/dashboard/actividad?limite=8
 //
@@ -19,7 +17,6 @@ const tieneAccesoGlobal = (usuario) => {
 //  - bitacora_mantenimiento -> mantenimientos
 //
 // Solo incluye equipos a los que el usuario tiene acceso.
-// =====================================================
 
 const obtenerActividadReciente = async (req, res) => {
   try {
@@ -28,7 +25,7 @@ const obtenerActividadReciente = async (req, res) => {
     if (!Number.isSafeInteger(idUsuario) || idUsuario <= 0) {
       return res.status(403).json({
         success: false,
-        message: 'Usuario sin autorización válida'
+        message: 'Usuario sin autorización válida',
       });
     }
 
@@ -38,14 +35,10 @@ const obtenerActividadReciente = async (req, res) => {
     if (req.query.limite !== undefined) {
       const valor = req.query.limite;
 
-      if (
-        typeof valor !== 'string' ||
-        !/^[1-9]\d*$/.test(valor) ||
-        Number(valor) > LIMITE_MAXIMO
-      ) {
+      if (typeof valor !== 'string' || !/^[1-9]\d*$/.test(valor) || Number(valor) > LIMITE_MAXIMO) {
         return res.status(400).json({
           success: false,
-          message: `El límite debe ser un entero entre 1 y ${LIMITE_MAXIMO}`
+          message: `El límite debe ser un entero entre 1 y ${LIMITE_MAXIMO}`,
         });
       }
 
@@ -160,18 +153,14 @@ const obtenerActividadReciente = async (req, res) => {
     return res.status(200).json({
       success: true,
       total: resultado.rowCount,
-      data: resultado.rows
+      data: resultado.rows,
     });
-
   } catch (error) {
-    console.error(
-      'Error al obtener la actividad reciente:',
-      error.message
-    );
+    console.error('Error al obtener la actividad reciente:', error.message);
 
     return res.status(500).json({
       success: false,
-      message: 'Error al consultar la actividad reciente'
+      message: 'Error al consultar la actividad reciente',
     });
   }
 };

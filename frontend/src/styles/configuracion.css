@@ -440,8 +440,13 @@
   outline-offset: 2px;
 }
 
-.cfg-dialogo:modal { overscroll-behavior: contain; }
-.cfg-dialogo::backdrop { overflow: hidden; overscroll-behavior: contain; }
+.cfg-dialogo:modal {
+  overscroll-behavior: contain;
+}
+.cfg-dialogo::backdrop {
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
 
 @media (max-width: 600px) {
   .cfg-barra {
@@ -490,7 +495,10 @@
   white-space: nowrap;
 }
 
-.cfg-filtro-sede { display: inline-flex; min-width: 180px; }
+.cfg-filtro-sede {
+  display: inline-flex;
+  min-width: 180px;
+}
 .cfg-filtro-sede select {
   box-sizing: border-box;
   width: 100%;
@@ -504,6 +512,16 @@
   font-size: 12px;
   cursor: pointer;
 }
-.cfg-filtro-sede select:focus-visible { outline: 2px solid var(--verde, #205c49); outline-offset: 2px; }
-.cfg-filtro-sede select:disabled { opacity: 0.6; cursor: default; }
-@media (max-width: 600px) { .cfg-filtro-sede { width: 100%; } }
+.cfg-filtro-sede select:focus-visible {
+  outline: 2px solid var(--verde, #205c49);
+  outline-offset: 2px;
+}
+.cfg-filtro-sede select:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+@media (max-width: 600px) {
+  .cfg-filtro-sede {
+    width: 100%;
+  }
+}

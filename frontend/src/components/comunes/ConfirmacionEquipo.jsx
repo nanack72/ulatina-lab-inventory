@@ -7,12 +7,21 @@ export default function ConfirmacionEquipo({ tituloId, ocupado, onCerrar, childr
   useEffect(() => {
     const ventana = dialogo.current;
     ventana.showModal();
-    return () => { if (ventana.open) ventana.close(); };
+    return () => {
+      if (ventana.open) ventana.close();
+    };
   }, []);
   return (
-    <dialog ref={dialogo} className="equipo-confirmacion-dialogo"
-      aria-labelledby={tituloId} aria-busy={ocupado}
-      onCancel={evento => { if (ocupado) evento.preventDefault(); else onCerrar(); }}>
+    <dialog
+      ref={dialogo}
+      className="equipo-confirmacion-dialogo"
+      aria-labelledby={tituloId}
+      aria-busy={ocupado}
+      onCancel={(evento) => {
+        if (ocupado) evento.preventDefault();
+        else onCerrar();
+      }}
+    >
       {children}
     </dialog>
   );

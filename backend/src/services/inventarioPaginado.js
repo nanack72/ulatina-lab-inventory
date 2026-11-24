@@ -1,10 +1,36 @@
 const { nombreCampo } = require('../utils/nombresCampos');
-const CAMPOS = ['id_equipo', 'nombre', 'numero_serie', 'placa_institucional',
-  'marca', 'modelo', 'ubicacion_detalle', 'id_categoria', 'categoria',
-  'id_estado', 'estado', 'id_laboratorio', 'codigo_laboratorio', 'laboratorio',
-  'id_sede', 'sede', 'eliminado_en', 'eliminado_por_nombre', 'motivo_eliminacion'];
-const BUSCABLES = ['nombre', 'numero_serie', 'placa_institucional', 'marca',
-  'modelo', 'categoria', 'laboratorio', 'sede', 'ubicacion_detalle'];
+const CAMPOS = [
+  'id_equipo',
+  'nombre',
+  'numero_serie',
+  'placa_institucional',
+  'marca',
+  'modelo',
+  'ubicacion_detalle',
+  'id_categoria',
+  'categoria',
+  'id_estado',
+  'estado',
+  'id_laboratorio',
+  'codigo_laboratorio',
+  'laboratorio',
+  'id_sede',
+  'sede',
+  'eliminado_en',
+  'eliminado_por_nombre',
+  'motivo_eliminacion',
+];
+const BUSCABLES = [
+  'nombre',
+  'numero_serie',
+  'placa_institucional',
+  'marca',
+  'modelo',
+  'categoria',
+  'laboratorio',
+  'sede',
+  'ubicacion_detalle',
+];
 const FILTROS = ['sede', 'laboratorio', 'categoria', 'estado'];
 
 // Equivalente a la normalización NFD de los filtros anteriores del navegador.
@@ -21,8 +47,9 @@ function opcionesSQL(campo) {
 
 const CONSULTA = `
   WITH visibles AS MATERIALIZED (
-    SELECT base.*, ${BUSCABLES.concat('estado').map(campo =>
-      `${normalizarSQL(campo)} AS ${campo}_n`).join(', ')}
+    SELECT base.*, ${BUSCABLES.concat('estado')
+      .map((campo) => `${normalizarSQL(campo)} AS ${campo}_n`)
+      .join(', ')}
     FROM (
       SELECT e.id_equipo, e.nombre, e.numero_serie, e.placa_institucional,
         e.marca, e.modelo, e.ubicacion_detalle,
@@ -45,7 +72,7 @@ const CONSULTA = `
     ) base
   ), filtrados AS MATERIALIZED (
     SELECT * FROM visibles
-    WHERE ($3 = '' OR ${BUSCABLES.map(campo => `position($3 IN ${campo}_n) > 0`).join(' OR ')})
+    WHERE ($3 = '' OR ${BUSCABLES.map((campo) => `position($3 IN ${campo}_n) > 0`).join(' OR ')})
       ${FILTROS.map((campo, indice) => `AND ($${indice + 4} = '' OR ${campo}_n = $${indice + 4})`).join('\n')}
   ), resumen AS (
     SELECT count(*)::integer AS total,
@@ -60,7 +87,7 @@ const CONSULTA = `
       FROM (SELECT ${CAMPOS.join(', ')} FROM filtrados
         ORDER BY id_equipo DESC LIMIT $9
         OFFSET (SELECT (pagina - 1) * $9 FROM pagina_actual)) fila) AS data,
-    json_build_object(${FILTROS.map(campo => `'${campo}', ${opcionesSQL(campo)}`).join(', ')}) AS opciones
+    json_build_object(${FILTROS.map((campo) => `'${campo}', ${opcionesSQL(campo)}`).join(', ')}) AS opciones
   FROM pagina_actual
 `;
 
@@ -77,16 +104,23 @@ async function consultarPaginaInventario(db, query, usuario) {
   if (typeof vista !== 'string' || !['activos', 'eliminados'].includes(vista)) {
     throw solicitudInvalida('La vista del inventario no es válida');
   }
-  const global = String(usuario.rol || '').trim().toLowerCase() === 'superadministrador';
+  const global =
+    String(usuario.rol || '')
+      .trim()
+      .toLowerCase() === 'superadministrador';
   if (vista === 'eliminados' && !global && usuario.puede_eliminar_equipos !== true) {
     throw solicitudInvalida('No tiene permiso para consultar equipos eliminados', 403);
   }
-  const textos = ['busqueda', ...FILTROS].map(campo => {
+  const textos = ['busqueda', ...FILTROS].map((campo) => {
     const valor = query[campo] ?? '';
     if (typeof valor !== 'string' || valor.length > 200) {
       throw solicitudInvalida(`El filtro de ${nombreCampo(campo)} no es válido`);
     }
-    return valor.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    return valor
+      .trim()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
   });
   function entero(campo, defecto, maximo) {
     const valor = query[campo] ?? String(defecto);
@@ -97,7 +131,14 @@ async function consultarPaginaInventario(db, query, usuario) {
   }
   const pagina = entero('pagina', 1, 100000);
   const limite = entero('limite', 5, 100);
-  const resultado = await db.query(CONSULTA, [global, idUsuario, ...textos, pagina, limite, vista === 'eliminados']);
+  const resultado = await db.query(CONSULTA, [
+    global,
+    idUsuario,
+    ...textos,
+    pagina,
+    limite,
+    vista === 'eliminados',
+  ]);
   return { success: true, ...resultado.rows[0] };
 }
 

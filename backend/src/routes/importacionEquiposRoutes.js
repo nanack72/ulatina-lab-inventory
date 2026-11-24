@@ -7,9 +7,7 @@ const { extraerImagenes } = require('../utils/imagenesExcel');
 const pool = require('../config/database');
 const { verificarToken } = require('../middlewares/authMiddleware');
 
-const {
-  puedeRegistrarInventario,
-} = require('../utils/permisosInventario');
+const { puedeRegistrarInventario } = require('../utils/permisosInventario');
 
 const router = express.Router();
 
@@ -54,11 +52,7 @@ function normalizar(valor) {
 }
 
 function esId(valor) {
-  return (
-    Number.isSafeInteger(valor) &&
-    valor > 0 &&
-    valor <= 2147483647
-  );
+  return Number.isSafeInteger(valor) && valor > 0 && valor <= 2147483647;
 }
 
 function esSuperadministrador(usuario) {
@@ -111,9 +105,7 @@ const subirArchivo = multer({
   },
   fileFilter(req, file, callback) {
     if (!file.originalname.toLowerCase().endsWith('.xlsx')) {
-      return callback(
-        errorSolicitud('Seleccione un archivo Excel con extensión .xlsx.')
-      );
+      return callback(errorSolicitud('Seleccione un archivo Excel con extensión .xlsx.'));
     }
 
     return callback(null, true);
@@ -132,10 +124,7 @@ function recibirArchivo(req, res, next) {
 
       return res.status(400).json({
         success: false,
-        message:
-          error.status
-            ? error.message
-            : "Seleccione un único archivo de Excel.",
+        message: error.status ? error.message : 'Seleccione un único archivo de Excel.',
       });
     }
 
@@ -159,19 +148,11 @@ const ALIAS = {
   anio: ['anio', 'año', 'año del equipo'],
   caracteristicas: ['caracteristicas', 'características'],
   comentarios: ['comentarios', 'observaciones'],
-  ubicacion_detalle: [
-    'ubicacion detallada',
-    'ubicacion_detalle',
-    'detalle de ubicacion',
-  ],
+  ubicacion_detalle: ['ubicacion detallada', 'ubicacion_detalle', 'detalle de ubicacion'],
   categoria: ['categoria', 'categoría', 'tipo de equipo'],
   estado: ['estado', 'estado del equipo'],
   sede: ['sede', 'ubicacion sede'],
-  laboratorio: [
-    'laboratorio',
-    'codigo de laboratorio',
-    'ubicacion codigo de lab',
-  ],
+  laboratorio: ['laboratorio', 'codigo de laboratorio', 'ubicacion codigo de lab'],
   id_categoria: ['id_categoria'],
   id_estado: ['id_estado'],
   id_laboratorio: ['id_laboratorio'],
@@ -204,13 +185,14 @@ function textoCelda(celda) {
     }
 
     if ('error' in valor) {
-      throw errorSolicitud(
-        `La celda ${celda.address} contiene un error de Excel.`
-      );
+      throw errorSolicitud(`La celda ${celda.address} contiene un error de Excel.`);
     }
 
     if (Array.isArray(valor.richText)) {
-      return valor.richText.map((parte) => parte.text).join('').trim();
+      return valor.richText
+        .map((parte) => parte.text)
+        .join('')
+        .trim();
     }
 
     if ('hyperlink' in valor) {
@@ -222,11 +204,7 @@ function textoCelda(celda) {
 }
 
 function buscarEncabezados(hoja) {
-  for (
-    let numero = 1;
-    numero <= Math.min(hoja.rowCount, 20);
-    numero += 1
-  ) {
+  for (let numero = 1; numero <= Math.min(hoja.rowCount, 20); numero += 1) {
     const fila = hoja.getRow(numero);
     const columnas = new Map();
 
@@ -244,9 +222,7 @@ function buscarEncabezados(hoja) {
       }
     });
 
-    const tieneNombre = ALIAS.nombre.some((alias) =>
-      columnas.has(normalizar(alias))
-    );
+    const tieneNombre = ALIAS.nombre.some((alias) => columnas.has(normalizar(alias)));
 
     if (tieneNombre) {
       return {
@@ -256,9 +232,7 @@ function buscarEncabezados(hoja) {
     }
   }
 
-  throw errorSolicitud(
-    'No se encontró el encabezado Nombre del equipo en las primeras 20 filas.'
-  );
+  throw errorSolicitud('No se encontró el encabezado Nombre del equipo en las primeras 20 filas.');
 }
 
 function columnaDe(columnas, campo) {
@@ -274,9 +248,7 @@ function columnaDe(columnas, campo) {
 function leerCampo(fila, columnas, campo) {
   const columna = columnaDe(columnas, campo);
 
-  return columna
-    ? textoCelda(fila.getCell(columna))
-    : '';
+  return columna ? textoCelda(fila.getCell(columna)) : '';
 }
 
 function idDesdeTexto(valor) {
@@ -323,10 +295,7 @@ async function cargarCatalogos(cliente, usuario) {
       )
       ORDER BY s.nombre, l.nombre
     `,
-    [
-      usuario.idUsuario,
-      esSuperadministrador(usuario),
-    ]
+    [usuario.idUsuario, esSuperadministrador(usuario)]
   );
 
   return {
@@ -343,9 +312,7 @@ function buscarId(lista, campoId, nombre) {
     (elemento) => normalizar(elemento.nombre) === normalizar(nombre)
   );
 
-  return coincidencias.length === 1
-    ? coincidencias[0][campoId]
-    : null;
+  return coincidencias.length === 1 ? coincidencias[0][campoId] : null;
 }
 
 // "2019", "HP ProDesk 2019" o "2019 - HP ProDesk" -> año y modelo por separado.
@@ -355,8 +322,9 @@ function separarAnioModelo(texto) {
   if (!original) return { anio: '', modelo: '' };
 
   const limite = new Date().getFullYear() + 1;
-  const encontrados = [...original.matchAll(/(?<!\d)(19[9]\d|20\d\d)(?!\d)/g)]
-    .filter((m) => Number(m[1]) <= limite);
+  const encontrados = [...original.matchAll(/(?<!\d)(19[9]\d|20\d\d)(?!\d)/g)].filter(
+    (m) => Number(m[1]) <= limite
+  );
 
   if (encontrados.length === 0) return { anio: '', modelo: original };
 
@@ -395,11 +363,10 @@ function buscarSede(catalogos, sede) {
 
 function buscarLaboratorio(catalogos, laboratorio, sede) {
   const idSede = buscarSede(catalogos, sede);
-  const delaSede = (sede && !idSede)
-    ? []
-    : catalogos.laboratorios.filter(
-        (elemento) => !idSede || elemento.id_sede === idSede
-      );
+  const delaSede =
+    sede && !idSede
+      ? []
+      : catalogos.laboratorios.filter((elemento) => !idSede || elemento.id_sede === idSede);
 
   // Sin texto de laboratorio (o sin coincidencia) pero con una sede que solo
   // tiene un laboratorio autorizado, ese es el laboratorio.
@@ -409,9 +376,7 @@ function buscarLaboratorio(catalogos, laboratorio, sede) {
 
   const texto = normalizar(laboratorio);
   const exactas = delaSede.filter(
-    (elemento) =>
-      normalizar(elemento.codigo) === texto ||
-      normalizar(elemento.nombre) === texto
+    (elemento) => normalizar(elemento.codigo) === texto || normalizar(elemento.nombre) === texto
   );
 
   if (exactas.length === 1) return exactas[0].id_laboratorio;
@@ -439,11 +404,7 @@ function validarFila(entrada, catalogos) {
   const errores = [];
   const datos = {};
 
-  if (
-    !entrada ||
-    typeof entrada !== 'object' ||
-    Array.isArray(entrada)
-  ) {
+  if (!entrada || typeof entrada !== 'object' || Array.isArray(entrada)) {
     return {
       datos,
       errores: ['La fila no contiene un objeto válido.'],
@@ -455,7 +416,9 @@ function validarFila(entrada, catalogos) {
       const valor = entrada[campo];
 
       if (!esId(valor)) {
-        errores.push(`Seleccione un valor válido para ${{id_categoria:'categoría',id_estado:'estado',id_laboratorio:'laboratorio'}[campo]}.`);
+        errores.push(
+          `Seleccione un valor válido para ${{ id_categoria: 'categoría', id_estado: 'estado', id_laboratorio: 'laboratorio' }[campo]}.`
+        );
       }
 
       datos[campo] = valor;
@@ -468,17 +431,10 @@ function validarFila(entrada, catalogos) {
       if (valor === '' || valor == null) {
         datos.anio = null;
       } else {
-        const anio = typeof valor === 'number'
-          ? valor
-          : /^\d{4}$/.test(String(valor))
-            ? Number(valor)
-            : NaN;
+        const anio =
+          typeof valor === 'number' ? valor : /^\d{4}$/.test(String(valor)) ? Number(valor) : NaN;
 
-        if (
-          !Number.isInteger(anio) ||
-          anio < 1900 ||
-          anio > 2100
-        ) {
+        if (!Number.isInteger(anio) || anio < 1900 || anio > 2100) {
           errores.push('El año debe estar entre 1900 y 2100.');
         }
 
@@ -507,26 +463,20 @@ function validarFila(entrada, catalogos) {
     const limite = LIMITES[campo] || MAX_TEXTO_LARGO;
 
     if (Array.from(texto).length > limite) {
-      errores.push(
-        `El campo ${nombreCampo(campo)} supera el límite de ${limite} caracteres.`
-      );
+      errores.push(`El campo ${nombreCampo(campo)} supera el límite de ${limite} caracteres.`);
     }
   }
 
   if (
     esId(datos.id_categoria) &&
-    !catalogos.categorias.some(
-      (categoria) => categoria.id_categoria === datos.id_categoria
-    )
+    !catalogos.categorias.some((categoria) => categoria.id_categoria === datos.id_categoria)
   ) {
     errores.push('La categoría seleccionada no existe.');
   }
 
   if (
     esId(datos.id_estado) &&
-    !catalogos.estados.some(
-      (estado) => estado.id_estado === datos.id_estado
-    )
+    !catalogos.estados.some((estado) => estado.id_estado === datos.id_estado)
   ) {
     errores.push('El estado seleccionado no existe.');
   }
@@ -534,13 +484,10 @@ function validarFila(entrada, catalogos) {
   if (
     esId(datos.id_laboratorio) &&
     !catalogos.laboratorios.some(
-      (laboratorio) =>
-        laboratorio.id_laboratorio === datos.id_laboratorio
+      (laboratorio) => laboratorio.id_laboratorio === datos.id_laboratorio
     )
   ) {
-    errores.push(
-      'El laboratorio no existe o no está autorizado para su cuenta.'
-    );
+    errores.push('El laboratorio no existe o no está autorizado para su cuenta.');
   }
 
   return { datos, errores };
@@ -551,10 +498,7 @@ function validarFila(entrada, catalogos) {
 // entre mayúsculas y minúsculas de las restricciones existentes.
 async function validarLote(cliente, filas, catalogos) {
   const resultados = filas.map((fila, indice) => ({
-    fila:
-      Number.isSafeInteger(fila?.fila) && fila.fila > 0
-        ? fila.fila
-        : indice + 1,
+    fila: Number.isSafeInteger(fila?.fila) && fila.fila > 0 ? fila.fila : indice + 1,
     ...validarFila(fila, catalogos),
   }));
 
@@ -576,21 +520,15 @@ async function validarLote(cliente, filas, catalogos) {
     for (const [valor, grupo] of grupos) {
       if (grupo.length > 1) {
         for (const resultado of grupo) {
-          resultado.errores.push(
-            `${nombreCampo(campo)}: «${valor}» está repetido en el archivo.`
-          );
+          resultado.errores.push(`${nombreCampo(campo)}: «${valor}» está repetido en el archivo.`);
         }
       }
     }
   }
 
-  const series = resultados
-    .map((resultado) => resultado.datos.numero_serie)
-    .filter(Boolean);
+  const series = resultados.map((resultado) => resultado.datos.numero_serie).filter(Boolean);
 
-  const placas = resultados
-    .map((resultado) => resultado.datos.placa_institucional)
-    .filter(Boolean);
+  const placas = resultados.map((resultado) => resultado.datos.placa_institucional).filter(Boolean);
 
   const existentes = await cliente.query(
     `
@@ -602,31 +540,20 @@ async function validarLote(cliente, filas, catalogos) {
     [series, placas]
   );
 
-  const seriesExistentes = new Set(
-    existentes.rows.map((equipo) => equipo.numero_serie)
-  );
+  const seriesExistentes = new Set(existentes.rows.map((equipo) => equipo.numero_serie));
 
-  const placasExistentes = new Set(
-    existentes.rows.map((equipo) => equipo.placa_institucional)
-  );
+  const placasExistentes = new Set(existentes.rows.map((equipo) => equipo.placa_institucional));
 
   for (const resultado of resultados) {
-    if (
-      resultado.datos.numero_serie &&
-      seriesExistentes.has(resultado.datos.numero_serie)
-    ) {
-      resultado.errores.push(
-        'El número de serie ya está registrado.'
-      );
+    if (resultado.datos.numero_serie && seriesExistentes.has(resultado.datos.numero_serie)) {
+      resultado.errores.push('El número de serie ya está registrado.');
     }
 
     if (
       resultado.datos.placa_institucional &&
       placasExistentes.has(resultado.datos.placa_institucional)
     ) {
-      resultado.errores.push(
-        'La placa institucional ya está registrada.'
-      );
+      resultado.errores.push('La placa institucional ya está registrada.');
     }
   }
 
@@ -651,20 +578,14 @@ router.post('/leer', recibirArchivo, async (req, res) => {
       );
     }
 
-    const hoja = libro.worksheets.find(
-      (elemento) => normalizar(elemento.name) === 'inventario'
-    );
+    const hoja = libro.worksheets.find((elemento) => normalizar(elemento.name) === 'inventario');
 
     if (!hoja) {
-      throw errorSolicitud(
-        'El archivo debe contener una hoja llamada Inventario.'
-      );
+      throw errorSolicitud('El archivo debe contener una hoja llamada Inventario.');
     }
 
     if (hoja.rowCount > 10000 || hoja.columnCount > 100) {
-      throw errorSolicitud(
-        'La hoja supera el tamaño permitido para esta importación.'
-      );
+      throw errorSolicitud('La hoja supera el tamaño permitido para esta importación.');
     }
 
     const encabezados = buscarEncabezados(hoja);
@@ -673,11 +594,7 @@ router.post('/leer', recibirArchivo, async (req, res) => {
     const originales = new Map();
     const sedesPorFila = new Map();
 
-    for (
-      let numero = encabezados.fila + 1;
-      numero <= hoja.rowCount;
-      numero += 1
-    ) {
+    for (let numero = encabezados.fila + 1; numero <= hoja.rowCount; numero += 1) {
       const fila = hoja.getRow(numero);
       const columnas = encabezados.columnas;
       const leer = (campo) => leerCampo(fila, columnas, campo);
@@ -732,64 +649,44 @@ router.post('/leer', recibirArchivo, async (req, res) => {
       }
 
       const tieneInformacion =
-        Object.entries(datos).some(
-          ([campo, valor]) => campo !== 'fila' && Boolean(valor)
-        ) ||
+        Object.entries(datos).some(([campo, valor]) => campo !== 'fila' && Boolean(valor)) ||
         Boolean(
           categoria ||
-          estado ||
-          sede ||
-          laboratorio ||
-          idCategoriaOriginal ||
-          idEstadoOriginal ||
-          idLaboratorioOriginal ||
-          adicionales.length
+            estado ||
+            sede ||
+            laboratorio ||
+            idCategoriaOriginal ||
+            idEstadoOriginal ||
+            idLaboratorioOriginal ||
+            adicionales.length
         );
 
       // Ignorar filas que solo tienen el número consecutivo.
       if (!tieneInformacion) continue;
 
       if (filas.length >= MAX_FILAS) {
-        throw errorSolicitud(
-          `Puede importar hasta ${MAX_FILAS} equipos por archivo.`
-        );
+        throw errorSolicitud(`Puede importar hasta ${MAX_FILAS} equipos por archivo.`);
       }
 
-      datos.caracteristicas = [
-        datos.caracteristicas,
-        ...adicionales,
-      ].filter(Boolean).join('\n');
+      datos.caracteristicas = [datos.caracteristicas, ...adicionales].filter(Boolean).join('\n');
 
       datos.id_categoria = idCategoriaOriginal
         ? idDesdeTexto(idCategoriaOriginal)
-        : buscarId(
-            catalogos.categorias,
-            'id_categoria',
-            categoria
-          );
+        : buscarId(catalogos.categorias, 'id_categoria', categoria);
 
       datos.id_estado = idEstadoOriginal
         ? idDesdeTexto(idEstadoOriginal)
-        : buscarId(
-            catalogos.estados,
-            'id_estado',
-            estado
-          );
+        : buscarId(catalogos.estados, 'id_estado', estado);
 
       datos.id_laboratorio = idLaboratorioOriginal
         ? idDesdeTexto(idLaboratorioOriginal)
-        : buscarLaboratorio(
-            catalogos,
-            laboratorio,
-            sede
-          );
+        : buscarLaboratorio(catalogos, laboratorio, sede);
 
       sedesPorFila.set(
         numero,
         datos.id_laboratorio
-          ? catalogos.laboratorios.find(
-              (lab) => lab.id_laboratorio === datos.id_laboratorio
-            )?.id_sede ?? null
+          ? (catalogos.laboratorios.find((lab) => lab.id_laboratorio === datos.id_laboratorio)
+              ?.id_sede ?? null)
           : buscarSede(catalogos, sede)
       );
 
@@ -805,9 +702,7 @@ router.post('/leer', recibirArchivo, async (req, res) => {
     }
 
     if (filas.length === 0) {
-      throw errorSolicitud(
-        'La hoja Inventario no contiene equipos para importar.'
-      );
+      throw errorSolicitud('La hoja Inventario no contiene equipos para importar.');
     }
 
     const revision = await validarLote(pool, filas, catalogos);
@@ -829,9 +724,7 @@ router.post('/leer', recibirArchivo, async (req, res) => {
           errores: resultado.errores,
         })),
         total: revision.length,
-        validos: revision.filter(
-          (resultado) => resultado.errores.length === 0
-        ).length,
+        validos: revision.filter((resultado) => resultado.errores.length === 0).length,
       },
     });
   } catch (error) {
@@ -849,14 +742,8 @@ router.post('/confirmar', async (req, res) => {
   try {
     const filas = req.body?.filas;
 
-    if (
-      !Array.isArray(filas) ||
-      filas.length === 0 ||
-      filas.length > MAX_FILAS
-    ) {
-      throw errorSolicitud(
-        `Envíe entre 1 y ${MAX_FILAS} equipos para importar.`
-      );
+    if (!Array.isArray(filas) || filas.length === 0 || filas.length > MAX_FILAS) {
+      throw errorSolicitud(`Envíe entre 1 y ${MAX_FILAS} equipos para importar.`);
     }
 
     cliente = await pool.connect();
@@ -882,15 +769,8 @@ router.post('/confirmar', async (req, res) => {
 
     const usuario = cuenta.rows[0];
 
-    if (
-      !usuario ||
-      !usuario.activo ||
-      !puedeRegistrarInventario(usuario)
-    ) {
-      throw errorSolicitud(
-        'Su cuenta ya no tiene permisos para importar equipos.',
-        403
-      );
+    if (!usuario || !usuario.activo || !puedeRegistrarInventario(usuario)) {
+      throw errorSolicitud('Su cuenta ya no tiene permisos para importar equipos.', 403);
     }
 
     const catalogos = await cargarCatalogos(cliente, {
@@ -898,21 +778,16 @@ router.post('/confirmar', async (req, res) => {
       idUsuario: req.usuario.idUsuario,
     });
 
-    const revision = await validarLote(
-      cliente,
-      filas,
-      catalogos
-    );
+    const revision = await validarLote(cliente, filas, catalogos);
 
     if (req.body.validar_solo === true) {
       await cliente.query('ROLLBACK');
       transaccion = false;
       return res.json({ success: true, data: { filas: revision } });
     }
-    await cliente.query(
-      "SELECT set_config('app.usuario_id', $1, true)",
-      [String(req.usuario.idUsuario)]
-    );
+    await cliente.query("SELECT set_config('app.usuario_id', $1, true)", [
+      String(req.usuario.idUsuario),
+    ]);
 
     const resultados = [];
 
@@ -929,13 +804,9 @@ router.post('/confirmar', async (req, res) => {
       await cliente.query('SAVEPOINT fila_importacion');
 
       try {
-        const valores = CAMPOS.map(
-          (campo) => resultado.datos[campo]
-        );
+        const valores = CAMPOS.map((campo) => resultado.datos[campo]);
 
-        const parametros = CAMPOS.map(
-          (_, indice) => `$${indice + 1}`
-        );
+        const parametros = CAMPOS.map((_, indice) => `$${indice + 1}`);
 
         const insertado = await cliente.query(
           `
@@ -948,9 +819,7 @@ router.post('/confirmar', async (req, res) => {
           valores
         );
 
-        await cliente.query(
-          'RELEASE SAVEPOINT fila_importacion'
-        );
+        await cliente.query('RELEASE SAVEPOINT fila_importacion');
 
         resultados.push({
           fila: resultado.fila,
@@ -959,19 +828,11 @@ router.post('/confirmar', async (req, res) => {
           errores: [],
         });
       } catch (error) {
-        await cliente.query(
-          'ROLLBACK TO SAVEPOINT fila_importacion'
-        );
+        await cliente.query('ROLLBACK TO SAVEPOINT fila_importacion');
 
-        await cliente.query(
-          'RELEASE SAVEPOINT fila_importacion'
-        );
+        await cliente.query('RELEASE SAVEPOINT fila_importacion');
 
-        if (
-          !['23505', '23503', '23502', '23514', '22001'].includes(
-            error.code
-          )
-        ) {
+        if (!['23505', '23503', '23502', '23514', '22001'].includes(error.code)) {
           throw error;
         }
 
@@ -980,7 +841,7 @@ router.post('/confirmar', async (req, res) => {
             ? 'La placa o el número de serie ya fue registrado.'
             : error.code === '23503'
               ? 'Una categoría, estado o laboratorio ya no está disponible.'
-              : "No fue posible guardar este equipo. Revise los datos e inténtelo nuevamente.";
+              : 'No fue posible guardar este equipo. Revise los datos e inténtelo nuevamente.';
 
         resultados.push({
           fila: resultado.fila,
@@ -993,14 +854,11 @@ router.post('/confirmar', async (req, res) => {
     await cliente.query('COMMIT');
     transaccion = false;
 
-    const importados = resultados.filter(
-      (resultado) => resultado.importado
-    ).length;
+    const importados = resultados.filter((resultado) => resultado.importado).length;
 
     return res.json({
       success: true,
-      message:
-        `Se importaron ${importados} de ${resultados.length} equipos.`,
+      message: `Se importaron ${importados} de ${resultados.length} equipos.`,
       data: {
         importados,
         rechazados: resultados.length - importados,
@@ -1012,10 +870,7 @@ router.post('/confirmar', async (req, res) => {
       try {
         await cliente.query('ROLLBACK');
       } catch (rollbackError) {
-        console.error(
-          'Error al revertir la importación:',
-          rollbackError
-        );
+        console.error('Error al revertir la importación:', rollbackError);
       }
     }
 

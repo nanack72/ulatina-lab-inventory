@@ -3,11 +3,20 @@ import Paginacion from '../components/inventario/Paginacion';
 import '../styles/inventario.css';
 import Notificacion from '../components/comunes/Notificacion';
 import { useEffect, useState } from 'react';
-import { History, MapPin, ArrowLeftRight, Settings2, Search, RefreshCw, ChevronDown, ArrowRight, UserRound } from 'lucide-react';
+import {
+  History,
+  MapPin,
+  ArrowLeftRight,
+  Settings2,
+  Search,
+  RefreshCw,
+  ChevronDown,
+  ArrowRight,
+  UserRound,
+} from 'lucide-react';
 
 import { obtenerHistorialGeneral } from '../services/historialGeneralService';
 import '../styles/historialGeneral.css';
-
 
 const TIPOS = [
   { valor: 'todos', texto: 'Todos' },
@@ -82,12 +91,7 @@ function mostrarValor(valor) {
   return String(valor);
 }
 
-function Movimiento({
-  registro,
-  expandido,
-  onExpandir,
-  onVerEquipo,
-}) {
+function Movimiento({ registro, expandido, onExpandir, onVerEquipo }) {
   const configuracion = CONFIGURACION[registro.tipo] || {
     icono: History,
     nombre: 'Movimiento',
@@ -106,15 +110,11 @@ function Movimiento({
           </span>
 
           <div className="hg-registro-titulo">
-            <span className="hg-etiqueta">
-              {configuracion.nombre}
-            </span>
+            <span className="hg-etiqueta">{configuracion.nombre}</span>
 
             <strong>{nombreAccion(registro.accion)}</strong>
 
-            <span className="hg-registro-fecha">
-              {formatoFecha(registro.fecha)}
-            </span>
+            <span className="hg-registro-fecha">{formatoFecha(registro.fecha)}</span>
           </div>
         </div>
 
@@ -137,9 +137,7 @@ function Movimiento({
           <button
             type="button"
             className="hg-enlace-equipo"
-            onClick={() =>
-              onVerEquipo?.({ id_equipo: registro.id_equipo })
-            }
+            onClick={() => onVerEquipo?.({ id_equipo: registro.id_equipo })}
           >
             {registro.nombre_equipo || 'Equipo sin nombre'}
             <ArrowRight size={14} />
@@ -155,13 +153,7 @@ function Movimiento({
         <div className="hg-valor hg-valor-anterior">
           <small>Valor anterior</small>
 
-          <p
-            className={
-              expandido ? 'hg-texto-completo' : 'hg-texto-corto'
-            }
-          >
-            {anterior}
-          </p>
+          <p className={expandido ? 'hg-texto-completo' : 'hg-texto-corto'}>{anterior}</p>
         </div>
 
         <span className="hg-flecha">
@@ -171,13 +163,7 @@ function Movimiento({
         <div className="hg-valor hg-valor-nuevo">
           <small>Valor nuevo</small>
 
-          <p
-            className={
-              expandido ? 'hg-texto-completo' : 'hg-texto-corto'
-            }
-          >
-            {nuevo}
-          </p>
+          <p className={expandido ? 'hg-texto-completo' : 'hg-texto-corto'}>{nuevo}</p>
         </div>
       </div>
 
@@ -190,21 +176,14 @@ function Movimiento({
         >
           {expandido ? 'Ocultar detalles' : 'Ver detalles'}
 
-          <ChevronDown
-            size={16}
-            className={expandido ? 'hg-chevron-abierto' : ''}
-          />
+          <ChevronDown size={16} className={expandido ? 'hg-chevron-abierto' : ''} />
         </button>
       </div>
     </article>
   );
 }
 
-export default function Historial({
-  token,
-  onVerEquipo,
-  onSesionExpirada,
-}) {
+export default function Historial({ token, onVerEquipo, onSesionExpirada }) {
   const [tipo, setTipo] = useState('todos');
   const [textoBusqueda, setTextoBusqueda] = useState('');
   const [busqueda, setBusqueda] = useState('');
@@ -239,7 +218,16 @@ export default function Historial({
       try {
         const resultado = await obtenerHistorialGeneral(
           token,
-          { tipo, busqueda, desde, hasta, pagina, limite, id_sede: ubicacion.sede, id_laboratorio: ubicacion.laboratorio },
+          {
+            tipo,
+            busqueda,
+            desde,
+            hasta,
+            pagina,
+            limite,
+            id_sede: ubicacion.sede,
+            id_laboratorio: ubicacion.laboratorio,
+          },
           controlador.signal
         );
 
@@ -288,15 +276,14 @@ export default function Historial({
         <div>
           <h1>Historial</h1>
 
-          <p>
-            Consulte la trazabilidad de los equipos tecnológicos
-            y sus movimientos registrados.
-          </p>
+          <p>Consulte la trazabilidad de los equipos tecnológicos y sus movimientos registrados.</p>
         </div>
 
         <div className="hg-contador">
           <History size={17} />
-          <span>{total} {total === 1 ? 'movimiento' : 'movimientos'}</span>
+          <span>
+            {total} {total === 1 ? 'movimiento' : 'movimientos'}
+          </span>
         </div>
       </div>
 
@@ -305,11 +292,7 @@ export default function Historial({
           <button
             key={opcion.valor}
             type="button"
-            className={
-              tipo === opcion.valor
-                ? 'hg-pestana activa'
-                : 'hg-pestana'
-            }
+            className={tipo === opcion.valor ? 'hg-pestana activa' : 'hg-pestana'}
             onClick={() => {
               setTipo(opcion.valor);
               setPagina(1);
@@ -334,7 +317,17 @@ export default function Historial({
         </label>
 
         <div className="hg-fechas">
-            <div className="inv-selectores"><FiltrosUbicacion compacto token={token} valor={ubicacion} onChange={valor => { setUbicacion(valor); setPagina(1); }} /></div>
+          <div className="inv-selectores">
+            <FiltrosUbicacion
+              compacto
+              token={token}
+              valor={ubicacion}
+              onChange={(valor) => {
+                setUbicacion(valor);
+                setPagina(1);
+              }}
+            />
+          </div>
           <label>
             <span>Desde</span>
 
@@ -376,10 +369,7 @@ export default function Historial({
       </div>
 
       {error ? (
-        <Notificacion tipo="error">
-          
-          {error}
-        </Notificacion>
+        <Notificacion tipo="error">{error}</Notificacion>
       ) : cargando ? (
         <div className="hg-mensaje" role="status">
           Cargando movimientos...
@@ -400,9 +390,7 @@ export default function Historial({
                 key={clave}
                 registro={registro}
                 expandido={expandido}
-                onExpandir={() =>
-                  setRegistroExpandido(expandido ? null : clave)
-                }
+                onExpandir={() => setRegistroExpandido(expandido ? null : clave)}
                 onVerEquipo={onVerEquipo}
               />
             );
@@ -411,9 +399,18 @@ export default function Historial({
       )}
 
       {!cargando && !error && (
-        <Paginacion pagina={pagina} total={total} limite={limite}
-          singular="movimiento" plural="movimientos" onCambiar={setPagina}
-          onCambiarLimite={(valor) => { setLimite(valor); setPagina(1); }} />
+        <Paginacion
+          pagina={pagina}
+          total={total}
+          limite={limite}
+          singular="movimiento"
+          plural="movimientos"
+          onCambiar={setPagina}
+          onCambiarLimite={(valor) => {
+            setLimite(valor);
+            setPagina(1);
+          }}
+        />
       )}
     </section>
   );

@@ -1,5 +1,12 @@
-const CAMPOS_TEXTO = ['nombre', 'placa_institucional', 'numero_serie', 'marca',
-  'modelo', 'caracteristicas', 'comentarios'];
+const CAMPOS_TEXTO = [
+  'nombre',
+  'placa_institucional',
+  'numero_serie',
+  'marca',
+  'modelo',
+  'caracteristicas',
+  'comentarios',
+];
 
 function normalizarTexto(valor, obligatorio = false) {
   const texto = String(valor ?? '').trim();
@@ -23,8 +30,8 @@ export function prepararCambiosEquipo(formulario, original) {
   }
   const nuevoAnio = formulario.anio === '' ? null : Number(formulario.anio);
   const anterior = valoresOriginales.anio;
-  const anioAnterior = anterior === undefined || anterior === null || anterior === ''
-    ? null : Number(anterior);
+  const anioAnterior =
+    anterior === undefined || anterior === null || anterior === '' ? null : Number(anterior);
   if (nuevoAnio !== anioAnterior) cambios.anio = nuevoAnio;
   // Estado, categoría y ubicación se gestionan fuera de la edición general.
   return cambios;

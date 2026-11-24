@@ -12,11 +12,14 @@ import {
 import '../styles/inventario.css';
 import '../styles/configuracion.css';
 
-
 const CATALOGOS = {
-  roles: { nombre: 'Roles', singular: 'rol', id: 'id_rol',
+  roles: {
+    nombre: 'Roles',
+    singular: 'rol',
+    id: 'id_rol',
     columnas: [{ campo: 'nombre', titulo: 'Nombre' }],
-    campos: [{ campo: 'nombre', titulo: 'Nombre', max: 50, obligatorio: true }] },
+    campos: [{ campo: 'nombre', titulo: 'Nombre', max: 50, obligatorio: true }],
+  },
   categorias: {
     nombre: 'Categorías',
     singular: 'categoría',
@@ -28,7 +31,12 @@ const CATALOGOS = {
     campos: [
       { campo: 'nombre', titulo: 'Nombre', max: 100, obligatorio: true },
       { campo: 'descripcion', titulo: 'Descripción', max: 255 },
-      { campo: 'anios_revision', titulo: 'Revisar por antigüedad a partir de (años)', tipo: 'anios', ayuda: 'De 1 a 100 años. Dejar vacío para no evaluar esta categoría por antigüedad.' },
+      {
+        campo: 'anios_revision',
+        titulo: 'Revisar por antigüedad a partir de (años)',
+        tipo: 'anios',
+        ayuda: 'De 1 a 100 años. Dejar vacío para no evaluar esta categoría por antigüedad.',
+      },
     ],
   },
   estados: {
@@ -42,19 +50,21 @@ const CATALOGOS = {
     campos: [
       { campo: 'nombre', titulo: 'Nombre', max: 100, obligatorio: true },
       { campo: 'descripcion', titulo: 'Descripción', max: 255 },
-      { campo: 'requiere_revision', titulo: 'Requiere revisión por condición', tipo: 'booleano', ayuda: 'Marcar para estados como dañado, inservible u obsoleto. No marcar por mantenimiento rutinario.' },
+      {
+        campo: 'requiere_revision',
+        titulo: 'Requiere revisión por condición',
+        tipo: 'booleano',
+        ayuda:
+          'Marcar para estados como dañado, inservible u obsoleto. No marcar por mantenimiento rutinario.',
+      },
     ],
   },
   sedes: {
     nombre: 'Sedes',
     singular: 'sede',
     id: 'id_sede',
-    columnas: [
-      { campo: 'nombre', titulo: 'Nombre' },
-    ],
-    campos: [
-      { campo: 'nombre', titulo: 'Nombre', max: 150, obligatorio: true },
-    ],
+    columnas: [{ campo: 'nombre', titulo: 'Nombre' }],
+    campos: [{ campo: 'nombre', titulo: 'Nombre', max: 150, obligatorio: true }],
   },
   laboratorios: {
     nombre: 'Laboratorios',
@@ -213,18 +223,15 @@ export default function Configuracion({ token, soloRoles = false }) {
             : tipo === 'sede'
               ? Number(formulario[campo])
               : tipo === 'anios'
-                ? (formulario[campo] === '' || formulario[campo] == null ? null : Number(formulario[campo]))
+                ? formulario[campo] === '' || formulario[campo] == null
+                  ? null
+                  : Number(formulario[campo])
                 : String(formulario[campo] ?? '').trim();
       }
 
       const id = modal.registro?.[config.id];
 
-      const resultado = await guardarConfiguracion(
-        catalogo,
-        id,
-        datos,
-        token
-      );
+      const resultado = await guardarConfiguracion(catalogo, id, datos, token);
 
       setModal(null);
       setMensaje(resultado.message);
@@ -245,11 +252,7 @@ export default function Configuracion({ token, soloRoles = false }) {
     setErrorModal('');
 
     try {
-      const resultado = await eliminarConfiguracion(
-        catalogo,
-        modal.registro[config.id],
-        token
-      );
+      const resultado = await eliminarConfiguracion(catalogo, modal.registro[config.id], token);
 
       setModal(null);
       setMensaje(resultado.message);
@@ -264,13 +267,14 @@ export default function Configuracion({ token, soloRoles = false }) {
 
   const termino = busqueda.trim().toLocaleLowerCase('es');
 
-  const filtrados = registros.filter((registro) =>
-    (catalogo !== 'laboratorios' || !filtroSede || String(registro.id_sede) === filtroSede) &&
-    config.columnas.some(({ campo }) =>
-      String(registro[campo] ?? '')
-        .toLocaleLowerCase('es')
-        .includes(termino)
-    )
+  const filtrados = registros.filter(
+    (registro) =>
+      (catalogo !== 'laboratorios' || !filtroSede || String(registro.id_sede) === filtroSede) &&
+      config.columnas.some(({ campo }) =>
+        String(registro[campo] ?? '')
+          .toLocaleLowerCase('es')
+          .includes(termino)
+      )
   );
 
   const total = filtrados.length;
@@ -285,57 +289,53 @@ export default function Configuracion({ token, soloRoles = false }) {
         <div className="inv-encabezado-texto">
           <h1>{soloRoles ? 'Roles de usuarios' : 'Configuración'}</h1>
           <p>
-            {soloRoles ? 'Cree y organice roles personalizados. Los roles del sistema están protegidos; los permisos de inventario se asignan por usuario.' : 'Administre las categorías, estados, sedes y laboratorios.'}
+            {soloRoles
+              ? 'Cree y organice roles personalizados. Los roles del sistema están protegidos; los permisos de inventario se asignan por usuario.'
+              : 'Administre las categorías, estados, sedes y laboratorios.'}
           </p>
-        </div>        
-      
+        </div>
+
         <div className="inv-acciones">
-            <button
-              type="button"
-              className="btn btn-lg btn-icono"
-              aria-label="Actualizar catálogo"
-              title="Actualizar catálogo"
-              disabled={cargando}
-              onClick={() => setRecarga((valor) => valor + 1)}
-            >
-              <RefreshCw size={17} />
-            </button>
-
-            <button
-              type="button"
-              className="btn btn-lg btn-primario"
-              disabled={cargando || Boolean(error)}
-              onClick={() => abrirFormulario()}
-            >
-              <Plus size={17} />
-              Agregar {config.singular}
-            </button>
-          </div>
-      </div>
-
-      <div
-        className="cfg-pestanas"
-        role="group"
-        aria-label="Catálogos del sistema"
-      >
-        {Object.entries(CATALOGOS).filter(([clave]) => soloRoles ? clave === 'roles' : clave !== 'roles').map(([clave, opcion]) => (
           <button
-            key={clave}
             type="button"
-            className={catalogo === clave ? 'activa' : ''}
-            aria-pressed={catalogo === clave}
-            onClick={() => cambiarCatalogo(clave)}
+            className="btn btn-lg btn-icono"
+            aria-label="Actualizar catálogo"
+            title="Actualizar catálogo"
+            disabled={cargando}
+            onClick={() => setRecarga((valor) => valor + 1)}
           >
-            {opcion.nombre}
+            <RefreshCw size={17} />
           </button>
-        ))}
+
+          <button
+            type="button"
+            className="btn btn-lg btn-primario"
+            disabled={cargando || Boolean(error)}
+            onClick={() => abrirFormulario()}
+          >
+            <Plus size={17} />
+            Agregar {config.singular}
+          </button>
+        </div>
       </div>
 
-      {mensaje && (
-        <Notificacion tipo="exito">
-          {mensaje}
-        </Notificacion>
-      )}
+      <div className="cfg-pestanas" role="group" aria-label="Catálogos del sistema">
+        {Object.entries(CATALOGOS)
+          .filter(([clave]) => (soloRoles ? clave === 'roles' : clave !== 'roles'))
+          .map(([clave, opcion]) => (
+            <button
+              key={clave}
+              type="button"
+              className={catalogo === clave ? 'activa' : ''}
+              aria-pressed={catalogo === clave}
+              onClick={() => cambiarCatalogo(clave)}
+            >
+              {opcion.nombre}
+            </button>
+          ))}
+      </div>
+
+      {mensaje && <Notificacion tipo="exito">{mensaje}</Notificacion>}
 
       <section className="inv-contenedor" aria-label={config.nombre}>
         <div className="inv-barra-filtros">
@@ -366,8 +366,10 @@ export default function Configuracion({ token, soloRoles = false }) {
                 }}
               >
                 <option value="">Todas las sedes</option>
-                {sedes.map(sede => (
-                  <option key={sede.id_sede} value={String(sede.id_sede)}>{sede.nombre}</option>
+                {sedes.map((sede) => (
+                  <option key={sede.id_sede} value={String(sede.id_sede)}>
+                    {sede.nombre}
+                  </option>
                 ))}
               </select>
             </label>
@@ -376,7 +378,6 @@ export default function Configuracion({ token, soloRoles = false }) {
 
         {error ? (
           <Notificacion tipo="error">
-            
             <span>{error}</span>
           </Notificacion>
         ) : cargando ? (
@@ -389,39 +390,33 @@ export default function Configuracion({ token, soloRoles = false }) {
               <table className="inv-tabla">
                 <thead>
                   <tr>
-                    
                     {config.columnas.map(({ campo, titulo }) => (
                       <th key={campo} scope="col">
                         {titulo}
                       </th>
                     ))}
-                    
-                  <th scope="col" className="cfg-columna-acciones">Acciones</th>
+
+                    <th scope="col" className="cfg-columna-acciones">
+                      Acciones
+                    </th>
                   </tr>
                 </thead>
 
                 <tbody>
                   {visibles.length === 0 ? (
                     <tr>
-                      <td
-                        colSpan={config.columnas.length + 1}
-                        className="cfg-vacio"
-                      >
+                      <td colSpan={config.columnas.length + 1} className="cfg-vacio">
                         No se encontraron registros.
                       </td>
                     </tr>
                   ) : (
                     visibles.map((registro) => (
                       <tr key={registro[config.id]}>
-                        
                         {config.columnas.map(({ campo }) => (
-                          <td key={campo}>
-                            {registro[campo] ?? 'Sin información'}
-                          </td>
+                          <td key={campo}>{registro[campo] ?? 'Sin información'}</td>
                         ))}
 
-                        
-                      <td className="cfg-columna-acciones">
+                        <td className="cfg-columna-acciones">
                           <div className="cfg-acciones-fila">
                             <button
                               type="button"
@@ -453,9 +448,18 @@ export default function Configuracion({ token, soloRoles = false }) {
               </table>
             </div>
 
-            <Paginacion pagina={paginaActual} total={total} limite={limite}
-              singular="registro" plural="registros" onCambiar={setPagina}
-              onCambiarLimite={(valor) => { setLimite(valor); setPagina(1); }} />
+            <Paginacion
+              pagina={paginaActual}
+              total={total}
+              limite={limite}
+              singular="registro"
+              plural="registros"
+              onCambiar={setPagina}
+              onCambiarLimite={(valor) => {
+                setLimite(valor);
+                setPagina(1);
+              }}
+            />
           </>
         )}
       </section>
@@ -486,14 +490,17 @@ export default function Configuracion({ token, soloRoles = false }) {
             {modal.tipo === 'eliminar' ? (
               <>
                 <p className="cfg-confirmacion">
-                  ¿Desea eliminar «{modal.registro.nombre}»?
-                  Esta acción es permanente. Si está en uso, no se
-                  permitirá eliminarlo.
+                  ¿Desea eliminar «{modal.registro.nombre}»? Esta acción es permanente. Si está en
+                  uso, no se permitirá eliminarlo.
                 </p>
 
                 <label className="cfg-confirmar-check">
-                  <input type="checkbox" checked={eliminacionConfirmada} disabled={guardando}
-                    onChange={evento => setEliminacionConfirmada(evento.target.checked)} />
+                  <input
+                    type="checkbox"
+                    checked={eliminacionConfirmada}
+                    disabled={guardando}
+                    onChange={(evento) => setEliminacionConfirmada(evento.target.checked)}
+                  />
                   <span>Entiendo que esta eliminación es permanente y deseo continuar.</span>
                 </label>
 
@@ -521,77 +528,83 @@ export default function Configuracion({ token, soloRoles = false }) {
             ) : (
               <form onSubmit={guardar}>
                 <fieldset className="cfg-formulario" disabled={guardando}>
-                  {config.campos.map(
-                    ({ campo, titulo, max, obligatorio, tipo, ayuda }, indice) => (
-                      <label key={campo} className="cfg-campo">
-                        <span>
-                          {titulo}{obligatorio ? ' *' : ''}
-                        </span>
+                  {config.campos.map(({ campo, titulo, max, obligatorio, tipo, ayuda }, indice) => (
+                    <label key={campo} className="cfg-campo">
+                      <span>
+                        {titulo}
+                        {obligatorio ? ' *' : ''}
+                      </span>
 
-                        {tipo === 'booleano' ? (
-                          <input
-                            type="checkbox"
-                            checked={formulario[campo] === true}
-                            onChange={(e) => setFormulario((anterior) => ({ ...anterior, [campo]: e.target.checked }))}
-                          />
-                        ) : tipo === 'anios' ? (
-                          <input
-                            type="number" min="1" max="100" step="1"
-                            value={formulario[campo] ?? ''}
-                            onChange={(e) => setFormulario((anterior) => ({ ...anterior, [campo]: e.target.value }))}
-                          />
-                        ) : tipo === 'sede' ? (
-                          <select
-                            required={obligatorio}
-                            value={formulario[campo] ?? ''}
-                            onChange={(e) =>
-                              setFormulario((anterior) => ({
-                                ...anterior,
-                                [campo]: e.target.value,
-                              }))
-                            }
-                          >
-                            <option value="">Seleccione una sede</option>
-                            {sedes.map((sede) => (
-                              <option
-                                key={sede.id_sede}
-                                value={sede.id_sede}
-                              >
-                                {sede.nombre}
-                              </option>
-                            ))}
-                          </select>
-                        ) : campo === 'descripcion' ? (
-                          <textarea
-                            rows={3}
-                            maxLength={max}
-                            value={formulario[campo] ?? ''}
-                            onChange={(e) =>
-                              setFormulario((anterior) => ({
-                                ...anterior,
-                                [campo]: e.target.value,
-                              }))
-                            }
-                          />
-                        ) : (
-                          <input
-                            type="text"
-                            required={obligatorio}
-                            maxLength={max}
-                            autoFocus={indice === 0}
-                            value={formulario[campo] ?? ''}
-                            onChange={(e) =>
-                              setFormulario((anterior) => ({
-                                ...anterior,
-                                [campo]: e.target.value,
-                              }))
-                            }
-                          />
-                        )}
-                        {ayuda && <small>{ayuda}</small>}
-                      </label>
-                    )
-                  )}
+                      {tipo === 'booleano' ? (
+                        <input
+                          type="checkbox"
+                          checked={formulario[campo] === true}
+                          onChange={(e) =>
+                            setFormulario((anterior) => ({
+                              ...anterior,
+                              [campo]: e.target.checked,
+                            }))
+                          }
+                        />
+                      ) : tipo === 'anios' ? (
+                        <input
+                          type="number"
+                          min="1"
+                          max="100"
+                          step="1"
+                          value={formulario[campo] ?? ''}
+                          onChange={(e) =>
+                            setFormulario((anterior) => ({ ...anterior, [campo]: e.target.value }))
+                          }
+                        />
+                      ) : tipo === 'sede' ? (
+                        <select
+                          required={obligatorio}
+                          value={formulario[campo] ?? ''}
+                          onChange={(e) =>
+                            setFormulario((anterior) => ({
+                              ...anterior,
+                              [campo]: e.target.value,
+                            }))
+                          }
+                        >
+                          <option value="">Seleccione una sede</option>
+                          {sedes.map((sede) => (
+                            <option key={sede.id_sede} value={sede.id_sede}>
+                              {sede.nombre}
+                            </option>
+                          ))}
+                        </select>
+                      ) : campo === 'descripcion' ? (
+                        <textarea
+                          rows={3}
+                          maxLength={max}
+                          value={formulario[campo] ?? ''}
+                          onChange={(e) =>
+                            setFormulario((anterior) => ({
+                              ...anterior,
+                              [campo]: e.target.value,
+                            }))
+                          }
+                        />
+                      ) : (
+                        <input
+                          type="text"
+                          required={obligatorio}
+                          maxLength={max}
+                          autoFocus={indice === 0}
+                          value={formulario[campo] ?? ''}
+                          onChange={(e) =>
+                            setFormulario((anterior) => ({
+                              ...anterior,
+                              [campo]: e.target.value,
+                            }))
+                          }
+                        />
+                      )}
+                      {ayuda && <small>{ayuda}</small>}
+                    </label>
+                  ))}
                 </fieldset>
 
                 <div className="cfg-modal-acciones">
@@ -604,11 +617,7 @@ export default function Configuracion({ token, soloRoles = false }) {
                     Cancelar
                   </button>
 
-                  <button
-                    type="submit"
-                    className="btn btn-primario"
-                    disabled={guardando}
-                  >
+                  <button type="submit" className="btn btn-primario" disabled={guardando}>
                     {guardando ? 'Guardando...' : 'Guardar'}
                   </button>
                 </div>

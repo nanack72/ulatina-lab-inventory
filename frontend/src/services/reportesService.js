@@ -8,8 +8,8 @@ export async function consultarResumenGeneral(token, signal) {
     signal,
     headers: {
       Authorization: `Bearer ${token}`,
-      Accept: 'application/json'
-    }
+      Accept: 'application/json',
+    },
   });
 
   const resultado = await respuesta.json().catch(() => null);
@@ -28,21 +28,14 @@ export async function consultarResumenGeneral(token, signal) {
 /**
  * Consulta los mantenimientos específicos de un laboratorio.
  */
-export async function consultarMantenimientosPorLaboratorio(
-  idLaboratorio,
-  token,
-  signal
-) {
-  const respuesta = await fetch(
-    `${API_URL}/mantenimientos-laboratorio/${idLaboratorio}`,
-    {
-      signal,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/json'
-      }
-    }
-  );
+export async function consultarMantenimientosPorLaboratorio(idLaboratorio, token, signal) {
+  const respuesta = await fetch(`${API_URL}/mantenimientos-laboratorio/${idLaboratorio}`, {
+    signal,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+    },
+  });
 
   const resultado = await respuesta.json().catch(() => null);
 
@@ -64,15 +57,13 @@ export async function consultarMantenimientosPorLaboratorio(
 export async function descargarReporteExcel(token) {
   const respuesta = await fetch(`${API_URL}/exportar-excel`, {
     headers: {
-      Authorization: `Bearer ${token}`
-    }
+      Authorization: `Bearer ${token}`,
+    },
   });
 
   if (!respuesta.ok) {
     const errorJson = await respuesta.json().catch(() => null);
-    throw new Error(
-      errorJson?.message || 'No fue posible generar el reporte consolidado en Excel'
-    );
+    throw new Error(errorJson?.message || 'No fue posible generar el reporte consolidado en Excel');
   }
 
   // Se obtiene el stream binario como Blob para evitar corrupción de codificación

@@ -28,7 +28,7 @@ async function obtenerBaseUrl() {
     const controlador = new AbortController();
     const temporizador = setTimeout(() => controlador.abort(), 600);
     const respuesta = await fetch('http://localhost:3000/api/health', {
-      signal: controlador.signal
+      signal: controlador.signal,
     });
     clearTimeout(temporizador);
 
@@ -66,5 +66,5 @@ function cerrarServidorTest() {
 module.exports = {
   obtenerBaseUrl,
   cerrarServidorTest,
-  obtenerCredencialesTest
+  obtenerCredencialesTest,
 };

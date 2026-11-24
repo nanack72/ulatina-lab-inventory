@@ -4,7 +4,7 @@ const router = express.Router();
 const {
   crearIncidencia,
   obtenerIncidencias,
-  actualizarEstadoIncidencia
+  actualizarEstadoIncidencia,
 } = require('../controllers/incidenciasController');
 
 const { verificarToken } = require('../middlewares/authMiddleware');
@@ -21,7 +21,7 @@ const ROLES_OPERATIVOS = [
   'Coordinador',
   'Director',
   'Tecnico',
-  'Técnico'
+  'Técnico',
 ];
 
 router.use(verificarToken);
@@ -30,17 +30,9 @@ router.use(verificarToken);
 router.get('/', obtenerIncidencias);
 
 // 2. POST /api/incidencias -> Registrar reporte de falla
-router.post(
-  '/',
-  permitirRoles(...ROLES_OPERATIVOS),
-  crearIncidencia
-);
+router.post('/', permitirRoles(...ROLES_OPERATIVOS), crearIncidencia);
 
 // 3. PATCH /api/incidencias/:id/estado -> Modificar estado operativo
-router.patch(
-  '/:id/estado',
-  permitirRoles(...ROLES_OPERATIVOS),
-  actualizarEstadoIncidencia
-);
+router.patch('/:id/estado', permitirRoles(...ROLES_OPERATIVOS), actualizarEstadoIncidencia);
 
 module.exports = router;

@@ -15,7 +15,9 @@ export default function NavegacionMovil(props) {
 
   useEffect(() => {
     const pantalla = window.matchMedia('(min-width: 801px)');
-    const alCambiar = () => { if (pantalla.matches) dialogo.current?.close(); };
+    const alCambiar = () => {
+      if (pantalla.matches) dialogo.current?.close();
+    };
     pantalla.addEventListener('change', alCambiar);
     return () => pantalla.removeEventListener('change', alCambiar);
   }, []);
@@ -24,7 +26,9 @@ export default function NavegacionMovil(props) {
     if (!abierto) return;
     const previo = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = previo; };
+    return () => {
+      document.body.style.overflow = previo;
+    };
   }, [abierto]);
 
   function abrir() {
@@ -35,23 +39,52 @@ export default function NavegacionMovil(props) {
 
   return (
     <>
-      <button ref={boton} type="button" className="movil-menu-boton"
-        aria-controls={id} aria-expanded={abierto} aria-haspopup="dialog" onClick={abrir}>
-        <Menu size={21} aria-hidden="true" /><span>Menú</span>
+      <button
+        ref={boton}
+        type="button"
+        className="movil-menu-boton"
+        aria-controls={id}
+        aria-expanded={abierto}
+        aria-haspopup="dialog"
+        onClick={abrir}
+      >
+        <Menu size={21} aria-hidden="true" />
+        <span>Menú</span>
       </button>
-      <dialog ref={dialogo} id={id} className="movil-menu-dialogo" aria-label="Navegación del sistema"
+      <dialog
+        ref={dialogo}
+        id={id}
+        className="movil-menu-dialogo"
+        aria-label="Navegación del sistema"
         onClose={() => {
           setAbierto(false);
           if (window.matchMedia('(max-width: 800px)').matches) boton.current?.focus();
         }}
-        onClick={(event) => { if (event.target === event.currentTarget) cerrar(); }}>
+        onClick={(event) => {
+          if (event.target === event.currentTarget) cerrar();
+        }}
+      >
         <div className="movil-menu-panel">
-          <button ref={cierre} type="button" className="movil-menu-cerrar" onClick={cerrar} aria-label="Cerrar menú">
+          <button
+            ref={cierre}
+            type="button"
+            className="movil-menu-cerrar"
+            onClick={cerrar}
+            aria-label="Cerrar menú"
+          >
             <X size={22} aria-hidden="true" />
           </button>
-          <Sidebar {...props}
-            cambiarPagina={(pagina) => { cerrar(); props.cambiarPagina(pagina); }}
-            cerrarSesion={() => { cerrar(); props.cerrarSesion(); }} />
+          <Sidebar
+            {...props}
+            cambiarPagina={(pagina) => {
+              cerrar();
+              props.cambiarPagina(pagina);
+            }}
+            cerrarSesion={() => {
+              cerrar();
+              props.cerrarSesion();
+            }}
+          />
         </div>
       </dialog>
     </>

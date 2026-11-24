@@ -47,9 +47,7 @@ const ETIQUETAS_MANTENIMIENTO = {
   repuesto: 'Pendiente de repuesto',
 };
 
-// ==========================================
 // COMPONENTES DE LA PANTALLA
-// ==========================================
 
 function TarjetaResumen({ titulo, valor, detalle, icono: Icono, tono }) {
   return (
@@ -90,12 +88,17 @@ function Panel({ titulo, subtitulo, enlace, onEnlace, claseExtra = '', children 
 }
 
 function Aviso({ children, conError = false, onReintentar }) {
-  if (conError) return (
-    <Notificacion tipo="error">
-      <span>{children}</span>
-      {onReintentar && <button type="button" onClick={onReintentar}>Reintentar</button>}
-    </Notificacion>
-  );
+  if (conError)
+    return (
+      <Notificacion tipo="error">
+        <span>{children}</span>
+        {onReintentar && (
+          <button type="button" onClick={onReintentar}>
+            Reintentar
+          </button>
+        )}
+      </Notificacion>
+    );
   return (
     <div
       className={`ini-aviso ${conError ? 'ini-aviso--error' : ''}`}
@@ -120,27 +123,15 @@ function BotonEquipo({ id, onVerEquipo, className, children }) {
   }
 
   return (
-    <button
-      type="button"
-      className={className}
-      onClick={() => onVerEquipo({ id_equipo: id })}
-    >
+    <button type="button" className={className} onClick={() => onVerEquipo({ id_equipo: id })}>
       {children}
     </button>
   );
 }
 
-// ==========================================
 // PANTALLA DE INICIO
-// ==========================================
 
-export default function Inicio({
-  usuario,
-  token,
-  onVerEquipo,
-  onIrA,
-  onSesionExpirada,
-}) {
+export default function Inicio({ usuario, token, onVerEquipo, onIrA, onSesionExpirada }) {
   const {
     equipos,
     cargando: cargandoEquipos,
@@ -234,8 +225,6 @@ export default function Inicio({
             <span className="ini-fecha">{dia}</span> de {mes}.
           </p>
         </div>
-
-
       </header>
 
       {errorEquipos && (
@@ -251,11 +240,7 @@ export default function Inicio({
           valor={cifra(equiposListos, resumen.total)}
           detalle={
             equiposListos
-              ? `En ${plural(
-                  resumen.laboratorios,
-                  'laboratorio',
-                  'laboratorios'
-                )}`
+              ? `En ${plural(resumen.laboratorios, 'laboratorio', 'laboratorios')}`
               : 'Consultando…'
           }
           icono={Package}
@@ -266,9 +251,7 @@ export default function Inicio({
           titulo="Equipos operativos"
           valor={cifra(equiposListos, resumen.operativos)}
           detalle={
-            equiposListos
-              ? `${resumen.porcentajeOperativos}% del inventario`
-              : 'Consultando…'
+            equiposListos ? `${resumen.porcentajeOperativos}% del inventario` : 'Consultando…'
           }
           icono={Check}
           tono="verde"
@@ -330,7 +313,8 @@ export default function Inicio({
           </dl>
           {equiposListos && revision.ambas > 0 && (
             <p className="ini-revision-coincidencias">
-              {plural(revision.ambas, 'equipo cumple', 'equipos cumplen')} ambos criterios; se cuenta cada equipo una sola vez.
+              {plural(revision.ambas, 'equipo cumple', 'equipos cumplen')} ambos criterios; se
+              cuenta cada equipo una sola vez.
             </p>
           )}
         </div>
@@ -366,51 +350,46 @@ export default function Inicio({
                 </thead>
 
                 <tbody>
-                  {mantenimientos
-                    .slice(0, MANTENIMIENTOS_RECIENTES)
-                    .map((m) => {
-                      const estado = tipoMantenimiento(m.estado_mantenimiento);
-                      const correctivo =
-                        String(m.tipo_mantenimiento).toLowerCase() ===
-                        'correctivo';
+                  {mantenimientos.slice(0, MANTENIMIENTOS_RECIENTES).map((m) => {
+                    const estado = tipoMantenimiento(m.estado_mantenimiento);
+                    const correctivo = String(m.tipo_mantenimiento).toLowerCase() === 'correctivo';
 
-                      return (
-                        <tr key={m.id_bitacora}>
-                          <td>
-                            <BotonEquipo
-                              id={m.id_equipo}
-                              onVerEquipo={onVerEquipo}
-                              className="ini-equipo"
-                            >
-                              {m.nombre_equipo || 'Sin nombre'}
-                            </BotonEquipo>
-                            <small>{m.placa_institucional || 'Sin placa'}</small>
-                          </td>
+                    return (
+                      <tr key={m.id_bitacora}>
+                        <td>
+                          <BotonEquipo
+                            id={m.id_equipo}
+                            onVerEquipo={onVerEquipo}
+                            className="ini-equipo"
+                          >
+                            {m.nombre_equipo || 'Sin nombre'}
+                          </BotonEquipo>
+                          <small>{m.placa_institucional || 'Sin placa'}</small>
+                        </td>
 
-                          <td>
-                            {m.nombre_laboratorio}
-                            <small>{formatearSede(m.nombre_sede)}</small>
-                          </td>
+                        <td>
+                          {m.nombre_laboratorio}
+                          <small>{formatearSede(m.nombre_sede)}</small>
+                        </td>
 
-                          <td>
-                            <span
-                              className={`ini-pill ${
-                                correctivo ? 'ini-pill--ambar' : 'ini-pill--verde'
-                              }`}
-                            >
-                              {m.tipo_mantenimiento}
-                            </span>
-                          </td>
+                        <td>
+                          <span
+                            className={`ini-pill ${
+                              correctivo ? 'ini-pill--ambar' : 'ini-pill--verde'
+                            }`}
+                          >
+                            {m.tipo_mantenimiento}
+                          </span>
+                        </td>
 
-                          <td>
-                            <span className={`ini-pill ini-pill--${estado}`}>
-                              {ETIQUETAS_MANTENIMIENTO[estado] ??
-                                m.estado_mantenimiento}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                        <td>
+                          <span className={`ini-pill ini-pill--${estado}`}>
+                            {ETIQUETAS_MANTENIMIENTO[estado] ?? m.estado_mantenimiento}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -479,9 +458,7 @@ export default function Inicio({
               const Icono = ICONOS_ACTIVIDAD[icono] ?? ArrowLeftRight;
 
               return (
-                <li
-                  key={`${movimiento.tipo}-${movimiento.id_equipo}-${movimiento.fecha}`}
-                >
+                <li key={`${movimiento.tipo}-${movimiento.id_equipo}-${movimiento.fecha}`}>
                   <span className="ini-icono ini-icono--verde ini-icono--redondo">
                     <Icono size={17} aria-hidden="true" />
                   </span>
@@ -494,9 +471,7 @@ export default function Inicio({
                         onVerEquipo={onVerEquipo}
                         className="ini-equipo ini-equipo--chico"
                       >
-                        {movimiento.nombre ||
-                          movimiento.placa_institucional ||
-                          'Equipo'}
+                        {movimiento.nombre || movimiento.placa_institucional || 'Equipo'}
                       </BotonEquipo>
                       {' · '}
                       {tiempoRelativo(movimiento.fecha, ahora)}

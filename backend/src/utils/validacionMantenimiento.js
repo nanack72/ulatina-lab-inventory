@@ -1,7 +1,7 @@
 const { nombreCampo } = require('./nombresCampos');
 function validarEntradaMantenimiento(body, actualizacion = false) {
   if (!body || typeof body !== 'object' || Array.isArray(body))
-    return "Complete los datos del mantenimiento.";
+    return 'Complete los datos del mantenimiento.';
   for (const campo of ['id_equipo', 'id_nuevo_estado']) {
     const v = body[campo];
     if (v === undefined || v === null || v === '') continue;

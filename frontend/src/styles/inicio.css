@@ -1,9 +1,8 @@
-/* ======================================
+/* 
    INICIO (DASHBOARD)
-   ====================================== */
+    */
 
 .ini-pagina {
-
   display: flex;
   flex-direction: column;
   gap: 22px;
@@ -104,11 +103,26 @@
   border-radius: 50%;
 }
 
-.ini-icono--gris { background: #eff1f3; color: #4a5565; }
-.ini-icono--verde { background: #e6f2ec; color: var(--verde); }
-.ini-icono--ambar { background: #fdf0d9; color: #9a5b00; }
-.ini-icono--azul { background: #e4eefb; color: #1d5fa8; }
-.ini-icono--rojo { background: #fde8e8; color: #b42323; }
+.ini-icono--gris {
+  background: #eff1f3;
+  color: #4a5565;
+}
+.ini-icono--verde {
+  background: #e6f2ec;
+  color: var(--verde);
+}
+.ini-icono--ambar {
+  background: #fdf0d9;
+  color: #9a5b00;
+}
+.ini-icono--azul {
+  background: #e4eefb;
+  color: #1d5fa8;
+}
+.ini-icono--rojo {
+  background: #fde8e8;
+  color: #b42323;
+}
 
 /* FILA CENTRAL */
 
@@ -271,11 +285,23 @@ button.ini-equipo:hover {
 }
 
 .ini-pill--gris,
-.ini-pill--otro { background: #eff1f3; color: #3f4a5a; }
+.ini-pill--otro {
+  background: #eff1f3;
+  color: #3f4a5a;
+}
 .ini-pill--ambar,
-.ini-pill--repuesto { background: #fdf0d9; color: #8a5200; }
-.ini-pill--completado { background: #e6f2ec; color: #1a5a3f; }
-.ini-pill--proceso { background: #e4eefb; color: #1b559a; }
+.ini-pill--repuesto {
+  background: #fdf0d9;
+  color: #8a5200;
+}
+.ini-pill--completado {
+  background: #e6f2ec;
+  color: #1a5a3f;
+}
+.ini-pill--proceso {
+  background: #e4eefb;
+  color: #1b559a;
+}
 
 /* REQUIERE ATENCIÓN */
 
@@ -387,9 +413,6 @@ button.ini-equipo:hover {
   }
 }
 
-
-
-
 .ini-revision-banda {
   display: grid;
   grid-template-columns: minmax(220px, 1fr) minmax(0, 2fr);
@@ -404,7 +427,9 @@ button.ini-equipo:hover {
   min-width: 0;
 }
 
-.ini-revision-desglose { min-width: 0; }
+.ini-revision-desglose {
+  min-width: 0;
+}
 
 .ini-revision-cifras {
   display: grid;
@@ -440,8 +465,14 @@ button.ini-equipo:hover {
 }
 
 @media (max-width: 650px) {
-  .ini-revision-banda { grid-template-columns: minmax(0, 1fr); gap: 20px; }
-  .ini-revision-cifras { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .ini-revision-banda {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+  .ini-revision-cifras {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
   .ini-revision-cifras > div {
     display: flex;
     align-items: center;
@@ -451,7 +482,9 @@ button.ini-equipo:hover {
     border-left: 0;
     border-top: 1px solid var(--borde, #d3e2db);
   }
-  .ini-revision-cifras dd { margin: 0; }
+  .ini-revision-cifras dd {
+    margin: 0;
+  }
 }
 
 /* Misma paleta de cifras que en Reportes. */

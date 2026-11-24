@@ -1,10 +1,10 @@
-/* ======================================================
+/* 
    COMPONENTES COMPARTIDOS
    Uso:  <button className="btn btn-primario">Guardar</button>
    Variantes: btn-primario | btn-secundario | btn-contorno
               btn-peligro  | btn-icono (cuadrado, solo ícono)
    Tamaños: btn-sm (pequeño) | btn-lg (botones de encabezado)
-   ====================================================== */
+    */
 
 .btn {
   display: inline-flex;
@@ -21,7 +21,9 @@
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .btn-lg {

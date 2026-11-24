@@ -1,7 +1,7 @@
-/* ======================================================
+/* 
    IMPORTACIÓN DE EQUIPOS (diálogo de 3 pasos)
    Estructura: cabecera fija · cuerpo con scroll · pie fijo
-   ====================================================== */
+    */
 
 .imp-dialogo {
   width: min(1000px, calc(100% - 32px));
@@ -21,7 +21,7 @@
 }
 
 /* En la revisión la altura es fija para que no "salte" al cambiar de página */
-.imp-dialogo[data-paso="revision"] {
+.imp-dialogo[data-paso='revision'] {
   height: min(860px, calc(100dvh - 40px));
 }
 
@@ -261,7 +261,9 @@
   background: var(--blanco);
   color: var(--verde);
   text-align: center;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .imp-carga-activa {
@@ -413,7 +415,7 @@
   font-weight: 500;
 }
 
-.imp-dialogo input[type="checkbox"] {
+.imp-dialogo input[type='checkbox'] {
   width: 16px;
   height: 16px;
   margin: 0;
@@ -765,7 +767,7 @@
 /* ---------- Accesibilidad ---------- */
 
 .imp-dialogo summary:focus-visible,
-.imp-dialogo input[type="checkbox"]:focus-visible,
+.imp-dialogo input[type='checkbox']:focus-visible,
 .imp-paginacion button:focus-visible {
   outline: 2px solid var(--verde);
   outline-offset: 2px;
@@ -785,7 +787,7 @@
     max-height: calc(100dvh - 16px);
   }
 
-  .imp-dialogo[data-paso="revision"] {
+  .imp-dialogo[data-paso='revision'] {
     height: calc(100dvh - 16px);
   }
 

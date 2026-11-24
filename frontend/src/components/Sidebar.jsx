@@ -7,7 +7,7 @@ import {
   ChartNoAxesColumn,
   Users,
   Settings,
-  LogOut
+  LogOut,
 } from 'lucide-react';
 
 import logoBlanco from '../assets/images/logo-ulatina-blanco.png';
@@ -19,12 +19,12 @@ const opcionesPrincipales = [
   { id: 'mantenimiento', nombre: 'Mantenimiento', Icono: Wrench },
   { id: 'incidencias', nombre: 'Incidencias', Icono: TriangleAlert },
   { id: 'historial', nombre: 'Historial', Icono: History },
-  { id: 'reportes', nombre: 'Reportes', Icono: ChartNoAxesColumn }
+  { id: 'reportes', nombre: 'Reportes', Icono: ChartNoAxesColumn },
 ];
 
 const opcionesAdministracion = [
   { id: 'usuarios', nombre: 'Usuarios', Icono: Users },
-  { id: 'configuracion', nombre: 'Configuración', Icono: Settings }
+  { id: 'configuracion', nombre: 'Configuración', Icono: Settings },
 ];
 
 // "Carlos Rodríguez" -> "CR"
@@ -39,14 +39,8 @@ function obtenerIniciales(nombre) {
   return letras.join('') || '?';
 }
 
-export default function Sidebar({
-  paginaActual,
-  cambiarPagina,
-  usuario,
-  cerrarSesion
-}) {
-  const esSuperadministrador =
-    usuario?.rol?.trim().toLowerCase() === 'superadministrador';
+export default function Sidebar({ paginaActual, cambiarPagina, usuario, cerrarSesion }) {
+  const esSuperadministrador = usuario?.rol?.trim().toLowerCase() === 'superadministrador';
 
   const nombreUsuario = usuario?.nombre?.trim() || 'Mi perfil';
   const perfilActivo = paginaActual === 'perfil';
@@ -55,9 +49,7 @@ export default function Sidebar({
     <button
       key={id}
       type="button"
-      className={`sidebar-link ${
-        paginaActual === id ? 'sidebar-link-active' : ''
-      }`}
+      className={`sidebar-link ${paginaActual === id ? 'sidebar-link-active' : ''}`}
       onClick={() => cambiarPagina(id)}
       aria-current={paginaActual === id ? 'page' : undefined}
     >
@@ -72,44 +64,29 @@ export default function Sidebar({
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
-        <img
-          src={logoBlanco}
-          alt="Universidad Latina de Costa Rica"
-          className="sidebar-logo"
-        />
+        <img src={logoBlanco} alt="Universidad Latina de Costa Rica" className="sidebar-logo" />
       </div>
 
       <nav className="sidebar-navigation" aria-label="Menú principal">
         <div className="sidebar-grupo">
           <span className="sidebar-section-title">PRINCIPAL</span>
 
-          <div className="sidebar-menu">
-            {opcionesPrincipales.map(renderizarOpcion)}
-          </div>
+          <div className="sidebar-menu">{opcionesPrincipales.map(renderizarOpcion)}</div>
         </div>
       </nav>
 
       {esSuperadministrador && (
-        <nav
-          className="sidebar-grupo sidebar-admin"
-          aria-label="Administración"
-        >
-          <span className="sidebar-section-title">
-            ADMINISTRACIÓN
-          </span>
+        <nav className="sidebar-grupo sidebar-admin" aria-label="Administración">
+          <span className="sidebar-section-title">ADMINISTRACIÓN</span>
 
-          <div className="sidebar-menu">
-            {opcionesAdministracion.map(renderizarOpcion)}
-          </div>
+          <div className="sidebar-menu">{opcionesAdministracion.map(renderizarOpcion)}</div>
         </nav>
       )}
 
       <div className="sidebar-bottom">
         <button
           type="button"
-          className={`sidebar-perfil ${
-            perfilActivo ? 'sidebar-perfil-active' : ''
-          }`}
+          className={`sidebar-perfil ${perfilActivo ? 'sidebar-perfil-active' : ''}`}
           onClick={() => cambiarPagina('perfil')}
           aria-current={perfilActivo ? 'page' : undefined}
           aria-label={`Mi perfil: ${nombreUsuario}`}
@@ -125,11 +102,7 @@ export default function Sidebar({
           </span>
         </button>
 
-        <button
-          type="button"
-          className="sidebar-link sidebar-logout"
-          onClick={cerrarSesion}
-        >
+        <button type="button" className="sidebar-link sidebar-logout" onClick={cerrarSesion}>
           <span className="sidebar-link-icono">
             <LogOut size={18} strokeWidth={1.9} aria-hidden="true" />
           </span>

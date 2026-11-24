@@ -2,67 +2,62 @@
 
 export const PRIORIDADES_INCIDENCIA = ['Crítica', 'Alta', 'Media', 'Baja'];
 
-export const ESTADOS_INCIDENCIA = [
-  'Abierta',
-  'En Revisión',
-  'Resuelta',
-  'Descartada'
-];
+export const ESTADOS_INCIDENCIA = ['Abierta', 'En Revisión', 'Resuelta', 'Descartada'];
 
 export const COLORES_PRIORIDAD = {
-  'Crítica': {
+  Crítica: {
     fondo: '#fee2e2',
     texto: '#991b1b',
     borde: '#fecaca',
-    punto: '#dc2626'
+    punto: '#dc2626',
   },
-  'Alta': {
+  Alta: {
     fondo: '#ffedd5',
     texto: '#c2410c',
     borde: '#fed7aa',
-    punto: '#ea580c'
+    punto: '#ea580c',
   },
-  'Media': {
+  Media: {
     fondo: '#fef3c7',
     texto: '#b45309',
     borde: '#fde68a',
-    punto: '#d97706'
+    punto: '#d97706',
   },
-  'Baja': {
+  Baja: {
     fondo: '#f1f5f9',
     texto: '#475569',
     borde: '#e2e8f0',
-    punto: '#64748b'
-  }
+    punto: '#64748b',
+  },
 };
 
 export const COLORES_ESTADO_INCIDENCIA = {
-  'Abierta': {
+  Abierta: {
     fondo: '#fef2f2',
     texto: '#b91c1c',
-    borde: '#fca5a5'
+    borde: '#fca5a5',
   },
   'En Revisión': {
     fondo: '#eff6ff',
     texto: '#1d4ed8',
-    borde: '#bfdbfe'
+    borde: '#bfdbfe',
   },
-  'Resuelta': {
+  Resuelta: {
     fondo: '#ecfdf5',
     texto: '#047857',
-    borde: '#a7f3d0'
+    borde: '#a7f3d0',
   },
-  'Descartada': {
+  Descartada: {
     fondo: '#f8fafc',
     texto: '#64748b',
-    borde: '#cbd5e1'
-  }
+    borde: '#cbd5e1',
+  },
 };
 
 export function formatearFechaIncidencia(fechaIso) {
-  if (!fechaIso) return "No disponible";
+  if (!fechaIso) return 'No disponible';
   const fecha = new Date(fechaIso);
-  if (isNaN(fecha.getTime())) return "No disponible";
+  if (isNaN(fecha.getTime())) return 'No disponible';
 
   return new Intl.DateTimeFormat('es-CR', {
     timeZone: 'America/Costa_Rica',
@@ -71,6 +66,6 @@ export function formatearFechaIncidencia(fechaIso) {
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-    hour12: true
+    hour12: true,
   }).format(fecha);
 }

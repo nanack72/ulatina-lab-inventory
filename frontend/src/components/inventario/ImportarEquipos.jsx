@@ -47,12 +47,7 @@ const CAMPOS_TEXTO = [
   { campo: 'ubicacion_detalle', etiqueta: 'Ubicación detallada', max: 255 },
 ];
 
-export default function ImportarEquipos({
-  abierto,
-  token,
-  onCerrar,
-  onImportados,
-}) {
+export default function ImportarEquipos({ abierto, token, onCerrar, onImportados }) {
   const dialogoRef = useRef(null);
   const operandoRef = useRef(false);
   const cuerpoRef = useRef(null);
@@ -78,28 +73,34 @@ export default function ImportarEquipos({
   const [resumen, setResumen] = useState(null);
   const [soloObservaciones, setSoloObservaciones] = useState(false);
 
-useEffect(() => {
-  const dialogo = dialogoRef.current;
+  useEffect(() => {
+    const dialogo = dialogoRef.current;
 
-  if (!dialogo) return;
+    if (!dialogo) return;
 
-  if (abierto && !dialogo.open) {
-    dialogo.showModal();
-  } else if (!abierto && dialogo.open) {
-    dialogo.close();
-  }
-
-  return () => {
-    if (dialogo.open) {
+    if (abierto && !dialogo.open) {
+      dialogo.showModal();
+    } else if (!abierto && dialogo.open) {
       dialogo.close();
     }
-  };
-}, [abierto]);
-  useEffect(() => { if (abierto) dialogoRef.current?.querySelector('h2')?.focus(); }, [paso, abierto]);
+
+    return () => {
+      if (dialogo.open) {
+        dialogo.close();
+      }
+    };
+  }, [abierto]);
+  useEffect(() => {
+    if (abierto) dialogoRef.current?.querySelector('h2')?.focus();
+  }, [paso, abierto]);
   // Cada cambio de paso o de página vuelve al inicio del contenido.
-  useEffect(() => { cuerpoRef.current?.scrollTo({ top: 0 }); }, [paso, pagina, soloObservaciones]);
-  useEffect(() => { if (error) cuerpoRef.current?.scrollTo({ top: 0 }); }, [error]);
-  
+  useEffect(() => {
+    cuerpoRef.current?.scrollTo({ top: 0 });
+  }, [paso, pagina, soloObservaciones]);
+  useEffect(() => {
+    if (error) cuerpoRef.current?.scrollTo({ top: 0 });
+  }, [error]);
+
   function cerrar() {
     if (operandoRef.current) return;
     onCerrar?.();
@@ -140,9 +141,7 @@ useEffect(() => {
 
       setCatalogos(resultado.catalogos);
       setAvisosFotos(resultado.avisos_fotos || []);
-      setSeleccionadas(
-        resultado.filas.map((fila) => fila.fila)
-      );
+      setSeleccionadas(resultado.filas.map((fila) => fila.fila));
 
       setPagina(1);
       setPaso('revision');
@@ -180,18 +179,14 @@ useEffect(() => {
 
   function sedeDeFila(fila) {
     return (
-      catalogos.laboratorios.find(
-        (lab) => lab.id_laboratorio === fila.id_laboratorio
-      )?.id_sede ??
+      catalogos.laboratorios.find((lab) => lab.id_laboratorio === fila.id_laboratorio)?.id_sede ??
       fila.id_sede ??
       null
     );
   }
 
   function cambiarSede(numeroFila, idSede) {
-    const delaSede = catalogos.laboratorios.filter(
-      (lab) => lab.id_sede === idSede
-    );
+    const delaSede = catalogos.laboratorios.filter((lab) => lab.id_sede === idSede);
 
     setFilas((anteriores) =>
       anteriores.map((fila) =>
@@ -200,10 +195,7 @@ useEffect(() => {
               ...fila,
               id_sede: idSede,
               // Con una sola opción se elige sola; si no, se vuelve a escoger.
-              id_laboratorio:
-                idSede && delaSede.length === 1
-                  ? delaSede[0].id_laboratorio
-                  : null,
+              id_laboratorio: idSede && delaSede.length === 1 ? delaSede[0].id_laboratorio : null,
               modificado: true,
             }
           : fila
@@ -212,9 +204,7 @@ useEffect(() => {
   }
 
   function cambiarLaboratorio(numeroFila, idLaboratorio) {
-    const laboratorio = catalogos.laboratorios.find(
-      (lab) => lab.id_laboratorio === idLaboratorio
-    );
+    const laboratorio = catalogos.laboratorios.find((lab) => lab.id_laboratorio === idLaboratorio);
 
     setFilas((anteriores) =>
       anteriores.map((fila) =>
@@ -245,28 +235,37 @@ useEffect(() => {
   async function guardarFotos(cola) {
     const pendientes = [];
     for (const foto of cola) {
-      try { await agregarFoto(foto.id, foto.archivo, token); }
-      catch (error) { pendientes.push({...foto, error:error.message}); }
+      try {
+        await agregarFoto(foto.id, foto.archivo, token);
+      } catch (error) {
+        pendientes.push({ ...foto, error: error.message });
+      }
     }
     setFotosPendientes(pendientes);
     return pendientes;
   }
   async function reintentarFotos() {
     if (operandoRef.current) return;
-    operandoRef.current = true; setOcupado(true);
+    operandoRef.current = true;
+    setOcupado(true);
     try {
       const pendientes = await guardarFotos(fotosPendientes);
-      notificar({ id: 'importacion-equipos-resultado', tipo: pendientes.length ? 'advertencia' : 'exito',
-        mensaje: pendientes.length ? 'Todavía hay fotos pendientes. Revise el detalle para reintentarlas.' : 'Todas las fotos pendientes se guardaron correctamente.' });
+      notificar({
+        id: 'importacion-equipos-resultado',
+        tipo: pendientes.length ? 'advertencia' : 'exito',
+        mensaje: pendientes.length
+          ? 'Todavía hay fotos pendientes. Revise el detalle para reintentarlas.'
+          : 'Todas las fotos pendientes se guardaron correctamente.',
+      });
+    } finally {
+      operandoRef.current = false;
+      setOcupado(false);
     }
-    finally { operandoRef.current = false; setOcupado(false); }
   }
   async function confirmar() {
     if (operandoRef.current) return;
 
-    const elegidas = filas.filter((fila) =>
-      seleccionadas.includes(fila.fila)
-    );
+    const elegidas = filas.filter((fila) => seleccionadas.includes(fila.fila));
 
     if (elegidas.length === 0) {
       setError('Seleccione al menos un equipo.');
@@ -277,19 +276,13 @@ useEffect(() => {
       fila: fila.fila,
       nombre: String(fila.nombre ?? '').trim(),
       numero_serie: String(fila.numero_serie ?? '').trim() || null,
-      placa_institucional:
-        String(fila.placa_institucional ?? '').trim() || null,
+      placa_institucional: String(fila.placa_institucional ?? '').trim() || null,
       marca: String(fila.marca ?? '').trim() || null,
       modelo: String(fila.modelo ?? '').trim() || null,
-      anio: fila.anio === '' || fila.anio == null
-        ? null
-        : fila.anio,
-      caracteristicas:
-        String(fila.caracteristicas ?? '').trim() || null,
-      comentarios:
-        String(fila.comentarios ?? '').trim() || null,
-      ubicacion_detalle:
-        String(fila.ubicacion_detalle ?? '').trim() || null,
+      anio: fila.anio === '' || fila.anio == null ? null : fila.anio,
+      caracteristicas: String(fila.caracteristicas ?? '').trim() || null,
+      comentarios: String(fila.comentarios ?? '').trim() || null,
+      ubicacion_detalle: String(fila.ubicacion_detalle ?? '').trim() || null,
       id_categoria: fila.id_categoria,
       id_estado: fila.id_estado,
       id_laboratorio: fila.id_laboratorio,
@@ -302,38 +295,43 @@ useEffect(() => {
     try {
       const comprobacion = await confirmarImportacionEquipos(datos, token, true);
       const revisadas = comprobacion.data.filas;
-      if (revisadas.some(f => f.errores.length)) {
-        setFilas(anteriores => anteriores.map(f => {
-          const revisada = revisadas.find(r => r.fila === f.fila);
-          return revisada ? {...f, errores:revisada.errores, modificado:false} : f;
-        }));
-        setError('Hay equipos seleccionados con errores. Corríjalos o desmárquelos para continuar.');
+      if (revisadas.some((f) => f.errores.length)) {
+        setFilas((anteriores) =>
+          anteriores.map((f) => {
+            const revisada = revisadas.find((r) => r.fila === f.fila);
+            return revisada ? { ...f, errores: revisada.errores, modificado: false } : f;
+          })
+        );
+        setError(
+          'Hay equipos seleccionados con errores. Corríjalos o desmárquelos para continuar.'
+        );
         return;
       }
       const resultado = await confirmarImportacionEquipos(datos, token);
       const cola = [];
-      for (const guardado of resultado.data.resultados.filter(f => f.importado)) {
-        const fila = elegidas.find(f => f.fila === guardado.fila);
+      for (const guardado of resultado.data.resultados.filter((f) => f.importado)) {
+        const fila = elegidas.find((f) => f.fila === guardado.fila);
         for (const imagen of fila.imagenes || []) {
-          const bytes = Uint8Array.from(atob(imagen.base64), c => c.charCodeAt(0));
-          cola.push({id:guardado.id_equipo, nombre:fila.nombre, archivo:new File([bytes], imagen.nombre, {type:imagen.mime})});
+          const bytes = Uint8Array.from(atob(imagen.base64), (c) => c.charCodeAt(0));
+          cola.push({
+            id: guardado.id_equipo,
+            nombre: fila.nombre,
+            archivo: new File([bytes], imagen.nombre, { type: imagen.mime }),
+          });
         }
-        for (const archivo of fila.adjuntos || []) cola.push({id:guardado.id_equipo, nombre:fila.nombre, archivo});
+        for (const archivo of fila.adjuntos || [])
+          cola.push({ id: guardado.id_equipo, nombre: fila.nombre, archivo });
       }
       const pendientesFotos = await guardarFotos([...fotosPendientes, ...cola]);
 
       const resultados = resultado.data.resultados;
 
       const importadas = new Set(
-        resultados
-          .filter((fila) => fila.importado)
-          .map((fila) => fila.fila)
+        resultados.filter((fila) => fila.importado).map((fila) => fila.fila)
       );
 
       const erroresPorFila = new Map(
-        resultados
-          .filter((fila) => !fila.importado)
-          .map((fila) => [fila.fila, fila.errores])
+        resultados.filter((fila) => !fila.importado).map((fila) => [fila.fila, fila.errores])
       );
 
       // Retirar las filas ya guardadas para que no se vuelvan
@@ -352,11 +350,7 @@ useEffect(() => {
           )
       );
 
-      setSeleccionadas(
-        resultados
-          .filter((fila) => !fila.importado)
-          .map((fila) => fila.fila)
-      );
+      setSeleccionadas(resultados.filter((fila) => !fila.importado).map((fila) => fila.fila));
 
       setResumen({
         mensaje: resultado.message,
@@ -367,8 +361,17 @@ useEffect(() => {
       setPagina(1);
       notificar({
         id: 'importacion-equipos-resultado',
-        tipo: resultado.data.importados === 0 ? 'error' : resultado.data.rechazados > 0 || pendientesFotos.length > 0 ? 'advertencia' : 'exito',
-        mensaje: resultado.message + (pendientesFotos.length ? ' Hay fotos pendientes; puede reintentarlas desde el resultado.' : ''),
+        tipo:
+          resultado.data.importados === 0
+            ? 'error'
+            : resultado.data.rechazados > 0 || pendientesFotos.length > 0
+              ? 'advertencia'
+              : 'exito',
+        mensaje:
+          resultado.message +
+          (pendientesFotos.length
+            ? ' Hay fotos pendientes; puede reintentarlas desde el resultado.'
+            : ''),
       });
       setPaso('resultado');
 
@@ -387,21 +390,15 @@ useEffect(() => {
     ? filas.filter((fila) => fila.errores?.length > 0 || fila.modificado)
     : filas;
 
-  const totalPaginas = Math.max(
-    1,
-    Math.ceil(filasMostradas.length / POR_PAGINA)
-  );
+  const totalPaginas = Math.max(1, Math.ceil(filasMostradas.length / POR_PAGINA));
 
   const paginaActual = Math.min(pagina, totalPaginas);
   const inicio = (paginaActual - 1) * POR_PAGINA;
   const visibles = filasMostradas.slice(inicio, inicio + POR_PAGINA);
   const todasSeleccionadas =
-    filas.length > 0 &&
-    filas.every((fila) => seleccionadas.includes(fila.fila));
+    filas.length > 0 && filas.every((fila) => seleccionadas.includes(fila.fila));
 
-  const erroresPendientes = filas.filter(
-    (fila) => fila.errores?.length > 0
-  ).length;
+  const erroresPendientes = filas.filter((fila) => fila.errores?.length > 0).length;
 
   return (
     <dialog
@@ -448,8 +445,7 @@ useEffect(() => {
         <ol className="imp-pasos" aria-label="Pasos de importación">
           {PASOS.map(({ id, texto }, indice) => {
             const actual = PASOS.findIndex((p) => p.id === paso);
-            const estado =
-              indice < actual ? 'hecho' : indice === actual ? 'actual' : '';
+            const estado = indice < actual ? 'hecho' : indice === actual ? 'actual' : '';
 
             return (
               <li
@@ -458,11 +454,7 @@ useEffect(() => {
                 aria-current={estado === 'actual' ? 'step' : undefined}
               >
                 <span className="imp-paso-numero">
-                  {estado === 'hecho' ? (
-                    <Check size={12} aria-hidden="true" />
-                  ) : (
-                    indice + 1
-                  )}
+                  {estado === 'hecho' ? <Check size={12} aria-hidden="true" /> : indice + 1}
                 </span>
                 {texto}
               </li>
@@ -472,254 +464,277 @@ useEffect(() => {
       </header>
 
       <div className="imp-cuerpo" ref={cuerpoRef}>
-      {paso === 'revision' && avisosFotos.length > 0 && (
-        <details className="imp-aviso">
-          <summary>
-            <TriangleAlert size={16} aria-hidden="true" />
-            Avisos sobre imágenes ({avisosFotos.length})
-            <ChevronDown size={16} aria-hidden="true" />
-          </summary>
-          <ul>
-            {avisosFotos.map((aviso, i) => (
-              <li key={i}>{aviso}</li>
-            ))}
-          </ul>
-        </details>
-      )}
+        {paso === 'revision' && avisosFotos.length > 0 && (
+          <details className="imp-aviso">
+            <summary>
+              <TriangleAlert size={16} aria-hidden="true" />
+              Avisos sobre imágenes ({avisosFotos.length})
+              <ChevronDown size={16} aria-hidden="true" />
+            </summary>
+            <ul>
+              {avisosFotos.map((aviso, i) => (
+                <li key={i}>{aviso}</li>
+              ))}
+            </ul>
+          </details>
+        )}
 
-      {error && (
-        <Notificacion tipo="error">
-          
-          <span>{error}</span>
-        </Notificacion>
-      )}
+        {error && (
+          <Notificacion tipo="error">
+            <span>{error}</span>
+          </Notificacion>
+        )}
 
-      {paso === 'archivo' && (
-        <>
-          <div className={`imp-carga ${arrastrando ? 'imp-carga-activa' : ''}`}
-            onDragOver={e=>{e.preventDefault();if(!ocupado)setArrastrando(true);}}
-            onDragLeave={()=>setArrastrando(false)}
-            onDrop={e=>{e.preventDefault();setArrastrando(false);if(ocupado)return;
-              if(e.dataTransfer.files.length!==1){setError('Arrastre un único archivo Excel.');return;}
-              setArchivo(e.dataTransfer.files[0]);setError('');}}>
-            <FileSpreadsheet size={38} aria-hidden="true" />
-
-            <label htmlFor="imp-archivo">
-              Arrastre su Excel aquí o selecciónelo
-            </label>
-
-            <input
-              id="imp-archivo"
-              name="archivo"
-              type="file"
-              accept=".xlsx"
-              disabled={ocupado}
-              onChange={(evento) => {
-                setArchivo(evento.target.files?.[0] ?? null);
+        {paso === 'archivo' && (
+          <>
+            <div
+              className={`imp-carga ${arrastrando ? 'imp-carga-activa' : ''}`}
+              onDragOver={(e) => {
+                e.preventDefault();
+                if (!ocupado) setArrastrando(true);
+              }}
+              onDragLeave={() => setArrastrando(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setArrastrando(false);
+                if (ocupado) return;
+                if (e.dataTransfer.files.length !== 1) {
+                  setError('Arrastre un único archivo Excel.');
+                  return;
+                }
+                setArchivo(e.dataTransfer.files[0]);
                 setError('');
               }}
-            />
+            >
+              <FileSpreadsheet size={38} aria-hidden="true" />
 
-            <p role="status" className={archivo ? 'imp-archivo-elegido' : ''}>
-              {archivo ? (
-                <>
-                  <Check size={14} aria-hidden="true" />
-                  {archivo.name}
-                </>
-              ) : (
-                'Ningún archivo seleccionado'
-              )}
-            </p>
-            <p>Formato .xlsx · Máximo 5 MB y 200 equipos.</p>
-          </div>
+              <label htmlFor="imp-archivo">Arrastre su Excel aquí o selecciónelo</label>
 
-          <ul className="imp-instrucciones">
-            <li>
-              Se lee la hoja <strong>Inventario</strong>; las filas que solo
-              tienen numeración se ignoran.
-            </li>
-            <li>
-              Categoría, estado y laboratorio se pueden ajustar en la revisión.
-            </li>
-            <li>
-              Las fotos pegadas en la hoja se asocian a la fila donde empieza
-              su esquina superior izquierda. Revíselas antes de guardar. Los
-              tickets no se importan.
-            </li>
-          </ul>
-        </>
-      )}
-
-      {paso === 'revision' && (
-        <>
-          <div className="imp-resumen">
-            <span>{filas.length} equipos por revisar</span>
-            <span>{seleccionadas.length} seleccionados</span>
-            <span className={erroresPendientes ? 'imp-resumen-alerta' : ''}>
-              {erroresPendientes} con observaciones
-            </span>
-          </div>
-
-
-
-          <div className="imp-seleccion">
-            <label>
               <input
-                type="checkbox"
-                checked={todasSeleccionadas}
+                id="imp-archivo"
+                name="archivo"
+                type="file"
+                accept=".xlsx"
                 disabled={ocupado}
-                onChange={(evento) =>
-                  setSeleccionadas(
-                    evento.target.checked
-                      ? filas.map((fila) => fila.fila)
-                      : []
-                  )
-                }
-              />
-              Seleccionar todos
-            </label>
-
-            <label className="imp-filtro-check">
-              <input
-                type="checkbox"
-                checked={soloObservaciones}
-                disabled={ocupado || erroresPendientes === 0}
                 onChange={(evento) => {
-                  setSoloObservaciones(evento.target.checked);
-                  setPagina(1);
+                  setArchivo(evento.target.files?.[0] ?? null);
+                  setError('');
                 }}
               />
-              Mostrar solo los que requieren revisión
-            </label>
-          </div>
 
-          {visibles.length === 0 && (
-            <p className="imp-vacio">No hay equipos que requieran revisión.</p>
-          )}
-
-          <fieldset
-            className="imp-lista"
-            disabled={ocupado}
-          ><legend>Equipos del archivo</legend>
-            {visibles.map((fila) => (
-              <article className="imp-equipo" key={fila.fila}>
-                <div className="imp-equipo-encabezado">
-                  <label className="imp-equipo-seleccion">
-                    <input
-                      type="checkbox"
-                      checked={seleccionadas.includes(fila.fila)}
-                      onChange={(evento) =>
-                        seleccionarFila(
-                          fila.fila,
-                          evento.target.checked
-                        )
-                      }
-                    />
-
-                    <span>
-                      <strong>
-                        {fila.nombre || 'Equipo sin nombre'}
-                      </strong>
-                      <small>
-                        Fila {fila.fila} ·{' '}
-                        {fila.placa_institucional || 'Sin placa'}
-                      </small>
-                    </span>
-                  </label>
-
-                  <span
-                    className={
-                      fila.modificado
-                        ? 'imp-etiqueta'
-                        : fila.errores?.length
-                          ? 'imp-etiqueta imp-etiqueta-error'
-                          : 'imp-etiqueta imp-etiqueta-valido'
-                    }
-                  >
-                    {fila.modificado
-                      ? 'Pendiente de revalidar'
-                      : fila.errores?.length
-                        ? 'Requiere revisión'
-                        : 'Validación inicial correcta'}
-                  </span>
-                </div>
-
-                {!fila.modificado && fila.errores?.length > 0 && (
-                  <ul className="imp-errores-fila">
-                    {fila.errores.map((mensaje, indice) => (
-                      <li key={indice}>{mensaje}</li>
-                    ))}
-                  </ul>
+              <p role="status" className={archivo ? 'imp-archivo-elegido' : ''}>
+                {archivo ? (
+                  <>
+                    <Check size={14} aria-hidden="true" />
+                    {archivo.name}
+                  </>
+                ) : (
+                  'Ningún archivo seleccionado'
                 )}
+              </p>
+              <p>Formato .xlsx · Máximo 5 MB y 200 equipos.</p>
+            </div>
 
-                <p className="imp-datos-resumen">
-                  {nombreCatalogo(
-                    catalogos.categorias,
-                    'id_categoria',
-                    fila.id_categoria
-                  ) || 'Sin categoría'}
-                  {' · '}
-                  {nombreCatalogo(
-                    catalogos.estados,
-                    'id_estado',
-                    fila.id_estado
-                  ) || 'Sin estado'}
-                  {' · '}
-                  {nombreCatalogo(
-                    catalogos.laboratorios,
-                    'id_laboratorio',
-                    fila.id_laboratorio
-                  ) || 'Sin laboratorio'}
-                </p>
+            <ul className="imp-instrucciones">
+              <li>
+                Se lee la hoja <strong>Inventario</strong>; las filas que solo tienen numeración se
+                ignoran.
+              </li>
+              <li>Categoría, estado y laboratorio se pueden ajustar en la revisión.</li>
+              <li>
+                Las fotos pegadas en la hoja se asocian a la fila donde empieza su esquina superior
+                izquierda. Revíselas antes de guardar. Los tickets no se importan.
+              </li>
+            </ul>
+          </>
+        )}
 
-                <details className="imp-fotos-revision"><summary>
-                    <span><Images size={15} aria-hidden="true" /> Fotos ({(fila.imagenes?.length || 0)+(fila.adjuntos?.length || 0)}) · ver, agregar o quitar</span>
-                    <ChevronDown size={16} aria-hidden="true" />
-                  </summary>
-                  <div className="fotos-galeria">{(fila.imagenes || []).map((imagen,i)=><figure key={i}>
-                    <img src={`data:${imagen.mime};base64,${imagen.base64}`} alt={`Foto extraída del Excel para ${fila.nombre || 'este equipo'}`} />
-                    <figcaption>{imagen.nombre}</figcaption><button type="button" className="btn btn-secundario btn-sm" onClick={()=>setFilas(anteriores=>anteriores.map(f=>f.fila===fila.fila?{...f,imagenes:f.imagenes.filter((_,n)=>n!==i)}:f))}>Quitar foto del Excel</button>
-                  </figure>)}</div>
-                  <AdjuntarFotos archivos={fila.adjuntos || []} disabled={ocupado} onChange={archivos=>{
-                    if(archivos.length+(fila.imagenes?.length||0)>MAX_FOTOS_EQUIPO){setError(`Máximo ${MAX_FOTOS_EQUIPO} fotos por equipo, contando las del Excel.`);return;}
-                    setFilas(anteriores=>anteriores.map(f=>f.fila===fila.fila?{...f,adjuntos:archivos}:f));
-                  }}/>
-                </details>
-                <details className="imp-detalles">
-                  <summary>
-                  <span>Ver y editar datos</span>
-                  <ChevronDown size={16} aria-hidden="true" />
-                </summary>
+        {paso === 'revision' && (
+          <>
+            <div className="imp-resumen">
+              <span>{filas.length} equipos por revisar</span>
+              <span>{seleccionadas.length} seleccionados</span>
+              <span className={erroresPendientes ? 'imp-resumen-alerta' : ''}>
+                {erroresPendientes} con observaciones
+              </span>
+            </div>
 
-                  {Object.values(fila.originales || {}).some(Boolean) && (
-                    <div className="imp-originales">
-                      <strong>Datos originales del archivo</strong>
+            <div className="imp-seleccion">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={todasSeleccionadas}
+                  disabled={ocupado}
+                  onChange={(evento) =>
+                    setSeleccionadas(evento.target.checked ? filas.map((fila) => fila.fila) : [])
+                  }
+                />
+                Seleccionar todos
+              </label>
 
-                      {Object.entries(fila.originales)
-                        .filter(([, valor]) => Boolean(valor))
-                        .map(([campo, valor]) => (
-                          <p key={campo}>
-                            <span>
-                              {campo === 'anio_modelo'
-                                ? 'Año y modelo'
-                                : campo === 'categoria'
-                                  ? 'Categoría'
-                                  : campo === 'laboratorio'
-                                    ? 'Laboratorio'
-                                    : campo === 'sede'
-                                      ? 'Sede'
-                                      : 'Estado'}
-                              :
-                            </span>{' '}
-                            {valor}
-                          </p>
-                        ))}
-                    </div>
+              <label className="imp-filtro-check">
+                <input
+                  type="checkbox"
+                  checked={soloObservaciones}
+                  disabled={ocupado || erroresPendientes === 0}
+                  onChange={(evento) => {
+                    setSoloObservaciones(evento.target.checked);
+                    setPagina(1);
+                  }}
+                />
+                Mostrar solo los que requieren revisión
+              </label>
+            </div>
+
+            {visibles.length === 0 && (
+              <p className="imp-vacio">No hay equipos que requieran revisión.</p>
+            )}
+
+            <fieldset className="imp-lista" disabled={ocupado}>
+              <legend>Equipos del archivo</legend>
+              {visibles.map((fila) => (
+                <article className="imp-equipo" key={fila.fila}>
+                  <div className="imp-equipo-encabezado">
+                    <label className="imp-equipo-seleccion">
+                      <input
+                        type="checkbox"
+                        checked={seleccionadas.includes(fila.fila)}
+                        onChange={(evento) => seleccionarFila(fila.fila, evento.target.checked)}
+                      />
+
+                      <span>
+                        <strong>{fila.nombre || 'Equipo sin nombre'}</strong>
+                        <small>
+                          Fila {fila.fila} · {fila.placa_institucional || 'Sin placa'}
+                        </small>
+                      </span>
+                    </label>
+
+                    <span
+                      className={
+                        fila.modificado
+                          ? 'imp-etiqueta'
+                          : fila.errores?.length
+                            ? 'imp-etiqueta imp-etiqueta-error'
+                            : 'imp-etiqueta imp-etiqueta-valido'
+                      }
+                    >
+                      {fila.modificado
+                        ? 'Pendiente de revalidar'
+                        : fila.errores?.length
+                          ? 'Requiere revisión'
+                          : 'Validación inicial correcta'}
+                    </span>
+                  </div>
+
+                  {!fila.modificado && fila.errores?.length > 0 && (
+                    <ul className="imp-errores-fila">
+                      {fila.errores.map((mensaje, indice) => (
+                        <li key={indice}>{mensaje}</li>
+                      ))}
+                    </ul>
                   )}
 
-                  <div className="imp-campos">
-                    {CAMPOS_TEXTO.map(
-                      ({ campo, etiqueta, max }) => (
+                  <p className="imp-datos-resumen">
+                    {nombreCatalogo(catalogos.categorias, 'id_categoria', fila.id_categoria) ||
+                      'Sin categoría'}
+                    {' · '}
+                    {nombreCatalogo(catalogos.estados, 'id_estado', fila.id_estado) || 'Sin estado'}
+                    {' · '}
+                    {nombreCatalogo(
+                      catalogos.laboratorios,
+                      'id_laboratorio',
+                      fila.id_laboratorio
+                    ) || 'Sin laboratorio'}
+                  </p>
+
+                  <details className="imp-fotos-revision">
+                    <summary>
+                      <span>
+                        <Images size={15} aria-hidden="true" /> Fotos (
+                        {(fila.imagenes?.length || 0) + (fila.adjuntos?.length || 0)}) · ver,
+                        agregar o quitar
+                      </span>
+                      <ChevronDown size={16} aria-hidden="true" />
+                    </summary>
+                    <div className="fotos-galeria">
+                      {(fila.imagenes || []).map((imagen, i) => (
+                        <figure key={i}>
+                          <img
+                            src={`data:${imagen.mime};base64,${imagen.base64}`}
+                            alt={`Foto extraída del Excel para ${fila.nombre || 'este equipo'}`}
+                          />
+                          <figcaption>{imagen.nombre}</figcaption>
+                          <button
+                            type="button"
+                            className="btn btn-secundario btn-sm"
+                            onClick={() =>
+                              setFilas((anteriores) =>
+                                anteriores.map((f) =>
+                                  f.fila === fila.fila
+                                    ? { ...f, imagenes: f.imagenes.filter((_, n) => n !== i) }
+                                    : f
+                                )
+                              )
+                            }
+                          >
+                            Quitar foto del Excel
+                          </button>
+                        </figure>
+                      ))}
+                    </div>
+                    <AdjuntarFotos
+                      archivos={fila.adjuntos || []}
+                      disabled={ocupado}
+                      onChange={(archivos) => {
+                        if (archivos.length + (fila.imagenes?.length || 0) > MAX_FOTOS_EQUIPO) {
+                          setError(
+                            `Máximo ${MAX_FOTOS_EQUIPO} fotos por equipo, contando las del Excel.`
+                          );
+                          return;
+                        }
+                        setFilas((anteriores) =>
+                          anteriores.map((f) =>
+                            f.fila === fila.fila ? { ...f, adjuntos: archivos } : f
+                          )
+                        );
+                      }}
+                    />
+                  </details>
+                  <details className="imp-detalles">
+                    <summary>
+                      <span>Ver y editar datos</span>
+                      <ChevronDown size={16} aria-hidden="true" />
+                    </summary>
+
+                    {Object.values(fila.originales || {}).some(Boolean) && (
+                      <div className="imp-originales">
+                        <strong>Datos originales del archivo</strong>
+
+                        {Object.entries(fila.originales)
+                          .filter(([, valor]) => Boolean(valor))
+                          .map(([campo, valor]) => (
+                            <p key={campo}>
+                              <span>
+                                {campo === 'anio_modelo'
+                                  ? 'Año y modelo'
+                                  : campo === 'categoria'
+                                    ? 'Categoría'
+                                    : campo === 'laboratorio'
+                                      ? 'Laboratorio'
+                                      : campo === 'sede'
+                                        ? 'Sede'
+                                        : 'Estado'}
+                                :
+                              </span>{' '}
+                              {valor}
+                            </p>
+                          ))}
+                      </div>
+                    )}
+
+                    <div className="imp-campos">
+                      {CAMPOS_TEXTO.map(({ campo, etiqueta, max }) => (
                         <label className="imp-campo" key={campo}>
                           <span>
                             {etiqueta}
@@ -731,369 +746,335 @@ useEffect(() => {
                             maxLength={max}
                             value={fila[campo] ?? ''}
                             onChange={(evento) =>
-                              cambiarCampo(
-                                fila.fila,
-                                campo,
-                                evento.target.value
-                              )
+                              cambiarCampo(fila.fila, campo, evento.target.value)
                             }
                           />
                         </label>
-                      )
-                    )}
+                      ))}
 
-                    <label className="imp-campo">
-                      <span>Año</span>
+                      <label className="imp-campo">
+                        <span>Año</span>
 
-                      <input
-                        type="number"
-                        min="1900"
-                        max="2100"
-                        step="1"
-                        value={fila.anio ?? ''}
-                        onChange={(evento) =>
-                          cambiarCampo(
-                            fila.fila,
-                            'anio',
-                            evento.target.value
-                          )
-                        }
-                      />
-                    </label>
+                        <input
+                          type="number"
+                          min="1900"
+                          max="2100"
+                          step="1"
+                          value={fila.anio ?? ''}
+                          onChange={(evento) =>
+                            cambiarCampo(fila.fila, 'anio', evento.target.value)
+                          }
+                        />
+                      </label>
 
-                    <label className="imp-campo">
-                      <span>Categoría *</span>
+                      <label className="imp-campo">
+                        <span>Categoría *</span>
 
-                      <select
-                        value={fila.id_categoria ?? ''}
-                        onChange={(evento) =>
-                          cambiarCampo(
-                            fila.fila,
-                            'id_categoria',
-                            evento.target.value
-                              ? Number(evento.target.value)
-                              : null
-                          )
-                        }
-                      >
-                        <option value="">Seleccione una categoría</option>
+                        <select
+                          value={fila.id_categoria ?? ''}
+                          onChange={(evento) =>
+                            cambiarCampo(
+                              fila.fila,
+                              'id_categoria',
+                              evento.target.value ? Number(evento.target.value) : null
+                            )
+                          }
+                        >
+                          <option value="">Seleccione una categoría</option>
 
-                        {catalogos.categorias.map((categoria) => (
-                          <option
-                            key={categoria.id_categoria}
-                            value={categoria.id_categoria}
-                          >
-                            {categoria.nombre}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-
-                    <label className="imp-campo">
-                      <span>Estado *</span>
-
-                      <select
-                        value={fila.id_estado ?? ''}
-                        onChange={(evento) =>
-                          cambiarCampo(
-                            fila.fila,
-                            'id_estado',
-                            evento.target.value
-                              ? Number(evento.target.value)
-                              : null
-                          )
-                        }
-                      >
-                        <option value="">Seleccione un estado</option>
-
-                        {catalogos.estados.map((estado) => (
-                          <option
-                            key={estado.id_estado}
-                            value={estado.id_estado}
-                          >
-                            {estado.nombre}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-
-                    <label className="imp-campo">
-                      <span>Sede</span>
-
-                      <select
-                        value={sedeDeFila(fila) ?? ''}
-                        onChange={(evento) =>
-                          cambiarSede(
-                            fila.fila,
-                            evento.target.value
-                              ? Number(evento.target.value)
-                              : null
-                          )
-                        }
-                      >
-                        <option value="">Seleccione una sede</option>
-
-                        {sedes.map((sede) => (
-                          <option key={sede.id_sede} value={sede.id_sede}>
-                            {sede.nombre}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-
-                    <label className="imp-campo">
-                      <span>Laboratorio autorizado *</span>
-
-                      <select
-                        value={fila.id_laboratorio ?? ''}
-                        onChange={(evento) =>
-                          cambiarLaboratorio(
-                            fila.fila,
-                            evento.target.value
-                              ? Number(evento.target.value)
-                              : null
-                          )
-                        }
-                      >
-                        <option value="">Seleccione un laboratorio</option>
-
-                        {catalogos.laboratorios
-                          .filter(
-                            (laboratorio) =>
-                              !sedeDeFila(fila) ||
-                              laboratorio.id_sede === sedeDeFila(fila)
-                          )
-                          .map((laboratorio) => (
-                            <option
-                              key={laboratorio.id_laboratorio}
-                              value={laboratorio.id_laboratorio}
-                            >
-                              {laboratorio.codigo} · {laboratorio.nombre}
+                          {catalogos.categorias.map((categoria) => (
+                            <option key={categoria.id_categoria} value={categoria.id_categoria}>
+                              {categoria.nombre}
                             </option>
                           ))}
-                      </select>
-                    </label>
+                        </select>
+                      </label>
 
-                    {[
-                      ['caracteristicas', 'Características'],
-                      ['comentarios', 'Comentarios'],
-                    ].map(([campo, etiqueta]) => {
-                      const ampliado = campo === 'caracteristicas'
-                        ? Boolean(caracteristicasAmpliadas[fila.fila])
-                        : Boolean(comentariosAmpliados[fila.fila]);
-                      const cambiarAmpliado = campo === 'caracteristicas'
-                        ? setCaracteristicasAmpliadas
-                        : setComentariosAmpliados;
-                      const idCampo = `imp-${campo}-${fila.fila}`;
+                      <label className="imp-campo">
+                        <span>Estado *</span>
 
-                      return (
-                        <div className="imp-campo imp-campo-ancho" key={campo}>
-                          <label htmlFor={idCampo}>{etiqueta}</label>
-                          <textarea
-                            id={idCampo}
-                            className={`imp-texto-expandible${ampliado ? ' imp-texto-expandible--ampliado' : ''}`}
-                            rows={ampliado ? 12 : 4}
-                            maxLength={10000}
-                            value={fila[campo] ?? ''}
-                            onChange={(evento) => cambiarCampo(fila.fila, campo, evento.target.value)}
-                          />
-                          <button
-                            type="button"
-                            className="imp-ampliar-campo"
-                            aria-controls={idCampo}
-                            aria-expanded={ampliado}
-                            aria-label={`${ampliado ? 'Reducir' : 'Ampliar'} campo de ${etiqueta.toLowerCase()}`}
-                            onClick={() => cambiarAmpliado((anteriores) => ({
-                              ...anteriores,
-                              [fila.fila]: !anteriores[fila.fila],
-                            }))}
-                          >
-                            {ampliado ? 'Reducir campo' : 'Ampliar campo'}
-                            <ChevronDown size={15} aria-hidden="true" className={ampliado ? 'imp-flecha-arriba' : ''} />
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </details>
-              </article>
-            ))}
-          </fieldset>
+                        <select
+                          value={fila.id_estado ?? ''}
+                          onChange={(evento) =>
+                            cambiarCampo(
+                              fila.fila,
+                              'id_estado',
+                              evento.target.value ? Number(evento.target.value) : null
+                            )
+                          }
+                        >
+                          <option value="">Seleccione un estado</option>
 
-          <nav
-            className="imp-paginacion"
-            aria-label="Paginación de equipos por revisar"
-          >
-            <button
-              type="button"
-              aria-label="Página anterior"
-              disabled={ocupado || paginaActual <= 1}
-              onClick={() => setPagina(paginaActual - 1)}
-            >
-              <ChevronLeft size={15} />
-            </button>
+                          {catalogos.estados.map((estado) => (
+                            <option key={estado.id_estado} value={estado.id_estado}>
+                              {estado.nombre}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
 
-            {generarPaginas(paginaActual, totalPaginas).map(
-              (numero, indice) =>
+                      <label className="imp-campo">
+                        <span>Sede</span>
+
+                        <select
+                          value={sedeDeFila(fila) ?? ''}
+                          onChange={(evento) =>
+                            cambiarSede(
+                              fila.fila,
+                              evento.target.value ? Number(evento.target.value) : null
+                            )
+                          }
+                        >
+                          <option value="">Seleccione una sede</option>
+
+                          {sedes.map((sede) => (
+                            <option key={sede.id_sede} value={sede.id_sede}>
+                              {sede.nombre}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+
+                      <label className="imp-campo">
+                        <span>Laboratorio autorizado *</span>
+
+                        <select
+                          value={fila.id_laboratorio ?? ''}
+                          onChange={(evento) =>
+                            cambiarLaboratorio(
+                              fila.fila,
+                              evento.target.value ? Number(evento.target.value) : null
+                            )
+                          }
+                        >
+                          <option value="">Seleccione un laboratorio</option>
+
+                          {catalogos.laboratorios
+                            .filter(
+                              (laboratorio) =>
+                                !sedeDeFila(fila) || laboratorio.id_sede === sedeDeFila(fila)
+                            )
+                            .map((laboratorio) => (
+                              <option
+                                key={laboratorio.id_laboratorio}
+                                value={laboratorio.id_laboratorio}
+                              >
+                                {laboratorio.codigo} · {laboratorio.nombre}
+                              </option>
+                            ))}
+                        </select>
+                      </label>
+
+                      {[
+                        ['caracteristicas', 'Características'],
+                        ['comentarios', 'Comentarios'],
+                      ].map(([campo, etiqueta]) => {
+                        const ampliado =
+                          campo === 'caracteristicas'
+                            ? Boolean(caracteristicasAmpliadas[fila.fila])
+                            : Boolean(comentariosAmpliados[fila.fila]);
+                        const cambiarAmpliado =
+                          campo === 'caracteristicas'
+                            ? setCaracteristicasAmpliadas
+                            : setComentariosAmpliados;
+                        const idCampo = `imp-${campo}-${fila.fila}`;
+
+                        return (
+                          <div className="imp-campo imp-campo-ancho" key={campo}>
+                            <label htmlFor={idCampo}>{etiqueta}</label>
+                            <textarea
+                              id={idCampo}
+                              className={`imp-texto-expandible${ampliado ? ' imp-texto-expandible--ampliado' : ''}`}
+                              rows={ampliado ? 12 : 4}
+                              maxLength={10000}
+                              value={fila[campo] ?? ''}
+                              onChange={(evento) =>
+                                cambiarCampo(fila.fila, campo, evento.target.value)
+                              }
+                            />
+                            <button
+                              type="button"
+                              className="imp-ampliar-campo"
+                              aria-controls={idCampo}
+                              aria-expanded={ampliado}
+                              aria-label={`${ampliado ? 'Reducir' : 'Ampliar'} campo de ${etiqueta.toLowerCase()}`}
+                              onClick={() =>
+                                cambiarAmpliado((anteriores) => ({
+                                  ...anteriores,
+                                  [fila.fila]: !anteriores[fila.fila],
+                                }))
+                              }
+                            >
+                              {ampliado ? 'Reducir campo' : 'Ampliar campo'}
+                              <ChevronDown
+                                size={15}
+                                aria-hidden="true"
+                                className={ampliado ? 'imp-flecha-arriba' : ''}
+                              />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </details>
+                </article>
+              ))}
+            </fieldset>
+
+            <nav className="imp-paginacion" aria-label="Paginación de equipos por revisar">
+              <button
+                type="button"
+                aria-label="Página anterior"
+                disabled={ocupado || paginaActual <= 1}
+                onClick={() => setPagina(paginaActual - 1)}
+              >
+                <ChevronLeft size={15} />
+              </button>
+
+              {generarPaginas(paginaActual, totalPaginas).map((numero, indice) =>
                 numero === '...' ? (
                   <span key={`puntos-${indice}`}>...</span>
                 ) : (
                   <button
                     type="button"
                     key={numero}
-                    className={
-                      numero === paginaActual ? 'activa' : ''
-                    }
+                    className={numero === paginaActual ? 'activa' : ''}
                     aria-label={`Ir a la página ${numero}`}
-                    aria-current={
-                      numero === paginaActual ? 'page' : undefined
-                    }
+                    aria-current={numero === paginaActual ? 'page' : undefined}
                     disabled={ocupado}
                     onClick={() => setPagina(numero)}
                   >
                     {numero}
                   </button>
                 )
+              )}
+
+              <button
+                type="button"
+                aria-label="Página siguiente"
+                disabled={ocupado || paginaActual >= totalPaginas}
+                onClick={() => setPagina(paginaActual + 1)}
+              >
+                <ChevronRight size={15} />
+              </button>
+            </nav>
+          </>
+        )}
+
+        {paso === 'resultado' && resumen && (
+          <div className="imp-resultado" role="status">
+            {fotosPendientes.length > 0 && (
+              <div className="imp-alerta imp-error">
+                <TriangleAlert size={18} aria-hidden="true" />
+                <div>
+                  <strong>Equipos guardados, fotos pendientes: {fotosPendientes.length}</strong>
+                  <p>
+                    Reintente sin importar los equipos de nuevo. Si cierra, podrá agregar las fotos
+                    desde el detalle del equipo.
+                  </p>
+                  <ul>
+                    {fotosPendientes.map((foto, i) => (
+                      <li key={i}>
+                        {foto.nombre}: {foto.archivo.name} — {foto.error}
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    type="button"
+                    className="btn btn-secundario btn-sm"
+                    disabled={ocupado}
+                    onClick={reintentarFotos}
+                  >
+                    <RefreshCw size={14} aria-hidden="true" />
+                    Reintentar fotos pendientes
+                  </button>
+                </div>
+              </div>
             )}
 
-            <button
-              type="button"
-              aria-label="Página siguiente"
-              disabled={ocupado || paginaActual >= totalPaginas}
-              onClick={() => setPagina(paginaActual + 1)}
-            >
-              <ChevronRight size={15} />
-            </button>
-          </nav>
-        </>
-      )}
+            {resumen.importados > 0 ? (
+              <CheckCircle2 size={38} aria-hidden="true" />
+            ) : (
+              <AlertCircle size={38} aria-hidden="true" className="imp-icono-error" />
+            )}
 
-      {paso === 'resultado' && resumen && (
-        <div className="imp-resultado" role="status">
-          {fotosPendientes.length > 0 && (
-            <div className="imp-alerta imp-error">
-              <TriangleAlert size={18} aria-hidden="true" />
-              <div>
-                <strong>
-                  Equipos guardados, fotos pendientes: {fotosPendientes.length}
-                </strong>
-                <p>
-                  Reintente sin importar los equipos de nuevo. Si cierra,
-                  podrá agregar las fotos desde el detalle del equipo.
-                </p>
-                <ul>
-                  {fotosPendientes.map((foto, i) => (
-                    <li key={i}>
-                      {foto.nombre}: {foto.archivo.name} — {foto.error}
-                    </li>
-                  ))}
-                </ul>
-                <button
-                  type="button"
-                  className="btn btn-secundario btn-sm"
-                  disabled={ocupado}
-                  onClick={reintentarFotos}
-                >
-                  <RefreshCw size={14} aria-hidden="true" />
-                  Reintentar fotos pendientes
-                </button>
-              </div>
+            <h3>{resumen.mensaje}</h3>
+
+            <div className="imp-cifras">
+              <span className="imp-cifra imp-cifra--ok">
+                <strong>{resumen.importados}</strong> importados
+              </span>
+              <span className={`imp-cifra${resumen.rechazados ? ' imp-cifra--error' : ''}`}>
+                <strong>{resumen.rechazados}</strong> rechazados
+              </span>
+              <span className="imp-cifra">
+                <strong>{filas.length}</strong> sin importar
+              </span>
             </div>
-          )}
 
-          {resumen.importados > 0 ? (
-            <CheckCircle2 size={38} aria-hidden="true" />
-          ) : (
-            <AlertCircle size={38} aria-hidden="true" className="imp-icono-error" />
-          )}
-
-          <h3>{resumen.mensaje}</h3>
-
-          <div className="imp-cifras">
-            <span className="imp-cifra imp-cifra--ok">
-              <strong>{resumen.importados}</strong> importados
-            </span>
-            <span
-              className={`imp-cifra${resumen.rechazados ? ' imp-cifra--error' : ''}`}
-            >
-              <strong>{resumen.rechazados}</strong> rechazados
-            </span>
-            <span className="imp-cifra">
-              <strong>{filas.length}</strong> sin importar
-            </span>
+            <p>
+              {resumen.rechazados > 0
+                ? 'Vuelva a la revisión para corregir los equipos rechazados. Los ya importados no se enviarán de nuevo.'
+                : filas.length > 0
+                  ? 'Quedan equipos que no seleccionó; puede revisarlos ahora o cerrar.'
+                  : 'Los equipos importados ya están disponibles en Inventario.'}
+            </p>
           </div>
-
-          <p>
-            {resumen.rechazados > 0
-              ? 'Vuelva a la revisión para corregir los equipos rechazados. Los ya importados no se enviarán de nuevo.'
-              : filas.length > 0
-                ? 'Quedan equipos que no seleccionó; puede revisarlos ahora o cerrar.'
-                : 'Los equipos importados ya están disponibles en Inventario.'}
-          </p>
-        </div>
-      )}
+        )}
       </div>
 
       <footer className="imp-acciones">
         <p className="imp-estado-seleccion" aria-live="polite">
           {paso === 'revision' && (
             <>
-              <strong>{seleccionadas.length}</strong> de {filas.length}{' '}
-              seleccionados
-              {erroresPendientes > 0 && (
-                <span> · {erroresPendientes} con observaciones</span>
-              )}
+              <strong>{seleccionadas.length}</strong> de {filas.length} seleccionados
+              {erroresPendientes > 0 && <span> · {erroresPendientes} con observaciones</span>}
             </>
           )}
         </p>
 
         <div className="imp-acciones-botones">
-        <button
-          type="button"
-          className="btn btn-secundario"
-          disabled={ocupado}
-          onClick={cerrar}
-        >
-          {paso === 'resultado' ? 'Cerrar' : 'Cancelar'}
-        </button>
-
-        {paso === 'archivo' && (
-          <button
-            type="button"
-            className="btn btn-primario"
-            disabled={ocupado || !archivo}
-            onClick={leerArchivo}
-          >
-            <Upload size={17} />
-            {ocupado ? 'Leyendo archivo...' : 'Leer archivo'}
+          <button type="button" className="btn btn-secundario" disabled={ocupado} onClick={cerrar}>
+            {paso === 'resultado' ? 'Cerrar' : 'Cancelar'}
           </button>
-        )}
 
-        {paso === 'revision' && (
-          <button
-            type="button"
-            className="btn btn-primario"
-            disabled={ocupado || seleccionadas.length === 0}
-            onClick={confirmar}
-          >
-            {ocupado
-              ? 'Comprobando y guardando...'
-              : `Comprobar y guardar (${seleccionadas.length})`}
-          </button>
-        )}
+          {paso === 'archivo' && (
+            <button
+              type="button"
+              className="btn btn-primario"
+              disabled={ocupado || !archivo}
+              onClick={leerArchivo}
+            >
+              <Upload size={17} />
+              {ocupado ? 'Leyendo archivo...' : 'Leer archivo'}
+            </button>
+          )}
 
-        {paso === 'resultado' && filas.length > 0 && (
-          <button
-            type="button"
-            className="btn btn-primario"
-            onClick={() => {
-              setError('');
-              setPaso('revision');
-            }}
-          >
-            Revisar pendientes
-          </button>
-        )}
+          {paso === 'revision' && (
+            <button
+              type="button"
+              className="btn btn-primario"
+              disabled={ocupado || seleccionadas.length === 0}
+              onClick={confirmar}
+            >
+              {ocupado
+                ? 'Comprobando y guardando...'
+                : `Comprobar y guardar (${seleccionadas.length})`}
+            </button>
+          )}
+
+          {paso === 'resultado' && filas.length > 0 && (
+            <button
+              type="button"
+              className="btn btn-primario"
+              onClick={() => {
+                setError('');
+                setPaso('revision');
+              }}
+            >
+              Revisar pendientes
+            </button>
+          )}
         </div>
       </footer>
     </dialog>

@@ -96,7 +96,11 @@ export default function ModalVerEvidencias({
         alCerrar={alCerrar}
         titulo="Fotografías del mantenimiento"
         descripcion={
-          (mantenimiento.nombre_equipo || 'Equipo sin nombre') + ' · ' + (mantenimiento.placa_institucional || 'Sin placa') + ' · ' + formatearFechaMantenimiento(mantenimiento.fecha_mantenimiento)
+          (mantenimiento.nombre_equipo || 'Equipo sin nombre') +
+          ' · ' +
+          (mantenimiento.placa_institucional || 'Sin placa') +
+          ' · ' +
+          formatearFechaMantenimiento(mantenimiento.fecha_mantenimiento)
         }
         ocupado={subiendo}
       >
@@ -127,7 +131,8 @@ export default function ModalVerEvidencias({
                 className={`mant-req-chip ${lista.length > 0 ? 'mant-req-chip--ok' : 'mant-req-chip--pendiente'}`}
               >
                 {lista.length > 0 ? <CheckCircle2 size={14} /> : <AlertCircle size={14} />}
-                Evidencia para cierre: {lista.length > 0 ? 'Cumplida' : 'Se requiere al menos 1 foto'}
+                Evidencia para cierre:{' '}
+                {lista.length > 0 ? 'Cumplida' : 'Se requiere al menos 1 foto'}
               </span>
             )}
           </div>

@@ -9,8 +9,7 @@ const verificarAccesoEquipo = async (idEquipo, usuario) => {
   }
 
   // Acceso global provisional para superadministrador
-  const accesoGlobal =
-    usuario.rol?.toLowerCase() === 'superadministrador';
+  const accesoGlobal = usuario.rol?.toLowerCase() === 'superadministrador';
 
   const valores = [Number(idEquipo)];
 

@@ -1,14 +1,9 @@
 const { nombreCampo } = require('../utils/nombresCampos');
 const pool = require('../config/database');
 
-const {
-  puedeRegistrarInventario,
-  puedeEditarInventario,
-} = require('../utils/permisosInventario');
+const { puedeRegistrarInventario, puedeEditarInventario } = require('../utils/permisosInventario');
 
-// =====================================================
 // FUNCIONES AUXILIARES
-// =====================================================
 
 // Verificar identificadores positivos.
 const esIdValido = (valor) => {
@@ -22,18 +17,18 @@ const esIdValido = (valor) => {
 
 // Comprobar acceso global.
 const tieneAccesoGlobal = (usuario) => {
-  return String(usuario?.rol || '').toLowerCase().trim() ===
-    'superadministrador';
+  return (
+    String(usuario?.rol || '')
+      .toLowerCase()
+      .trim() === 'superadministrador'
+  );
 };
 
 // Obtener ID del usuario autenticado.
 const obtenerIdUsuario = (usuario) => {
   const idUsuario = Number(usuario?.idUsuario);
 
-  if (
-    !Number.isSafeInteger(idUsuario) ||
-    idUsuario <= 0
-  ) {
+  if (!Number.isSafeInteger(idUsuario) || idUsuario <= 0) {
     return null;
   }
 
@@ -41,11 +36,7 @@ const obtenerIdUsuario = (usuario) => {
 };
 
 // Agregar restricciones de laboratorio a consultas GET.
-const agregarRestriccionAcceso = (
-  condiciones,
-  valores,
-  usuario
-) => {
+const agregarRestriccionAcceso = (condiciones, valores, usuario) => {
   const idUsuario = obtenerIdUsuario(usuario);
 
   if (!idUsuario) {
@@ -76,24 +67,15 @@ const agregarRestriccionAcceso = (
 
 // Convertir textos opcionales vacíos a NULL.
 const textoOpcional = (valor) => {
-  if (
-    valor === undefined ||
-    valor === null ||
-    valor === ''
-  ) {
+  if (valor === undefined || valor === null || valor === '') {
     return null;
   }
 
-  return typeof valor === 'string'
-    ? valor.trim() || null
-    : null;
+  return typeof valor === 'string' ? valor.trim() || null : null;
 };
 
 // Consultar estado, rol y permiso actuales en PostgreSQL.
-const consultarUsuarioActual = async (
-  client,
-  idUsuario
-) => {
+const consultarUsuarioActual = async (client, idUsuario) => {
   const resultado = await client.query(
     `SELECT
        u.id_usuario,
@@ -120,12 +102,7 @@ const consultarUsuarioActual = async (
 };
 
 // Verificar asignación actual a un laboratorio.
-const tieneAccesoLaboratorio = async (
-  client,
-  idUsuario,
-  idLaboratorio,
-  esSuperadministrador
-) => {
+const tieneAccesoLaboratorio = async (client, idUsuario, idLaboratorio, esSuperadministrador) => {
   const resultado = await client.query(
     `SELECT l.id_laboratorio
      FROM public.laboratorio l
@@ -144,50 +121,36 @@ const tieneAccesoLaboratorio = async (
          )
        )
      LIMIT 1`,
-    [
-      idLaboratorio,
-      idUsuario,
-      esSuperadministrador,
-    ]
+    [idLaboratorio, idUsuario, esSuperadministrador]
   );
 
   return resultado.rowCount > 0;
 };
 
 // Manejar errores comunes de PostgreSQL.
-const responderErrorEscritura = (
-  res,
-  error,
-  operacion
-) => {
+const responderErrorEscritura = (res, error, operacion) => {
   if (error.code === '23505') {
     return res.status(409).json({
       success: false,
-      message:
-        'Ya existe un equipo con ese número de serie o placa institucional',
+      message: 'Ya existe un equipo con ese número de serie o placa institucional',
     });
   }
 
   if (error.code === '23503') {
     return res.status(400).json({
       success: false,
-      message:
-        'La categoría, el estado o el laboratorio no existen',
+      message: 'La categoría, el estado o el laboratorio no existen',
     });
   }
 
   if (error.code === '23502' || error.code === '23514') {
     return res.status(400).json({
       success: false,
-      message:
-        'Los datos enviados no cumplen las restricciones del sistema',
+      message: 'Los datos enviados no cumplen las restricciones del sistema',
     });
   }
 
-  console.error(
-    `Error al ${operacion} equipo:`,
-    error.message
-  );
+  console.error(`Error al ${operacion} equipo:`, error.message);
 
   return res.status(500).json({
     success: false,
@@ -195,23 +158,15 @@ const responderErrorEscritura = (
   });
 };
 
-// =====================================================
 // 1. OBTENER EQUIPOS
 // GET /api/equipos
-// =====================================================
 
 const obtenerEquipos = async (req, res) => {
   try {
     const condiciones = ['e.eliminado_en IS NULL'];
     const valores = [];
 
-    if (
-      !agregarRestriccionAcceso(
-        condiciones,
-        valores,
-        req.usuario
-      )
-    ) {
+    if (!agregarRestriccionAcceso(condiciones, valores, req.usuario)) {
       return res.status(403).json({
         success: false,
         message: 'Usuario sin autorización válida',
@@ -230,10 +185,7 @@ const obtenerEquipos = async (req, res) => {
       const valor = req.query[campo];
 
       if (valor !== undefined) {
-        if (
-          typeof valor !== 'string' ||
-          !valor.trim()
-        ) {
+        if (typeof valor !== 'string' || !valor.trim()) {
           return res.status(400).json({
             success: false,
             message: `El filtro ${nombreCampo(campo)} no es válido`,
@@ -242,9 +194,7 @@ const obtenerEquipos = async (req, res) => {
 
         valores.push(`%${valor.trim()}%`);
 
-        condiciones.push(
-          `${columna} ILIKE $${valores.length}`
-        );
+        condiciones.push(`${columna} ILIKE $${valores.length}`);
       }
     }
 
@@ -259,10 +209,7 @@ const obtenerEquipos = async (req, res) => {
       const valor = req.query[campo];
 
       if (valor !== undefined) {
-        if (
-          typeof valor !== 'string' ||
-          !esIdValido(valor)
-        ) {
+        if (typeof valor !== 'string' || !esIdValido(valor)) {
           return res.status(400).json({
             success: false,
             message: `Seleccione un valor válido para ${nombreCampo(campo)}.`,
@@ -271,9 +218,7 @@ const obtenerEquipos = async (req, res) => {
 
         valores.push(Number(valor));
 
-        condiciones.push(
-          `${columna} = $${valores.length}`
-        );
+        condiciones.push(`${columna} = $${valores.length}`);
       }
     }
 
@@ -330,10 +275,7 @@ const obtenerEquipos = async (req, res) => {
       ORDER BY e.id_equipo DESC
     `;
 
-    const resultado = await pool.query(
-      consulta,
-      valores
-    );
+    const resultado = await pool.query(consulta, valores);
 
     return res.status(200).json({
       success: true,
@@ -341,10 +283,7 @@ const obtenerEquipos = async (req, res) => {
       data: resultado.rows,
     });
   } catch (error) {
-    console.error(
-      'Error al obtener equipos:',
-      error.message
-    );
+    console.error('Error al obtener equipos:', error.message);
 
     return res.status(500).json({
       success: false,
@@ -353,10 +292,8 @@ const obtenerEquipos = async (req, res) => {
   }
 };
 
-// =====================================================
 // 2. OBTENER EQUIPO POR ID
 // GET /api/equipos/:id
-// =====================================================
 
 const obtenerEquipoPorId = async (req, res) => {
   try {
@@ -372,13 +309,7 @@ const obtenerEquipoPorId = async (req, res) => {
     const condiciones = ['e.id_equipo = $1', 'e.eliminado_en IS NULL'];
     const valores = [Number(id)];
 
-    if (
-      !agregarRestriccionAcceso(
-        condiciones,
-        valores,
-        req.usuario
-      )
-    ) {
+    if (!agregarRestriccionAcceso(condiciones, valores, req.usuario)) {
       return res.status(403).json({
         success: false,
         message: 'Usuario sin autorización válida',
@@ -431,10 +362,7 @@ const obtenerEquipoPorId = async (req, res) => {
       LIMIT 1
     `;
 
-    const resultado = await pool.query(
-      consulta,
-      valores
-    );
+    const resultado = await pool.query(consulta, valores);
 
     if (resultado.rowCount === 0) {
       return res.status(404).json({
@@ -448,10 +376,7 @@ const obtenerEquipoPorId = async (req, res) => {
       data: resultado.rows[0],
     });
   } catch (error) {
-    console.error(
-      'Error al obtener equipo por ID:',
-      error.message
-    );
+    console.error('Error al obtener equipo por ID:', error.message);
 
     return res.status(500).json({
       success: false,
@@ -460,10 +385,8 @@ const obtenerEquipoPorId = async (req, res) => {
   }
 };
 
-// =====================================================
 // 3. CREAR EQUIPO
 // POST /api/equipos
-// =====================================================
 
 const crearEquipo = async (req, res) => {
   const idUsuario = obtenerIdUsuario(req.usuario);
@@ -494,25 +417,17 @@ const crearEquipo = async (req, res) => {
     id_laboratorio,
   } = req.body || {};
 
-  if (
-    typeof nombre !== 'string' ||
-    !nombre.trim()
-  ) {
+  if (typeof nombre !== 'string' || !nombre.trim()) {
     return res.status(400).json({
       success: false,
       message: 'El nombre del equipo es obligatorio',
     });
   }
 
-  if (
-    !esIdValido(id_categoria) ||
-    !esIdValido(id_estado) ||
-    !esIdValido(id_laboratorio)
-  ) {
+  if (!esIdValido(id_categoria) || !esIdValido(id_estado) || !esIdValido(id_laboratorio)) {
     return res.status(400).json({
       success: false,
-      message:
-        'Categoría, estado y laboratorio deben ser válidos',
+      message: 'Categoría, estado y laboratorio deben ser válidos',
     });
   }
 
@@ -527,11 +442,7 @@ const crearEquipo = async (req, res) => {
   };
 
   for (const [campo, valor] of Object.entries(textos)) {
-    if (
-      valor !== undefined &&
-      valor !== null &&
-      typeof valor !== 'string'
-    ) {
+    if (valor !== undefined && valor !== null && typeof valor !== 'string') {
       return res.status(400).json({
         success: false,
         message: `El campo ${nombreCampo(campo)} debe ser texto`,
@@ -543,12 +454,10 @@ const crearEquipo = async (req, res) => {
     anio !== undefined &&
     anio !== null &&
     anio !== '' &&
-    (
-      (typeof anio !== 'string' && typeof anio !== 'number') ||
+    ((typeof anio !== 'string' && typeof anio !== 'number') ||
       !/^\d{4}$/.test(String(anio)) ||
       Number(anio) < 1900 ||
-      Number(anio) > 2100
-    )
+      Number(anio) > 2100)
   ) {
     return res.status(400).json({
       success: false,
@@ -565,10 +474,7 @@ const crearEquipo = async (req, res) => {
     await client.query('BEGIN');
     transaccionIniciada = true;
 
-    const usuario = await consultarUsuarioActual(
-      client,
-      idUsuario
-    );
+    const usuario = await consultarUsuarioActual(client, idUsuario);
 
     if (!usuario) {
       await client.query('ROLLBACK');
@@ -614,16 +520,12 @@ const crearEquipo = async (req, res) => {
 
       return res.status(403).json({
         success: false,
-        message:
-          'Laboratorio inexistente o sin acceso autorizado',
+        message: 'Laboratorio inexistente o sin acceso autorizado',
       });
     }
 
     // Identificar al usuario para los triggers.
-    await client.query(
-      "SELECT set_config('app.usuario_id', $1, true)",
-      [String(idUsuario)]
-    );
+    await client.query("SELECT set_config('app.usuario_id', $1, true)", [String(idUsuario)]);
 
     const resultado = await client.query(
       `INSERT INTO public.equipo (
@@ -651,9 +553,7 @@ const crearEquipo = async (req, res) => {
         textoOpcional(placa_institucional),
         textoOpcional(marca),
         textoOpcional(modelo),
-        anio === undefined || anio === null || anio === ''
-          ? null
-          : Number(anio),
+        anio === undefined || anio === null || anio === '' ? null : Number(anio),
         textoOpcional(caracteristicas),
         textoOpcional(comentarios),
         textoOpcional(ubicacion_detalle),
@@ -676,18 +576,11 @@ const crearEquipo = async (req, res) => {
       try {
         await client.query('ROLLBACK');
       } catch (rollbackError) {
-        console.error(
-          'Error al revertir:',
-          rollbackError.message
-        );
+        console.error('Error al revertir:', rollbackError.message);
       }
     }
 
-    return responderErrorEscritura(
-      res,
-      error,
-      'registrar'
-    );
+    return responderErrorEscritura(res, error, 'registrar');
   } finally {
     if (client) {
       client.release();
@@ -695,10 +588,8 @@ const crearEquipo = async (req, res) => {
   }
 };
 
-// =====================================================
 // 4. ACTUALIZAR EQUIPO
 // PUT /api/equipos/:id
-// =====================================================
 
 const actualizarEquipo = async (req, res) => {
   const idUsuario = obtenerIdUsuario(req.usuario);
@@ -736,11 +627,7 @@ const actualizarEquipo = async (req, res) => {
 
   const datos = req.body;
 
-  if (
-    !datos ||
-    typeof datos !== 'object' ||
-    Array.isArray(datos)
-  ) {
+  if (!datos || typeof datos !== 'object' || Array.isArray(datos)) {
     return res.status(400).json({
       success: false,
       message: 'Complete los datos del equipo.',
@@ -756,23 +643,16 @@ const actualizarEquipo = async (req, res) => {
     });
   }
 
-  const camposDesconocidos = camposRecibidos.filter(
-    (campo) => !camposPermitidos.includes(campo)
-  );
+  const camposDesconocidos = camposRecibidos.filter((campo) => !camposPermitidos.includes(campo));
 
   if (camposDesconocidos.length > 0) {
     return res.status(400).json({
       success: false,
-      message:
-        `Campos no permitidos: ${camposDesconocidos.join(', ')}`,
+      message: `Campos no permitidos: ${camposDesconocidos.join(', ')}`,
     });
   }
 
-  const camposId = [
-    'id_categoria',
-    'id_estado',
-    'id_laboratorio',
-  ];
+  const camposId = ['id_categoria', 'id_estado', 'id_laboratorio'];
 
   const camposTexto = [
     'nombre',
@@ -786,10 +666,7 @@ const actualizarEquipo = async (req, res) => {
   ];
 
   for (const campo of camposId) {
-    if (
-      Object.prototype.hasOwnProperty.call(datos, campo) &&
-      !esIdValido(datos[campo])
-    ) {
+    if (Object.prototype.hasOwnProperty.call(datos, campo) && !esIdValido(datos[campo])) {
       return res.status(400).json({
         success: false,
         message: `Seleccione un valor válido para ${nombreCampo(campo)}.`,
@@ -805,19 +682,13 @@ const actualizarEquipo = async (req, res) => {
     const valor = datos[campo];
 
     if (campo === 'nombre') {
-      if (
-        typeof valor !== 'string' ||
-        !valor.trim()
-      ) {
+      if (typeof valor !== 'string' || !valor.trim()) {
         return res.status(400).json({
           success: false,
           message: 'El nombre del equipo no puede estar vacío',
         });
       }
-    } else if (
-      valor !== null &&
-      typeof valor !== 'string'
-    ) {
+    } else if (valor !== null && typeof valor !== 'string') {
       return res.status(400).json({
         success: false,
         message: `El campo ${nombreCampo(campo)} debe contener texto o quedar vacío`,
@@ -831,12 +702,10 @@ const actualizarEquipo = async (req, res) => {
     if (
       anio !== null &&
       anio !== '' &&
-      (
-        (typeof anio !== 'string' && typeof anio !== 'number') ||
+      ((typeof anio !== 'string' && typeof anio !== 'number') ||
         !/^\d{4}$/.test(String(anio)) ||
         Number(anio) < 1900 ||
-        Number(anio) > 2100
-      )
+        Number(anio) > 2100)
     ) {
       return res.status(400).json({
         success: false,
@@ -853,17 +722,11 @@ const actualizarEquipo = async (req, res) => {
     if (camposId.includes(campo)) {
       cambios[campo] = Number(valor);
     } else if (campo === 'anio') {
-      cambios[campo] =
-        valor === null || valor === ''
-          ? null
-          : Number(valor);
+      cambios[campo] = valor === null || valor === '' ? null : Number(valor);
     } else if (campo === 'nombre') {
       cambios[campo] = valor.trim();
     } else {
-      cambios[campo] =
-        valor === null
-          ? null
-          : valor.trim() || null;
+      cambios[campo] = valor === null ? null : valor.trim() || null;
     }
   }
 
@@ -876,10 +739,7 @@ const actualizarEquipo = async (req, res) => {
     await client.query('BEGIN');
     transaccionIniciada = true;
 
-    const usuario = await consultarUsuarioActual(
-      client,
-      idUsuario
-    );
+    const usuario = await consultarUsuarioActual(client, idUsuario);
 
     if (!usuario) {
       await client.query('ROLLBACK');
@@ -932,14 +792,11 @@ const actualizarEquipo = async (req, res) => {
       });
     }
 
-    const laboratorioAnterior =
-      equipoActual.rows[0].id_laboratorio;
+    const laboratorioAnterior = equipoActual.rows[0].id_laboratorio;
 
-    const laboratorioNuevo =
-      cambios.id_laboratorio ?? laboratorioAnterior;
+    const laboratorioNuevo = cambios.id_laboratorio ?? laboratorioAnterior;
 
-    const esSuperadministrador =
-      usuario.rol === 'superadministrador';
+    const esSuperadministrador = usuario.rol === 'superadministrador';
 
     const accesoOrigen = await tieneAccesoLaboratorio(
       client,
@@ -954,8 +811,7 @@ const actualizarEquipo = async (req, res) => {
 
       return res.status(403).json({
         success: false,
-        message:
-          'Sin acceso autorizado al laboratorio de origen',
+        message: 'Sin acceso autorizado al laboratorio de origen',
       });
     }
 
@@ -972,22 +828,16 @@ const actualizarEquipo = async (req, res) => {
 
       return res.status(403).json({
         success: false,
-        message:
-          'Laboratorio de destino inexistente o sin acceso',
+        message: 'Laboratorio de destino inexistente o sin acceso',
       });
     }
 
-    await client.query(
-      "SELECT set_config('app.usuario_id', $1, true)",
-      [String(idUsuario)]
-    );
+    await client.query("SELECT set_config('app.usuario_id', $1, true)", [String(idUsuario)]);
 
     const nombresCampos = Object.keys(cambios);
     const valores = Object.values(cambios);
 
-    const asignaciones = nombresCampos.map(
-      (campo, indice) => `${campo} = $${indice + 1}`
-    );
+    const asignaciones = nombresCampos.map((campo, indice) => `${campo} = $${indice + 1}`);
 
     valores.push(idEquipo);
 
@@ -998,10 +848,7 @@ const actualizarEquipo = async (req, res) => {
       RETURNING *
     `;
 
-    const resultado = await client.query(
-      consulta,
-      valores
-    );
+    const resultado = await client.query(consulta, valores);
 
     await client.query('COMMIT');
     transaccionIniciada = false;
@@ -1016,18 +863,11 @@ const actualizarEquipo = async (req, res) => {
       try {
         await client.query('ROLLBACK');
       } catch (rollbackError) {
-        console.error(
-          'Error al revertir:',
-          rollbackError.message
-        );
+        console.error('Error al revertir:', rollbackError.message);
       }
     }
 
-    return responderErrorEscritura(
-      res,
-      error,
-      'actualizar'
-    );
+    return responderErrorEscritura(res, error, 'actualizar');
   } finally {
     if (client) {
       client.release();
@@ -1035,9 +875,7 @@ const actualizarEquipo = async (req, res) => {
   }
 };
 
-// =====================================================
 // EXPORTACIONES
-// =====================================================
 
 module.exports = {
   obtenerEquipos,

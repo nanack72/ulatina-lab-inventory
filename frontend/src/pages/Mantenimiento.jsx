@@ -105,11 +105,27 @@ export default function Mantenimiento({ token }) {
             onChange={(valor) => filtro(setBusqueda, valor)}
           />
           <div className="inv-selectores">
-            <FiltrosUbicacion compacto token={token} valor={ubicacion} onChange={valor => { setUbicacion(valor); setPagina(1); }} />
-            <FiltroSelect etiqueta="Tipo" valor={tipo} opciones={TIPOS_MANTENIMIENTO}
-              onChange={valor => filtro(setTipo, valor)} />
-            <FiltroSelect etiqueta="Estado" valor={estado} opciones={ESTADOS_MANTENIMIENTO}
-              onChange={valor => filtro(setEstado, valor)} />
+            <FiltrosUbicacion
+              compacto
+              token={token}
+              valor={ubicacion}
+              onChange={(valor) => {
+                setUbicacion(valor);
+                setPagina(1);
+              }}
+            />
+            <FiltroSelect
+              etiqueta="Tipo"
+              valor={tipo}
+              opciones={TIPOS_MANTENIMIENTO}
+              onChange={(valor) => filtro(setTipo, valor)}
+            />
+            <FiltroSelect
+              etiqueta="Estado"
+              valor={estado}
+              opciones={ESTADOS_MANTENIMIENTO}
+              onChange={(valor) => filtro(setEstado, valor)}
+            />
           </div>
         </div>
         <TablaMantenimientos
@@ -122,8 +138,13 @@ export default function Mantenimiento({ token }) {
         <PaginacionModulo
           pagina={datos?.pagina || pagina}
           total={datos?.total || 0}
-          limite={limite} singular="mantenimiento" plural="mantenimientos"
-          alCambiarLimite={(valor) => { setLimite(valor); setPagina(1); }}
+          limite={limite}
+          singular="mantenimiento"
+          plural="mantenimientos"
+          alCambiarLimite={(valor) => {
+            setLimite(valor);
+            setPagina(1);
+          }}
           alCambiar={setPagina}
           cargando={cargando}
         />

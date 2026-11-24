@@ -1,9 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { obtenerEquipos } from '../services/equiposService';
 import { adaptarEquipo } from '../utils/inventario';
@@ -28,10 +23,7 @@ export function useEquipos(token, onSesionExpirada) {
       setError('');
 
       try {
-        const datos = await obtenerEquipos(
-          token,
-          controlador.signal
-        );
+        const datos = await obtenerEquipos(token, controlador.signal);
 
         if (!controlador.signal.aborted) {
           setEquipos(datos.map(adaptarEquipo));
@@ -42,16 +34,11 @@ export function useEquipos(token, onSesionExpirada) {
         setEquipos([]);
 
         if (err.status === 401) {
-          setError(
-            "Su sesión expiró o ya no es válida. Inicie sesión nuevamente."
-          );
+          setError('Su sesión expiró o ya no es válida. Inicie sesión nuevamente.');
 
           alExpirarSesion.current?.();
         } else {
-          setError(
-            err.message ||
-            'No se pudo cargar el inventario.'
-          );
+          setError(err.message || 'No se pudo cargar el inventario.');
         }
       } finally {
         if (!controlador.signal.aborted) {

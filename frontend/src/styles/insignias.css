@@ -1,5 +1,7 @@
 /* Apariencia compartida de estados, tipos y prioridades. */
-.main-layout .main-page :is(.ini-pill, .inv-estado, .usu-estado, .mod-insignia, select.mod-select-estado) {
+.main-layout
+  .main-page
+  :is(.ini-pill, .inv-estado, .usu-estado, .mod-insignia, select.mod-select-estado) {
   box-sizing: border-box;
   display: inline-flex;
   align-items: center;
@@ -22,19 +24,31 @@
   vertical-align: middle;
 }
 
-.main-layout .main-page :is(.inv-estado--operativo, .usu-estado-activo, .mod-insignia-verde, .ini-pill--verde, .ini-pill--completado) {
+.main-layout
+  .main-page
+  :is(
+    .inv-estado--operativo,
+    .usu-estado-activo,
+    .mod-insignia-verde,
+    .ini-pill--verde,
+    .ini-pill--completado
+  ) {
   --insignia-fondo: #e9f5e4;
   --insignia-texto: #286433;
   --insignia-borde: #78946c;
 }
 
-.main-layout .main-page :is(.inv-estado--mantenimiento, .mod-insignia-ambar, .ini-pill--ambar, .ini-pill--proceso) {
+.main-layout
+  .main-page
+  :is(.inv-estado--mantenimiento, .mod-insignia-ambar, .ini-pill--ambar, .ini-pill--proceso) {
   --insignia-fondo: #fff6e6;
   --insignia-texto: #845212;
   --insignia-borde: #a38a60;
 }
 
-.main-layout .main-page :is(.inv-estado--baja, .usu-estado-inactivo, .mod-insignia-rojo, .ini-pill--repuesto) {
+.main-layout
+  .main-page
+  :is(.inv-estado--baja, .usu-estado-inactivo, .mod-insignia-rojo, .ini-pill--repuesto) {
   --insignia-fondo: #fff0ed;
   --insignia-texto: #a12d25;
   --insignia-borde: #b17c76;
@@ -56,7 +70,9 @@
 }
 
 @media (max-width: 800px) {
-  .main-layout .main-page :is(.ini-pill, .inv-estado, .usu-estado, .mod-insignia, select.mod-select-estado) {
+  .main-layout
+    .main-page
+    :is(.ini-pill, .inv-estado, .usu-estado, .mod-insignia, select.mod-select-estado) {
     min-height: 44px;
     font-size: 16px;
     line-height: 22px;
@@ -64,7 +80,9 @@
 }
 
 @media (forced-colors: active) {
-  .main-layout .main-page :is(.ini-pill, .inv-estado, .usu-estado, .mod-insignia, select.mod-select-estado) {
+  .main-layout
+    .main-page
+    :is(.ini-pill, .inv-estado, .usu-estado, .mod-insignia, select.mod-select-estado) {
     border-color: CanvasText;
     background-color: Canvas;
     color: CanvasText;

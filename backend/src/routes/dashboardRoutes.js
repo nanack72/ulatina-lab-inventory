@@ -1,9 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const {
-  obtenerActividadReciente
-} = require('../controllers/dashboardController');
+const { obtenerActividadReciente } = require('../controllers/dashboardController');
 
 const { verificarToken } = require('../middlewares/authMiddleware');
 

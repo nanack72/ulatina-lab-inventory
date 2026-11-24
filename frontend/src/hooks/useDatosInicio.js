@@ -1,14 +1,6 @@
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-import {
-  obtenerActividadReciente,
-  obtenerMantenimientos,
-} from '../services/dashboardService';
+import { obtenerActividadReciente, obtenerMantenimientos } from '../services/dashboardService';
 
 const ACTIVIDAD_VISIBLE = 6;
 
@@ -39,11 +31,7 @@ export function useDatosInicio(token, onSesionExpirada) {
 
       const [mantenimientos, actividad] = await Promise.allSettled([
         obtenerMantenimientos(token, controlador.signal),
-        obtenerActividadReciente(
-          token,
-          controlador.signal,
-          ACTIVIDAD_VISIBLE
-        ),
+        obtenerActividadReciente(token, controlador.signal, ACTIVIDAD_VISIBLE),
       ]);
 
       if (controlador.signal.aborted) return;
@@ -62,12 +50,8 @@ export function useDatosInicio(token, onSesionExpirada) {
           : '';
 
       setDatos({
-        mantenimientos:
-          mantenimientos.status === 'fulfilled'
-            ? mantenimientos.value
-            : [],
-        actividad:
-          actividad.status === 'fulfilled' ? actividad.value : [],
+        mantenimientos: mantenimientos.status === 'fulfilled' ? mantenimientos.value : [],
+        actividad: actividad.status === 'fulfilled' ? actividad.value : [],
         errorMantenimientos: mensaje(mantenimientos),
         errorActividad: mensaje(actividad),
         ahora: Date.now(),

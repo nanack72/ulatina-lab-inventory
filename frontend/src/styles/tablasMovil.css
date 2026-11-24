@@ -1,9 +1,9 @@
-/* ======================================================
+/* 
    TABLAS EN TELÉFONO
    Debajo de 700 px cada fila se muestra como una tarjeta y
    el nombre de la columna aparece sobre cada dato
    (data-label lo agrega useTablasEnTarjetas).
-   ====================================================== */
+    */
 
 @media (max-width: 700px) {
   .main-page .inv-tabla-contenedor,
@@ -82,7 +82,9 @@
   }
 
   /* La cuadrícula de dos columnas deja huecos en la línea superior */
-  .main-page .inv-tabla td:nth-child(n + 3):not(:last-child):not(:has(select, button, p, .insignia)) {
+  .main-page
+    .inv-tabla
+    td:nth-child(n + 3):not(:last-child):not(:has(select, button, p, .insignia)) {
     border-top: 1px solid #eef3f0;
   }
 
@@ -98,9 +100,9 @@
 
   /* Celdas sin encabezado (flecha de detalle) y filas vacías */
   .main-page .inv-tabla td:not([data-label])::before,
-  .main-page .inv-tabla td[data-label=""]::before,
+  .main-page .inv-tabla td[data-label='']::before,
   .main-page .ini-tabla td:not([data-label])::before,
-  .main-page .ini-tabla td[data-label=""]::before {
+  .main-page .ini-tabla td[data-label='']::before {
     content: none;
   }
 
@@ -163,7 +165,7 @@
 
 @media (max-width: 700px) {
   /* Los nombres pueden ser largos: evitar una media fila vacía a su derecha. */
-  .main-page .mod-tabla td[data-label="Reportado por"] {
+  .main-page .mod-tabla td[data-label='Reportado por'] {
     grid-column: 1 / -1;
   }
 

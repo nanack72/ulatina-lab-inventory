@@ -73,12 +73,14 @@ test('las evidencias existentes no son públicas por /uploads', async (t) => {
   fs.mkdirSync(carpeta, { recursive: true });
   const nombre = 'prueba-' + randomUUID() + '.png';
   const archivo = path.join(carpeta, nombre);
-  fs.writeFileSync(archivo, Buffer.from([137,80,78,71,13,10,26,10]));
+  fs.writeFileSync(archivo, Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
   t.after(() => fs.unlinkSync(archivo));
   const servidor = http.createServer(cargarApp());
-  await new Promise(resolve => servidor.listen(0, '127.0.0.1', resolve));
-  t.after(() => new Promise(resolve => servidor.close(resolve)));
-  const respuesta = await fetch('http://127.0.0.1:' + servidor.address().port + '/uploads/evidencias/' + nombre);
+  await new Promise((resolve) => servidor.listen(0, '127.0.0.1', resolve));
+  t.after(() => new Promise((resolve) => servidor.close(resolve)));
+  const respuesta = await fetch(
+    'http://127.0.0.1:' + servidor.address().port + '/uploads/evidencias/' + nombre
+  );
   assert.equal(respuesta.status, 404);
 });
 
@@ -89,42 +91,37 @@ test('límites JSON de importación y respuestas de error', async (t) => {
     servidor.listen(0, '127.0.0.1', resolve);
   });
 
-  t.after(() => new Promise((resolve) => {
-    servidor.close(resolve);
-  }));
+  t.after(
+    () =>
+      new Promise((resolve) => {
+        servidor.close(resolve);
+      })
+  );
 
   const base = `http://127.0.0.1:${servidor.address().port}`;
 
-  const enviar = (ruta, body) => fetch(`${base}${ruta}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body,
-  });
+  const enviar = (ruta, body) =>
+    fetch(`${base}${ruta}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body,
+    });
 
   const cuerpo = JSON.stringify({
     texto: 'a'.repeat(150 * 1024),
   });
 
   await t.test('acepta más de 100 kB en confirmación', async () => {
-    const respuesta = await enviar(
-      '/api/importacion-equipos/confirmar',
-      cuerpo
-    );
+    const respuesta = await enviar('/api/importacion-equipos/confirmar', cuerpo);
 
     assert.equal(respuesta.status, 200);
-    assert.equal(
-      (await respuesta.json()).longitud,
-      150 * 1024
-    );
+    assert.equal((await respuesta.json()).longitud, 150 * 1024);
   });
 
   await t.test('mantiene el límite general en otras rutas', async () => {
-    const respuesta = await enviar(
-      '/api/equipos/confirmar',
-      cuerpo
-    );
+    const respuesta = await enviar('/api/equipos/confirmar', cuerpo);
 
     assert.equal(respuesta.status, 413);
     assert.equal((await respuesta.json()).success, false);
@@ -143,10 +140,7 @@ test('límites JSON de importación y respuestas de error', async (t) => {
   });
 
   await t.test('rechaza JSON mal formado con JSON', async () => {
-    const respuesta = await enviar(
-      '/api/importacion-equipos/confirmar',
-      '{'
-    );
+    const respuesta = await enviar('/api/importacion-equipos/confirmar', '{');
 
     assert.equal(respuesta.status, 400);
     assert.equal((await respuesta.json()).success, false);
@@ -154,14 +148,9 @@ test('límites JSON de importación y respuestas de error', async (t) => {
 });
 
 test('historial usa /api y conserva autenticación y cancelación', async (t) => {
-  const archivo = path.join(
-    __dirname,
-    '../../frontend/src/services/historialCambiosService.js'
-  );
+  const archivo = path.join(__dirname, '../../frontend/src/services/historialCambiosService.js');
 
-  const { obtenerHistorialCambios } = await import(
-    pathToFileURL(archivo).href
-  );
+  const { obtenerHistorialCambios } = await import(pathToFileURL(archivo).href);
 
   const signal = new AbortController().signal;
   const fetchOriginal = global.fetch;
@@ -175,26 +164,19 @@ test('historial usa /api y conserva autenticación y cancelación', async (t) =>
   global.fetch = async (url, opciones) => {
     solicitud = { url, opciones };
 
-    return new Response(JSON.stringify({
-      success: true,
-      data: [{ id: 1 }],
-    }));
+    return new Response(
+      JSON.stringify({
+        success: true,
+        data: [{ id: 1 }],
+      })
+    );
   };
 
-  assert.deepEqual(
-    await obtenerHistorialCambios(12, 'token-prueba', signal),
-    [{ id: 1 }]
-  );
+  assert.deepEqual(await obtenerHistorialCambios(12, 'token-prueba', signal), [{ id: 1 }]);
 
-  assert.equal(
-    solicitud.url,
-    '/api/equipos/12/historial-cambios'
-  );
+  assert.equal(solicitud.url, '/api/equipos/12/historial-cambios');
 
-  assert.equal(
-    solicitud.opciones.headers.Authorization,
-    'Bearer token-prueba'
-  );
+  assert.equal(solicitud.opciones.headers.Authorization, 'Bearer token-prueba');
 
   assert.equal(solicitud.opciones.signal, signal);
 });

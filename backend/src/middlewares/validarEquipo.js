@@ -6,7 +6,7 @@ const validarEquipo = (req, res, next) => {
     id_laboratorio,
     id_categoria,
     id_estado,
-    anio
+    anio,
   } = req.body;
 
   const errores = [];
@@ -17,24 +17,17 @@ const validarEquipo = (req, res, next) => {
   }
 
   // Validar número de serie
-  if (
-    typeof numero_serie !== 'string' ||
-    !numero_serie.trim()
-  ) {
+  if (typeof numero_serie !== 'string' || !numero_serie.trim()) {
     errores.push('El número de serie es obligatorio');
   }
 
   // Validar placa institucional
-  if (
-    typeof placa_institucional !== 'string' ||
-    !placa_institucional.trim()
-  ) {
+  if (typeof placa_institucional !== 'string' || !placa_institucional.trim()) {
     errores.push('La placa institucional es obligatoria');
   }
 
   // Validar identificadores
-  const validarId = (valor) =>
-    Number.isSafeInteger(valor) && valor > 0;
+  const validarId = (valor) => Number.isSafeInteger(valor) && valor > 0;
 
   if (!validarId(id_laboratorio)) {
     errores.push('El laboratorio no es válido');
@@ -52,11 +45,7 @@ const validarEquipo = (req, res, next) => {
   if (
     anio !== undefined &&
     anio !== null &&
-    (
-      !Number.isInteger(anio) ||
-      anio < 1900 ||
-      anio > new Date().getFullYear() + 1
-    )
+    (!Number.isInteger(anio) || anio < 1900 || anio > new Date().getFullYear() + 1)
   ) {
     errores.push('El año del equipo no es válido');
   }
@@ -65,7 +54,7 @@ const validarEquipo = (req, res, next) => {
     return res.status(400).json({
       success: false,
       message: 'Errores de validación',
-      errores
+      errores,
     });
   }
 
