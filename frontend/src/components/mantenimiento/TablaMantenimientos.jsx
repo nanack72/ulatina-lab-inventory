@@ -7,7 +7,7 @@ import {
 } from '../../utils/mantenimiento';
 // Color del selector según el estado del mantenimiento
 const TONO_ESTADO = {
-  'Completado': 'verde',
+  Completado: 'verde',
   'En Proceso': 'ambar',
   'Pendiente Repuesto': 'rojo',
 };

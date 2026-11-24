@@ -3,7 +3,12 @@ export function Campo({ etiqueta, htmlFor, requerido = false, children }) {
     <label className="registro-campo" htmlFor={htmlFor}>
       <span className="registro-etiqueta">
         {etiqueta}
-        {requerido && <span className="registro-requerido" aria-hidden="true"> *</span>}
+        {requerido && (
+          <span className="registro-requerido" aria-hidden="true">
+            {' '}
+            *
+          </span>
+        )}
       </span>
       {children}
     </label>
@@ -19,9 +24,7 @@ export function Seccion({ titulo, icono: Icono, children }) {
         </span>
         <h2>{titulo}</h2>
       </div>
-      <div className="registro-tarjeta-contenido">
-        {children}
-      </div>
+      <div className="registro-tarjeta-contenido">{children}</div>
     </section>
   );
 }

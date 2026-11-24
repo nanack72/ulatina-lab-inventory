@@ -19,11 +19,7 @@ const ETIQUETAS = {
 };
 
 function nombreCampo(campo) {
-  return (
-    ETIQUETAS[campo] ||
-    String(campo || 'Campo desconocido')
-      .replaceAll('_', ' ')
-  );
+  return ETIQUETAS[campo] || String(campo || 'Campo desconocido').replaceAll('_', ' ');
 }
 
 function valorVisible(valor) {
@@ -48,10 +44,7 @@ function fechaVisible(fecha) {
   }).format(valor);
 }
 
-export default function HistorialCambios({
-  idEquipo,
-  token,
-}) {
+export default function HistorialCambios({ idEquipo, token }) {
   const [registros, setRegistros] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
@@ -65,29 +58,21 @@ export default function HistorialCambios({
       setError('');
 
       try {
-        const datos = await obtenerHistorialCambios(
-          idEquipo,
-          token,
-          controlador.signal
-        );
+        const datos = await obtenerHistorialCambios(idEquipo, token, controlador.signal);
 
         if (!controlador.signal.aborted) {
           setRegistros(
             [...datos].sort(
               (a, b) =>
                 new Date(b.fecha) - new Date(a.fecha) ||
-                b.id_historial_cambio -
-                  a.id_historial_cambio
+                b.id_historial_cambio - a.id_historial_cambio
             )
           );
         }
       } catch (err) {
         if (controlador.signal.aborted) return;
 
-        setError(
-          err.message ||
-          'No se pudo cargar el historial.'
-        );
+        setError(err.message || 'No se pudo cargar el historial.');
       } finally {
         if (!controlador.signal.aborted) {
           setCargando(false);
@@ -109,10 +94,7 @@ export default function HistorialCambios({
 
           <div>
             <h2>Historial de modificaciones</h2>
-            <p>
-              Consulte los cambios realizados
-              en los datos del equipo.
-            </p>
+            <p>Consulte los cambios realizados en los datos del equipo.</p>
           </div>
         </div>
 
@@ -129,13 +111,10 @@ export default function HistorialCambios({
       </header>
 
       <div className="hc-contenido">
-        {cargando && (
-          <p role="status">Cargando modificaciones...</p>
-        )}
+        {cargando && <p role="status">Cargando modificaciones...</p>}
 
         {!cargando && error && (
           <Notificacion tipo="error">
-            
             <span>{error}</span>
           </Notificacion>
         )}
@@ -144,70 +123,44 @@ export default function HistorialCambios({
           <>
             <p className="hc-total">
               {registros.length}{' '}
-              {registros.length === 1
-                ? 'modificación encontrada'
-                : 'modificaciones encontradas'}
+              {registros.length === 1 ? 'modificación encontrada' : 'modificaciones encontradas'}
             </p>
 
             {registros.length === 0 ? (
-              <p>
-                Este equipo todavía no tiene
-                modificaciones registradas.
-              </p>
+              <p>Este equipo todavía no tiene modificaciones registradas.</p>
             ) : (
               <div className="hc-lista">
                 {registros.map((registro) => (
-                  <article
-                    className="hc-registro"
-                    key={registro.id_historial_cambio}
-                  >
+                  <article className="hc-registro" key={registro.id_historial_cambio}>
                     <div className="hc-registro-superior">
                       <div className="hc-campo">
                         <Pencil size={16} />
-                        <h3>
-                          {nombreCampo(
-                            registro.campo_modificado
-                          )}
-                        </h3>
+                        <h3>{nombreCampo(registro.campo_modificado)}</h3>
                       </div>
 
-                      <time dateTime={registro.fecha}>
-                        {fechaVisible(registro.fecha)}
-                      </time>
+                      <time dateTime={registro.fecha}>{fechaVisible(registro.fecha)}</time>
                     </div>
 
                     <div className="hc-comparacion">
                       <div className="hc-valor hc-valor-anterior">
                         <span>Valor anterior</span>
                         <strong>
-                          {valorVisible(
-                            registro.valor_anterior_visible ?? registro.valor_anterior
-                          )}
+                          {valorVisible(registro.valor_anterior_visible ?? registro.valor_anterior)}
                         </strong>
                       </div>
 
-                      <ArrowRight
-                        size={19}
-                        className="hc-flecha"
-                        aria-hidden="true"
-                      />
+                      <ArrowRight size={19} className="hc-flecha" aria-hidden="true" />
 
                       <div className="hc-valor hc-valor-nuevo">
                         <span>Valor nuevo</span>
                         <strong>
-                          {valorVisible(
-                            registro.valor_nuevo_visible ?? registro.valor_nuevo
-                          )}
+                          {valorVisible(registro.valor_nuevo_visible ?? registro.valor_nuevo)}
                         </strong>
                       </div>
                     </div>
 
                     <div className="hc-responsable">
-                      Responsable:{' '}
-                      <strong>
-                        {registro.nombre_usuario ||
-                          'No disponible'}
-                      </strong>
+                      Responsable: <strong>{registro.nombre_usuario || 'No disponible'}</strong>
                     </div>
                   </article>
                 ))}

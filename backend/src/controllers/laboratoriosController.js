@@ -1,8 +1,6 @@
 const pool = require('../config/database');
 
-const {
-  puedeRegistrarInventario,
-} = require('../utils/permisosInventario');
+const { puedeRegistrarInventario } = require('../utils/permisosInventario');
 
 // GET /api/laboratorios
 // Devuelve los laboratorios autorizados para los
@@ -20,10 +18,7 @@ const obtenerLaboratorios = async (req, res) => {
 
     const idUsuario = Number(usuario.idUsuario);
 
-    if (
-      !Number.isSafeInteger(idUsuario) ||
-      idUsuario <= 0
-    ) {
+    if (!Number.isSafeInteger(idUsuario) || idUsuario <= 0) {
       return res.status(401).json({
         success: false,
         message: 'Sesión de usuario no válida',
@@ -34,16 +29,14 @@ const obtenerLaboratorios = async (req, res) => {
       .toLowerCase()
       .trim();
 
-    const esSuperAdministrador =
-      rol === 'superadministrador';
+    const esSuperAdministrador = rol === 'superadministrador';
 
     // Registro y edición pueden cargar los laboratorios.
     // El permiso de edición incluye el de registro.
     if (!puedeRegistrarInventario(usuario)) {
       return res.status(403).json({
         success: false,
-        message:
-          'No tiene permisos para utilizar los formularios de inventario.',
+        message: 'No tiene permisos para utilizar los formularios de inventario.',
       });
     }
 
@@ -73,10 +66,7 @@ const obtenerLaboratorios = async (req, res) => {
       ORDER BY s.nombre ASC, l.nombre ASC
     `;
 
-    const resultado = await pool.query(consulta, [
-      idUsuario,
-      esSuperAdministrador,
-    ]);
+    const resultado = await pool.query(consulta, [idUsuario, esSuperAdministrador]);
 
     return res.status(200).json({
       success: true,
@@ -84,10 +74,7 @@ const obtenerLaboratorios = async (req, res) => {
       data: resultado.rows,
     });
   } catch (error) {
-    console.error(
-      'Error al obtener laboratorios:',
-      error
-    );
+    console.error('Error al obtener laboratorios:', error);
 
     return res.status(500).json({
       success: false,

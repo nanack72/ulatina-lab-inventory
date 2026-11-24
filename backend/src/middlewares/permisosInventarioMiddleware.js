@@ -8,13 +8,10 @@ const validarLaboratorioInventario = async (req, res, next) => {
     const idLaboratorio = req.body?.id_laboratorio;
 
     // Verificar que el usuario esté autenticado
-    if (
-      !Number.isSafeInteger(idUsuario) ||
-      idUsuario <= 0
-    ) {
+    if (!Number.isSafeInteger(idUsuario) || idUsuario <= 0) {
       return res.status(403).json({
         success: false,
-        message: 'Usuario sin autorización válida'
+        message: 'Usuario sin autorización válida',
       });
     }
 
@@ -25,7 +22,7 @@ const validarLaboratorioInventario = async (req, res, next) => {
     ) {
       return res.status(400).json({
         success: false,
-        message: 'Debe indicar un laboratorio válido'
+        message: 'Debe indicar un laboratorio válido',
       });
     }
 
@@ -53,25 +50,21 @@ const validarLaboratorioInventario = async (req, res, next) => {
     if (resultado.rowCount === 0) {
       return res.status(403).json({
         success: false,
-        message: "No tiene autorización para registrar equipos en este laboratorio"
+        message: 'No tiene autorización para registrar equipos en este laboratorio',
       });
     }
 
     next();
-
   } catch (error) {
-    console.error(
-      'Error al validar permisos de inventario:',
-      error.message
-    );
+    console.error('Error al validar permisos de inventario:', error.message);
 
     return res.status(500).json({
       success: false,
-      message: 'Error al verificar permisos de inventario'
+      message: 'Error al verificar permisos de inventario',
     });
   }
 };
 
 module.exports = {
-  validarLaboratorioInventario
+  validarLaboratorioInventario,
 };

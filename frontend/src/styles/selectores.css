@@ -1,26 +1,98 @@
-select{font:inherit;color:var(--texto);border:1px solid var(--borde);border-radius:8px;background-color:#fff;min-height:36px;cursor:pointer}
-select:focus-visible{outline:2px solid var(--verde);outline-offset:2px}
-select:disabled{cursor:not-allowed;opacity:.65}
-.selector-etiqueta{position:absolute;clip-path:inset(50%);width:1px;height:1px;overflow:hidden;white-space:nowrap}
-@supports (appearance:base-select){
-  select:not([multiple]),select:not([multiple])::picker(select){appearance:base-select}
-  select:not([multiple]){align-items:center;padding:9px 12px;gap:16px}
-  select:not([multiple])::picker(select){border:1px solid #c9ddd2;border-radius:12px;padding:6px;margin-top:6px;background:#fff;color:var(--texto);font:inherit;box-shadow:0 12px 32px #163d2924;max-height:320px;overflow:auto}
-  select:not([multiple]) option{padding:10px 12px;min-height:38px;border-radius:7px;font-size:13px;white-space:normal}
-  select:not([multiple]) option:hover,select:not([multiple]) option:focus{background:var(--verde-suave);color:var(--verde)}
-  select:not([multiple]) option:checked{font-weight:600;background:#e4f1e9;color:var(--verde)}
-  select:not([multiple]) option::checkmark{color:var(--verde)}
-  select:not([multiple])::picker-icon{color:var(--verde);transition:rotate .15s}
-  select:not([multiple]):open::picker-icon{rotate:90deg}
-  .inv-select-contenedor>svg{display:none}
-  .inv-select-contenedor select{appearance:base-select;padding:8px 12px}
-  select:not([multiple]){min-width:0;max-width:100%}
+select {
+  font: inherit;
+  color: var(--texto);
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  background-color: #fff;
+  min-height: 36px;
+  cursor: pointer;
 }
-@media(prefers-reduced-motion:reduce){select::picker-icon{transition:none}}
+select:focus-visible {
+  outline: 2px solid var(--verde);
+  outline-offset: 2px;
+}
+select:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+.selector-etiqueta {
+  position: absolute;
+  clip-path: inset(50%);
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+@supports (appearance: base-select) {
+  select:not([multiple]),
+  select:not([multiple])::picker(select) {
+    appearance: base-select;
+  }
+  select:not([multiple]) {
+    align-items: center;
+    padding: 9px 12px;
+    gap: 16px;
+  }
+  select:not([multiple])::picker(select) {
+    border: 1px solid #c9ddd2;
+    border-radius: 12px;
+    padding: 6px;
+    margin-top: 6px;
+    background: #fff;
+    color: var(--texto);
+    font: inherit;
+    box-shadow: 0 12px 32px #163d2924;
+    max-height: 320px;
+    overflow: auto;
+  }
+  select:not([multiple]) option {
+    padding: 10px 12px;
+    min-height: 38px;
+    border-radius: 7px;
+    font-size: 13px;
+    white-space: normal;
+  }
+  select:not([multiple]) option:hover,
+  select:not([multiple]) option:focus {
+    background: var(--verde-suave);
+    color: var(--verde);
+  }
+  select:not([multiple]) option:checked {
+    font-weight: 600;
+    background: #e4f1e9;
+    color: var(--verde);
+  }
+  select:not([multiple]) option::checkmark {
+    color: var(--verde);
+  }
+  select:not([multiple])::picker-icon {
+    color: var(--verde);
+    transition: rotate 0.15s;
+  }
+  select:not([multiple]):open::picker-icon {
+    rotate: 90deg;
+  }
+  .inv-select-contenedor > svg {
+    display: none;
+  }
+  .inv-select-contenedor select {
+    appearance: base-select;
+    padding: 8px 12px;
+  }
+  select:not([multiple]) {
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  select::picker-icon {
+    transition: none;
+  }
+}
 
 /* Flecha común para filtros, formularios, estados y paginación. */
 :root body select:not([multiple]):not([size]),
-:root body select:not([multiple])[size="1"] {
+:root body select:not([multiple])[size='1'] {
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23215e4b' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
@@ -35,9 +107,9 @@ select:disabled{cursor:not-allowed;opacity:.65}
 }
 @supports (appearance: base-select) {
   :root body select:not([multiple]):not([size]),
-  :root body select:not([multiple])[size="1"],
+  :root body select:not([multiple])[size='1'],
   :root body select:not([multiple]):not([size])::picker(select),
-  :root body select:not([multiple])[size="1"]::picker(select) {
+  :root body select:not([multiple])[size='1']::picker(select) {
     appearance: base-select;
   }
   :root body select:not([multiple])::picker-icon {
@@ -46,7 +118,7 @@ select:disabled{cursor:not-allowed;opacity:.65}
 }
 @media (forced-colors: active) {
   :root body select:not([multiple]):not([size]),
-  :root body select:not([multiple])[size="1"] {
+  :root body select:not([multiple])[size='1'] {
     appearance: auto;
     background-image: none;
   }
@@ -58,7 +130,7 @@ select:disabled{cursor:not-allowed;opacity:.65}
 /* La flecha hereda el color del control y gira según su apertura real. */
 @supports (appearance: base-select) {
   :root body select:not([multiple]):not([size]),
-  :root body select:not([multiple])[size="1"] {
+  :root body select:not([multiple])[size='1'] {
     background-image: none;
     padding-inline-end: 12px;
     gap: 10px;
@@ -66,14 +138,15 @@ select:disabled{cursor:not-allowed;opacity:.65}
     anchor-scope: --selector-desplegable;
   }
   :root body select:not([multiple])::picker-icon {
-    content: "";
+    content: '';
     display: block;
     flex: none;
     width: 16px;
     height: 16px;
     color: inherit;
     background-color: currentColor;
-    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E")
+      center / contain no-repeat;
     rotate: 0deg;
     transition: rotate 180ms ease;
   }
@@ -95,13 +168,15 @@ select:disabled{cursor:not-allowed;opacity:.65}
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  :root body select:not([multiple])::picker-icon { transition: none; }
+  :root body select:not([multiple])::picker-icon {
+    transition: none;
+  }
 }
 @media (forced-colors: active) {
   :root body select:not([multiple])::picker-icon {
     mask: none;
     background-color: transparent;
-    content: "⌄";
+    content: '⌄';
     color: ButtonText;
   }
 }

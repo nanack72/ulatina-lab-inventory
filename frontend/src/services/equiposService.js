@@ -4,7 +4,7 @@ const API_URL = '/api/equipos';
 
 export async function obtenerEquipos(token, signal) {
   if (!token) {
-    throw new Error("Debe iniciar sesión para consultar el inventario.");
+    throw new Error('Debe iniciar sesión para consultar el inventario.');
   }
 
   const { respuesta, resultado } = await solicitarInventario(
@@ -21,10 +21,7 @@ export async function obtenerEquipos(token, signal) {
   );
 
   if (!respuesta.ok) {
-    const error = new Error(
-      resultado?.message ||
-      'No fue posible consultar el inventario.'
-    );
+    const error = new Error(resultado?.message || 'No fue posible consultar el inventario.');
     error.status = respuesta.status;
     throw error;
   }
@@ -38,23 +35,25 @@ export async function obtenerEquipos(token, signal) {
 
 export async function obtenerEquipoPorId(idEquipo, token, signal) {
   if (!token) {
-    throw new Error("Debe iniciar sesión para consultar el equipo.");
+    throw new Error('Debe iniciar sesión para consultar el equipo.');
   }
 
   if (!Number.isInteger(Number(idEquipo)) || Number(idEquipo) <= 0) {
-    throw new Error("No se pudo identificar el equipo. Vuelva al inventario y selecciónelo nuevamente.");
+    throw new Error(
+      'No se pudo identificar el equipo. Vuelva al inventario y selecciónelo nuevamente.'
+    );
   }
 
   const { respuesta, resultado } = await solicitarInventario(
     `/api/equipos/${encodeURIComponent(idEquipo)}`,
     {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/json',
-        },
-        signal,
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
       },
+      signal,
+    },
     'No se pudo conectar con el servidor para consultar el equipo.'
   );
 
@@ -62,14 +61,12 @@ export async function obtenerEquipoPorId(idEquipo, token, signal) {
     let mensaje = resultado?.message;
 
     if (respuesta.status === 401) {
-      mensaje = "Su sesión ya no es válida. Inicie sesión nuevamente.";
+      mensaje = 'Su sesión ya no es válida. Inicie sesión nuevamente.';
     } else if (respuesta.status === 403 || respuesta.status === 404) {
-      mensaje = "No se encontró el equipo o no tiene acceso a él.";
+      mensaje = 'No se encontró el equipo o no tiene acceso a él.';
     }
 
-    const error = new Error(
-      mensaje || 'No fue posible consultar el detalle del equipo.'
-    );
+    const error = new Error(mensaje || 'No fue posible consultar el detalle del equipo.');
 
     error.status = respuesta.status;
     throw error;
@@ -94,9 +91,7 @@ export async function obtenerEquipoPorId(idEquipo, token, signal) {
  */
 export async function registrarEquipo(datosEquipo, token) {
   if (!token) {
-    throw new Error(
-      "Debe iniciar sesión para registrar equipos."
-    );
+    throw new Error('Debe iniciar sesión para registrar equipos.');
   }
 
   const { respuesta, resultado } = await solicitarInventario(
@@ -115,16 +110,14 @@ export async function registrarEquipo(datosEquipo, token) {
   );
 
   if (!respuesta.ok) {
-    let mensaje =
-      resultado?.message || 'No fue posible registrar el equipo.';
+    let mensaje = resultado?.message || 'No fue posible registrar el equipo.';
 
     if (respuesta.status === 401) {
-      mensaje = "Su sesión ya no es válida. Inicie sesión nuevamente.";
+      mensaje = 'Su sesión ya no es válida. Inicie sesión nuevamente.';
     }
 
     if (respuesta.status === 403) {
-      mensaje =
-        "No tiene permisos para registrar equipos en este laboratorio.";
+      mensaje = 'No tiene permisos para registrar equipos en este laboratorio.';
     }
 
     const error = new Error(mensaje);
@@ -135,9 +128,7 @@ export async function registrarEquipo(datosEquipo, token) {
   }
 
   if (resultado?.success !== true) {
-    throw new Error(
-      'El servidor no confirmó el registro del equipo.'
-    );
+    throw new Error('El servidor no confirmó el registro del equipo.');
   }
 
   return resultado;
@@ -150,47 +141,39 @@ export async function registrarEquipo(datosEquipo, token) {
 
 export async function actualizarEquipo(idEquipo, datosEquipo, token) {
   if (!token) {
-    throw new Error(
-      "Debe iniciar sesión para modificar equipos."
-    );
+    throw new Error('Debe iniciar sesión para modificar equipos.');
   }
 
-  if (
-    !Number.isSafeInteger(Number(idEquipo)) ||
-    Number(idEquipo) <= 0
-  ) {
-    throw new Error("No se pudo identificar el equipo. Vuelva al inventario y selecciónelo nuevamente.");
+  if (!Number.isSafeInteger(Number(idEquipo)) || Number(idEquipo) <= 0) {
+    throw new Error(
+      'No se pudo identificar el equipo. Vuelva al inventario y selecciónelo nuevamente.'
+    );
   }
 
   const { respuesta, resultado } = await solicitarInventario(
     `/api/equipos/${encodeURIComponent(idEquipo)}`,
     {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(datosEquipo),
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
       },
+      body: JSON.stringify(datosEquipo),
+    },
     'No se pudo conectar con el servidor para actualizar el equipo.',
     { propagarCancelacion: false }
   );
 
   if (!respuesta.ok) {
-    let mensaje =
-      resultado?.message ||
-      'No fue posible actualizar el equipo.';
+    let mensaje = resultado?.message || 'No fue posible actualizar el equipo.';
 
     if (respuesta.status === 401) {
-      mensaje =
-        "Su sesión ya no es válida. Inicie sesión nuevamente.";
+      mensaje = 'Su sesión ya no es válida. Inicie sesión nuevamente.';
     } else if (respuesta.status === 403) {
-      mensaje =
-        "No tiene permisos para modificar este equipo.";
+      mensaje = 'No tiene permisos para modificar este equipo.';
     } else if (respuesta.status === 404) {
-      mensaje =
-        "No se encontró el equipo o no tiene acceso a él.";
+      mensaje = 'No se encontró el equipo o no tiene acceso a él.';
     }
 
     const error = new Error(mensaje);
@@ -201,14 +184,11 @@ export async function actualizarEquipo(idEquipo, datosEquipo, token) {
   }
 
   if (resultado?.success !== true) {
-    throw new Error(
-      'El servidor no confirmó la actualización del equipo.'
-    );
+    throw new Error('El servidor no confirmó la actualización del equipo.');
   }
 
   return resultado;
 }
-
 
 /**
  * Traslada un equipo a una nueva ubicación.
@@ -219,41 +199,26 @@ export async function actualizarEquipo(idEquipo, datosEquipo, token) {
  * El backend debe verificar los permisos y
  * PostgreSQL debe registrar el historial.
  */
-export async function trasladarEquipo(
-  idEquipo,
-  datosTraslado,
-  token
-) {
+export async function trasladarEquipo(idEquipo, datosTraslado, token) {
   if (!token) {
-    throw new Error(
-      "Debe iniciar sesión para trasladar equipos."
-    );
+    throw new Error('Debe iniciar sesión para trasladar equipos.');
   }
 
   const id = Number(idEquipo);
 
   if (!Number.isSafeInteger(id) || id <= 0) {
     throw new Error(
-      "No se pudo identificar el equipo. Vuelva al inventario y selecciónelo nuevamente."
+      'No se pudo identificar el equipo. Vuelva al inventario y selecciónelo nuevamente.'
     );
   }
 
-  const idLaboratorio = Number(
-    datosTraslado.id_laboratorio
-  );
+  const idLaboratorio = Number(datosTraslado.id_laboratorio);
 
-  if (
-    !Number.isSafeInteger(idLaboratorio) ||
-    idLaboratorio <= 0
-  ) {
-    throw new Error(
-      "Debe seleccionar un laboratorio válido."
-    );
+  if (!Number.isSafeInteger(idLaboratorio) || idLaboratorio <= 0) {
+    throw new Error('Debe seleccionar un laboratorio válido.');
   }
 
-  const ubicacionDetalle = String(
-    datosTraslado.ubicacion_detalle ?? ''
-  ).trim();
+  const ubicacionDetalle = String(datosTraslado.ubicacion_detalle ?? '').trim();
 
   // El backend recibe únicamente los campos
   // que queremos modificar.
@@ -265,32 +230,27 @@ export async function trasladarEquipo(
   const { respuesta, resultado } = await solicitarInventario(
     `/api/equipos/${encodeURIComponent(id)}`,
     {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(datos),
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
       },
+      body: JSON.stringify(datos),
+    },
     'No se pudo conectar con el servidor.',
     { propagarCancelacion: false }
   );
 
   if (!respuesta.ok) {
-    let mensaje =
-      resultado?.message ||
-      'No fue posible trasladar el equipo.';
+    let mensaje = resultado?.message || 'No fue posible trasladar el equipo.';
 
     if (respuesta.status === 401) {
-      mensaje =
-        "Su sesión ya no es válida. Inicie sesión nuevamente.";
+      mensaje = 'Su sesión ya no es válida. Inicie sesión nuevamente.';
     } else if (respuesta.status === 403) {
-      mensaje =
-        "No tiene permisos para trasladar el equipo a ese laboratorio.";
+      mensaje = 'No tiene permisos para trasladar el equipo a ese laboratorio.';
     } else if (respuesta.status === 404) {
-      mensaje =
-        'El equipo o laboratorio no está disponible.';
+      mensaje = 'El equipo o laboratorio no está disponible.';
     }
 
     const error = new Error(mensaje);
@@ -300,9 +260,7 @@ export async function trasladarEquipo(
   }
 
   if (resultado?.success !== true) {
-    throw new Error(
-      'El servidor no confirmó el traslado.'
-    );
+    throw new Error('El servidor no confirmó el traslado.');
   }
 
   return resultado;
@@ -313,115 +271,88 @@ export async function trasladarEquipo(
  *
  * GET /api/equipos/:id/historial-ubicacion
  */
-export async function obtenerHistorialUbicacion(
-  idEquipo,
-  token,
-  signal
-) {
+export async function obtenerHistorialUbicacion(idEquipo, token, signal) {
   if (!token) {
-    throw new Error(
-      "Debe iniciar sesión para consultar el historial."
-    );
+    throw new Error('Debe iniciar sesión para consultar el historial.');
   }
 
   const id = Number(idEquipo);
 
   if (!Number.isSafeInteger(id) || id <= 0) {
     throw new Error(
-      "No se pudo identificar el equipo. Vuelva al inventario y selecciónelo nuevamente."
+      'No se pudo identificar el equipo. Vuelva al inventario y selecciónelo nuevamente.'
     );
   }
 
   const { respuesta, resultado } = await solicitarInventario(
     `/api/equipos/${encodeURIComponent(id)}/historial-ubicacion`,
     {
-        method: 'GET',
-        headers: {
-          Accept: 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        signal,
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
       },
+      signal,
+    },
     'No se pudo conectar con el servidor.'
   );
 
   if (!respuesta.ok) {
-    const error = new Error(
-      resultado?.message ||
-      'No fue posible consultar el historial.'
-    );
+    const error = new Error(resultado?.message || 'No fue posible consultar el historial.');
 
     error.status = respuesta.status;
     throw error;
   }
 
-  if (
-    resultado?.success !== true ||
-    !Array.isArray(resultado.data)
-  ) {
-    throw new Error(
-      'El historial recibido no tiene el formato esperado.'
-    );
+  if (resultado?.success !== true || !Array.isArray(resultado.data)) {
+    throw new Error('El historial recibido no tiene el formato esperado.');
   }
 
   return resultado.data;
 }
-
 
 /**
  * Consulta el historial de estados de un equipo.
  *
  * GET /api/equipos/:id/historial-estados
  */
-export async function obtenerHistorialEstados(
-  idEquipo,
-  token,
-  signal
-) {
+export async function obtenerHistorialEstados(idEquipo, token, signal) {
   const id = Number(idEquipo);
 
   if (!Number.isSafeInteger(id) || id <= 0) {
     throw new Error(
-      "No se pudo identificar el equipo. Vuelva al inventario y selecciónelo nuevamente."
+      'No se pudo identificar el equipo. Vuelva al inventario y selecciónelo nuevamente.'
     );
   }
 
   if (!token) {
-    throw new Error(
-      "Debe iniciar sesión para consultar el historial."
-    );
+    throw new Error('Debe iniciar sesión para consultar el historial.');
   }
 
   const { respuesta, resultado } = await solicitarInventario(
     `/api/equipos/${encodeURIComponent(id)}/historial-estados`,
     {
-        method: 'GET',
-        headers: {
-          Accept: 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        signal,
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
       },
+      signal,
+    },
     'No se pudo conectar con el servidor.'
   );
 
   if (!respuesta.ok) {
     const error = new Error(
-      resultado?.message ||
-      'No fue posible consultar el historial de estados.'
+      resultado?.message || 'No fue posible consultar el historial de estados.'
     );
 
     error.status = respuesta.status;
     throw error;
   }
 
-  if (
-    resultado?.success !== true ||
-    !Array.isArray(resultado.data)
-  ) {
-    throw new Error(
-      'El historial recibido no tiene el formato esperado.'
-    );
+  if (resultado?.success !== true || !Array.isArray(resultado.data)) {
+    throw new Error('El historial recibido no tiene el formato esperado.');
   }
 
   return resultado.data;

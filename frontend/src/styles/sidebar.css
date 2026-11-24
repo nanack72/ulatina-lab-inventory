@@ -1,6 +1,6 @@
-/* ==========================================
+/* 
    SIDEBAR
-========================================== */
+ */
 
 .sidebar {
   --sb-acento: var(--blanco);
@@ -17,16 +17,8 @@
   min-height: 0;
   overflow-y: auto;
   background:
-    radial-gradient(
-      circle at 85% 8%,
-      rgba(255, 255, 255, 0.10),
-      transparent 38%
-    ),
-    radial-gradient(
-      circle at 10% 95%,
-      rgba(255, 255, 255, 0.07),
-      transparent 45%
-    ),
+    radial-gradient(circle at 85% 8%, rgba(255, 255, 255, 0.1), transparent 38%),
+    radial-gradient(circle at 10% 95%, rgba(255, 255, 255, 0.07), transparent 45%),
     linear-gradient(160deg, #1a6e55 0%, #0f4c3c 55%, #0b3d31 100%);
   color: var(--blanco);
   font-family: 'Inter', Arial, sans-serif;
@@ -34,9 +26,9 @@
   scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
 }
 
-/* ==========================================
+/* 
    LOGO OFICIAL
-========================================== */
+ */
 
 .sidebar-brand {
   position: relative;
@@ -53,12 +45,7 @@
   right: 18px;
   left: 18px;
   height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.22),
-    transparent
-  );
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.22), transparent);
 }
 
 .sidebar-brand::after {
@@ -73,9 +60,9 @@
   object-fit: contain;
 }
 
-/* ==========================================
+/* 
    NAVEGACIÓN
-========================================== */
+ */
 
 .sidebar-navigation {
   display: flex;
@@ -145,7 +132,9 @@
   height: 34px;
   border-radius: var(--radio-sm);
   background: rgba(255, 255, 255, 0.07);
-  transition: background 0.2s ease, color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
 }
 
 .sidebar-link-texto {
@@ -169,11 +158,7 @@
 
 .sidebar-link-active,
 .sidebar-link-active:hover {
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.21),
-    rgba(255, 255, 255, 0.07)
-  );
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.21), rgba(255, 255, 255, 0.07));
   color: var(--blanco);
   font-weight: 700;
   transform: none;
@@ -203,9 +188,9 @@
   outline-offset: 2px;
 }
 
-/* ==========================================
+/* 
    OPCIONES INFERIORES
-========================================== */
+ */
 
 .sidebar-bottom {
   position: relative;
@@ -232,7 +217,9 @@
   font-family: inherit;
   text-align: left;
   cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .sidebar-perfil:hover {
@@ -296,9 +283,9 @@
   background: rgba(255, 138, 138, 0.22);
 }
 
-/* ==========================================
+/* 
    MOVIMIENTO REDUCIDO
-========================================== */
+ */
 
 @media (prefers-reduced-motion: reduce) {
   .sidebar-link,
@@ -312,9 +299,9 @@
   }
 }
 
-/* ==========================================
+/* 
    RESPONSIVE
-========================================== */
+ */
 
 @media (max-width: 900px) {
   .sidebar {
@@ -397,9 +384,9 @@
   }
 }
 
-/* ==========================================
+/* 
    LAYOUT PRINCIPAL
-========================================== */
+ */
 
 .main-layout {
   display: flex;

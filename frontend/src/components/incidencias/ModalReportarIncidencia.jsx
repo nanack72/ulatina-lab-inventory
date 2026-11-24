@@ -13,9 +13,11 @@ export default function ModalReportarIncidencia({
   token,
 }) {
   const [ubicacion, setUbicacion] = useState({ sede: '', laboratorio: '' });
-  const equiposFiltrados = equiposDisponibles.filter(eq =>
-    (!ubicacion.sede || String(eq.id_sede) === ubicacion.sede) &&
-    (!ubicacion.laboratorio || String(eq.id_laboratorio) === ubicacion.laboratorio));
+  const equiposFiltrados = equiposDisponibles.filter(
+    (eq) =>
+      (!ubicacion.sede || String(eq.id_sede) === ubicacion.sede) &&
+      (!ubicacion.laboratorio || String(eq.id_laboratorio) === ubicacion.laboratorio)
+  );
   const [equipo, setEquipo] = useState(''),
     [titulo, setTitulo] = useState(''),
     [descripcion, setDescripcion] = useState(''),
@@ -58,10 +60,17 @@ export default function ModalReportarIncidencia({
       <form className="mod-formulario" onSubmit={guardar}>
         <Aviso error>{error || errorEquipos}</Aviso>
         <div className="mod-campos">
-            <FiltrosUbicacion token={token} valor={ubicacion} disabled={guardando}
-              onChange={valor => { setUbicacion(valor); setEquipo(''); }} />
-          </div>
-          <label className="mod-campo" htmlFor="inc-equipo">
+          <FiltrosUbicacion
+            token={token}
+            valor={ubicacion}
+            disabled={guardando}
+            onChange={(valor) => {
+              setUbicacion(valor);
+              setEquipo('');
+            }}
+          />
+        </div>
+        <label className="mod-campo" htmlFor="inc-equipo">
           Equipo *
           <select
             id="inc-equipo"

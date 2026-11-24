@@ -35,22 +35,16 @@ const FORMULARIO_INICIAL = {
 function nombreCatalogo(elemento) {
   return String(
     elemento?.nombre ??
-    elemento?.nombre_sede ??
-    elemento?.nombre_laboratorio ??
-    elemento?.nombre_categoria ??
-    elemento?.nombre_estado ??
-    ''
+      elemento?.nombre_sede ??
+      elemento?.nombre_laboratorio ??
+      elemento?.nombre_categoria ??
+      elemento?.nombre_estado ??
+      ''
   );
 }
 
-export default function RegistrarEquipo({
-  token,
-  onCancelar,
-  onRegistrado,
-}) {
-  const [formulario, setFormulario] = useState(
-    FORMULARIO_INICIAL
-  );
+export default function RegistrarEquipo({ token, onCancelar, onRegistrado }) {
+  const [formulario, setFormulario] = useState(FORMULARIO_INICIAL);
 
   const [categorias, setCategorias] = useState([]);
   const [estados, setEstados] = useState([]);
@@ -61,7 +55,6 @@ export default function RegistrarEquipo({
   const [guardando, setGuardando] = useState(false);
 
   const [error, setError] = useState('');
-  
 
   const enviandoRef = useRef(false);
 
@@ -74,12 +67,7 @@ export default function RegistrarEquipo({
       setError('');
 
       try {
-        const [
-          datosCategorias,
-          datosEstados,
-          datosSedes,
-          datosLaboratorios,
-        ] = await Promise.all([
+        const [datosCategorias, datosEstados, datosSedes, datosLaboratorios] = await Promise.all([
           obtenerCategorias(token, controlador.signal),
           obtenerEstados(token, controlador.signal),
           obtenerSedes(token, controlador.signal),
@@ -95,10 +83,7 @@ export default function RegistrarEquipo({
       } catch (err) {
         if (controlador.signal.aborted) return;
 
-        setError(
-          err.message ||
-          'No fue posible cargar los catálogos del sistema.'
-        );
+        setError(err.message || 'No fue posible cargar los catálogos del sistema.');
       } finally {
         if (!controlador.signal.aborted) {
           setCargandoCatalogos(false);
@@ -117,9 +102,7 @@ export default function RegistrarEquipo({
     if (!formulario.id_sede) return [];
 
     return laboratorios.filter(
-      (laboratorio) =>
-        String(laboratorio.id_sede) ===
-        String(formulario.id_sede)
+      (laboratorio) => String(laboratorio.id_sede) === String(formulario.id_sede)
     );
   }, [laboratorios, formulario.id_sede]);
 
@@ -146,29 +129,27 @@ export default function RegistrarEquipo({
 
   function validarFormulario() {
     if (!formulario.nombre.trim()) {
-      return "Debe ingresar el nombre del equipo.";
+      return 'Debe ingresar el nombre del equipo.';
     }
 
     if (!formulario.id_categoria) {
-      return "Debe seleccionar una categoría.";
+      return 'Debe seleccionar una categoría.';
     }
 
     if (!formulario.id_estado) {
-      return "Debe seleccionar el estado del equipo.";
+      return 'Debe seleccionar el estado del equipo.';
     }
 
     if (!formulario.id_sede) {
-      return "Debe seleccionar una sede.";
+      return 'Debe seleccionar una sede.';
     }
 
     if (!formulario.id_laboratorio) {
-      return "Debe seleccionar un laboratorio.";
+      return 'Debe seleccionar un laboratorio.';
     }
 
     const autorizado = laboratoriosFiltrados.some(
-      (laboratorio) =>
-        String(laboratorio.id_laboratorio) ===
-        String(formulario.id_laboratorio)
+      (laboratorio) => String(laboratorio.id_laboratorio) === String(formulario.id_laboratorio)
     );
 
     if (!autorizado) {
@@ -177,13 +158,11 @@ export default function RegistrarEquipo({
 
     if (
       formulario.anio !== '' &&
-      (
-        !Number.isInteger(Number(formulario.anio)) ||
+      (!Number.isInteger(Number(formulario.anio)) ||
         Number(formulario.anio) < 1900 ||
-        Number(formulario.anio) > new Date().getFullYear() + 1
-      )
+        Number(formulario.anio) > new Date().getFullYear() + 1)
     ) {
-      return "Ingrese un año válido.";
+      return 'Ingrese un año válido.';
     }
 
     return '';
@@ -204,25 +183,17 @@ export default function RegistrarEquipo({
     enviandoRef.current = true;
     setGuardando(true);
     setError('');
-    
 
     const datosEquipo = {
       nombre: formulario.nombre.trim(),
       numero_serie: formulario.numero_serie.trim() || null,
-      placa_institucional:
-        formulario.placa_institucional.trim() || null,
+      placa_institucional: formulario.placa_institucional.trim() || null,
       marca: formulario.marca.trim() || null,
       modelo: formulario.modelo.trim() || null,
-      anio:
-        formulario.anio === ''
-          ? null
-          : Number(formulario.anio),
-      caracteristicas:
-        formulario.caracteristicas.trim() || null,
-      comentarios:
-        formulario.comentarios.trim() || null,
-      ubicacion_detalle:
-        formulario.ubicacion_detalle.trim() || null,
+      anio: formulario.anio === '' ? null : Number(formulario.anio),
+      caracteristicas: formulario.caracteristicas.trim() || null,
+      comentarios: formulario.comentarios.trim() || null,
+      ubicacion_detalle: formulario.ubicacion_detalle.trim() || null,
       id_categoria: Number(formulario.id_categoria),
       id_estado: Number(formulario.id_estado),
       id_laboratorio: Number(formulario.id_laboratorio),
@@ -237,10 +208,7 @@ export default function RegistrarEquipo({
         onRegistrado();
       }
     } catch (err) {
-      setError(
-        err.message ||
-        'Ocurrió un error al registrar el equipo.'
-      );
+      setError(err.message || 'Ocurrió un error al registrar el equipo.');
     } finally {
       enviandoRef.current = false;
       setGuardando(false);
@@ -250,12 +218,7 @@ export default function RegistrarEquipo({
   return (
     <div className="registro-pagina">
       {/* VOLVER */}
-      <button
-        type="button"
-        className="registro-volver"
-        onClick={onCancelar}
-        disabled={guardando}
-      >
+      <button type="button" className="registro-volver" onClick={onCancelar} disabled={guardando}>
         <ArrowLeft size={17} />
         Volver al inventario
       </button>
@@ -264,22 +227,18 @@ export default function RegistrarEquipo({
       <div className="registro-encabezado">
         <div>
           <h1>Registrar equipo</h1>
-          <p>
-            Complete la información del nuevo equipo tecnológico.
-          </p>
+          <p>Complete la información del nuevo equipo tecnológico.</p>
         </div>
       </div>
 
       {/* ERRORES */}
       {error && (
         <Notificacion tipo="error">
-          
           <span>{error}</span>
         </Notificacion>
       )}
 
       {/* CONFIRMACIÓN */}
-      
 
       {cargandoCatalogos ? (
         <div className="registro-cargando" role="status">
@@ -289,10 +248,7 @@ export default function RegistrarEquipo({
         <form onSubmit={manejarRegistro}>
           <div className="registro-grid">
             {/* IDENTIFICACIÓN */}
-            <Seccion
-              titulo="Identificación del equipo"
-              icono={Monitor}
-            >
+            <Seccion titulo="Identificación del equipo" icono={Monitor}>
               <div className="registro-campos-grid">
                 <Campo etiqueta="Nombre del equipo" requerido htmlFor="registrar-nombre">
                   <input
@@ -340,10 +296,7 @@ export default function RegistrarEquipo({
                     <option value="">Seleccionar categoría</option>
 
                     {categorias.map((categoria) => (
-                      <option
-                        key={categoria.id_categoria}
-                        value={categoria.id_categoria}
-                      >
+                      <option key={categoria.id_categoria} value={categoria.id_categoria}>
                         {nombreCatalogo(categoria)}
                       </option>
                     ))}
@@ -353,10 +306,7 @@ export default function RegistrarEquipo({
             </Seccion>
 
             {/* CARACTERÍSTICAS TÉCNICAS */}
-            <Seccion
-              titulo="Características técnicas"
-              icono={Cpu}
-            >
+            <Seccion titulo="Características técnicas" icono={Cpu}>
               <div className="registro-campos-grid">
                 <Campo etiqueta="Marca" htmlFor="registrar-marca">
                   <input
@@ -408,10 +358,7 @@ export default function RegistrarEquipo({
             </Seccion>
 
             {/* UBICACIÓN */}
-            <Seccion
-              titulo="Ubicación del equipo"
-              icono={MapPin}
-            >
+            <Seccion titulo="Ubicación del equipo" icono={MapPin}>
               <div className="registro-campos-grid">
                 <Campo etiqueta="Sede" requerido htmlFor="registrar-id_sede">
                   <select
@@ -426,23 +373,22 @@ export default function RegistrarEquipo({
                     {sedes
                       .filter((sede) =>
                         laboratorios.some(
-                          (laboratorio) =>
-                            String(laboratorio.id_sede) ===
-                            String(sede.id_sede)
+                          (laboratorio) => String(laboratorio.id_sede) === String(sede.id_sede)
                         )
                       )
                       .map((sede) => (
-                        <option
-                          key={sede.id_sede}
-                          value={sede.id_sede}
-                        >
+                        <option key={sede.id_sede} value={sede.id_sede}>
                           {nombreCatalogo(sede)}
                         </option>
                       ))}
                   </select>
                 </Campo>
 
-                <Campo etiqueta="Laboratorio autorizado" requerido htmlFor="registrar-id_laboratorio">
+                <Campo
+                  etiqueta="Laboratorio autorizado"
+                  requerido
+                  htmlFor="registrar-id_laboratorio"
+                >
                   <select
                     id="registrar-id_laboratorio"
                     name="id_laboratorio"
@@ -454,10 +400,7 @@ export default function RegistrarEquipo({
                     <option value="">Seleccionar laboratorio</option>
 
                     {laboratoriosFiltrados.map((laboratorio) => (
-                      <option
-                        key={laboratorio.id_laboratorio}
-                        value={laboratorio.id_laboratorio}
-                      >
+                      <option key={laboratorio.id_laboratorio} value={laboratorio.id_laboratorio}>
                         {nombreCatalogo(laboratorio)}
                       </option>
                     ))}
@@ -486,10 +429,7 @@ export default function RegistrarEquipo({
                     <option value="">Seleccionar estado</option>
 
                     {estados.map((estado) => (
-                      <option
-                        key={estado.id_estado}
-                        value={estado.id_estado}
-                      >
+                      <option key={estado.id_estado} value={estado.id_estado}>
                         {nombreCatalogo(estado)}
                       </option>
                     ))}
@@ -499,14 +439,11 @@ export default function RegistrarEquipo({
             </Seccion>
 
             {/* OBSERVACIONES */}
-            <Seccion
-              titulo="Observaciones"
-              icono={FileText}
-            >
+            <Seccion titulo="Observaciones" icono={FileText}>
               <Campo etiqueta="Comentarios adicionales" htmlFor="registrar-comentarios">
                 <textarea
                   id="registrar-comentarios"
-                    name="comentarios"
+                  name="comentarios"
                   value={formulario.comentarios}
                   onChange={actualizarCampo}
                   placeholder="Observaciones importantes del equipo..."
@@ -518,9 +455,7 @@ export default function RegistrarEquipo({
 
           {/* BOTONES */}
           <div className="registro-acciones">
-            <span>
-              Los campos marcados con * son obligatorios.
-            </span>
+            <span>Los campos marcados con * son obligatorios.</span>
 
             <div className="registro-botones">
               <button
@@ -535,7 +470,7 @@ export default function RegistrarEquipo({
               <button
                 type="submit"
                 className="btn btn-lg btn-primario"
-                disabled={guardando || cargandoCatalogos || !!error && categorias.length === 0}
+                disabled={guardando || cargandoCatalogos || (!!error && categorias.length === 0)}
               >
                 <Save size={17} />
                 {guardando ? 'Guardando...' : 'Guardar equipo'}

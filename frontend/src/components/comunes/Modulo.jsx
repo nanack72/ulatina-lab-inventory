@@ -61,11 +61,29 @@ export function BusquedaModulo({ valor, onChange, etiqueta }) {
 export function Insignia({ children, tono = 'neutral' }) {
   return <span className={'mod-insignia mod-insignia-' + tono}>{children}</span>;
 }
-export function PaginacionModulo({ pagina, total, limite = 10, alCambiar, cargando, alCambiarLimite, singular, plural }) {
+export function PaginacionModulo({
+  pagina,
+  total,
+  limite = 10,
+  alCambiar,
+  cargando,
+  alCambiarLimite,
+  singular,
+  plural,
+}) {
   if (alCambiarLimite) {
-    return <Paginacion pagina={pagina} total={total} limite={limite}
-      onCambiar={alCambiar} onCambiarLimite={alCambiarLimite}
-      cargando={cargando} singular={singular || 'registro'} plural={plural || 'registros'} />;
+    return (
+      <Paginacion
+        pagina={pagina}
+        total={total}
+        limite={limite}
+        onCambiar={alCambiar}
+        onCambiarLimite={alCambiarLimite}
+        cargando={cargando}
+        singular={singular || 'registro'}
+        plural={plural || 'registros'}
+      />
+    );
   }
   const paginas = Math.max(1, Math.ceil(total / limite));
   const actual = Math.min(pagina, paginas);

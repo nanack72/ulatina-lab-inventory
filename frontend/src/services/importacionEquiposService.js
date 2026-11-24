@@ -36,9 +36,9 @@ async function solicitar(ruta, token, opciones, { reintentar = false } = {}) {
   if (!respuesta.ok || resultado?.success !== true) {
     const error = new Error(
       resultado?.message ||
-      (respuesta.status >= 500
-        ? 'El servidor no respondió correctamente. Intente de nuevo en unos segundos.'
-        : 'No fue posible completar la operación.')
+        (respuesta.status >= 500
+          ? 'El servidor no respondió correctamente. Intente de nuevo en unos segundos.'
+          : 'No fue posible completar la operación.')
     );
 
     error.status = respuesta.status;
@@ -52,22 +52,32 @@ export async function leerArchivoEquipos(archivo, token) {
   const formulario = new FormData();
   formulario.append('archivo', archivo);
 
-  const resultado = await solicitar('leer', token, {
-    method: 'POST',
-    body: formulario,
-  }, { reintentar: true });
+  const resultado = await solicitar(
+    'leer',
+    token,
+    {
+      method: 'POST',
+      body: formulario,
+    },
+    { reintentar: true }
+  );
 
   return resultado.data;
 }
 
 export async function confirmarImportacionEquipos(filas, token, validarSolo = false) {
-  const resultado = await solicitar('confirmar', token, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
+  const resultado = await solicitar(
+    'confirmar',
+    token,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ filas, ...(validarSolo ? { validar_solo: true } : {}) }),
     },
-    body: JSON.stringify({ filas, ...(validarSolo ? { validar_solo: true } : {}) }),
-  }, { reintentar: validarSolo });
+    { reintentar: validarSolo }
+  );
 
   return resultado;
 }

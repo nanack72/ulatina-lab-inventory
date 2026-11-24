@@ -8,7 +8,9 @@ const { darBajaUsuario } = require('../src/services/bajaUsuario');
 test('baja de usuarios con PostgreSQL temporal', async (t) => {
   const db = new PGlite();
   t.after(() => db.close());
-  const pool = { connect: async () => ({ query: (sql, valores) => db.query(sql, valores), release() {} }) };
+  const pool = {
+    connect: async () => ({ query: (sql, valores) => db.query(sql, valores), release() {} }),
+  };
   await db.exec(`
     CREATE TABLE rol (id_rol int PRIMARY KEY, nombre text);
     CREATE TABLE usuario (id_usuario int PRIMARY KEY, id_rol int REFERENCES rol, activo boolean);
@@ -57,21 +59,33 @@ test('baja de usuarios con PostgreSQL temporal', async (t) => {
   await t.test('impide la baja propia, incluida la del único superadministrador', async () => {
     await reiniciar();
     await db.query('UPDATE usuario SET activo=false WHERE id_usuario=3');
-    await assert.rejects(() => darBajaUsuario(pool, '1', 1), error => error.status === 409);
-    assert.equal((await db.query('SELECT activo FROM usuario WHERE id_usuario=1')).rows[0].activo, true);
+    await assert.rejects(
+      () => darBajaUsuario(pool, '1', 1),
+      (error) => error.status === 409
+    );
+    assert.equal(
+      (await db.query('SELECT activo FROM usuario WHERE id_usuario=1')).rows[0].activo,
+      true
+    );
   });
   await t.test('vuelve a comprobar el rol y estado del administrador', async () => {
     for (const cambio of ['id_rol=2', 'activo=false']) {
       await reiniciar();
       await db.exec(`UPDATE usuario SET ${cambio} WHERE id_usuario=1`);
-      await assert.rejects(() => darBajaUsuario(pool, '2', 1), error => error.status === 403);
+      await assert.rejects(
+        () => darBajaUsuario(pool, '2', 1),
+        (error) => error.status === 403
+      );
       assert.equal((await cuenta()).activo, true);
     }
   });
   await t.test('permite retirar otro superadministrador y conserva al actor', async () => {
     await reiniciar();
     assert.equal((await darBajaUsuario(pool, '3', 1)).accion, 'eliminado');
-    assert.equal((await db.query('SELECT activo FROM usuario WHERE id_usuario=1')).rows[0].activo, true);
+    assert.equal(
+      (await db.query('SELECT activo FROM usuario WHERE id_usuario=1')).rows[0].activo,
+      true
+    );
   });
   await t.test('sin FK de actividad elige desactivar de forma conservadora', async () => {
     await reiniciar();
@@ -93,22 +107,37 @@ test('baja de usuarios con PostgreSQL temporal', async (t) => {
   });
   await t.test('no permite cascadas indirectas sobre las asignaciones de acceso', async () => {
     await reiniciar();
-    await db.exec('CREATE TABLE actividad_por_acceso (id_acceso int REFERENCES usuario_sede ON DELETE CASCADE); INSERT INTO actividad_por_acceso VALUES (20)');
+    await db.exec(
+      'CREATE TABLE actividad_por_acceso (id_acceso int REFERENCES usuario_sede ON DELETE CASCADE); INSERT INTO actividad_por_acceso VALUES (20)'
+    );
     assert.equal((await darBajaUsuario(pool, '2', 1)).accion, 'desactivado');
-    assert.equal((await db.query('SELECT id_acceso FROM actividad_por_acceso')).rows[0].id_acceso, 20);
+    assert.equal(
+      (await db.query('SELECT id_acceso FROM actividad_por_acceso')).rows[0].id_acceso,
+      20
+    );
     await db.exec('DROP TABLE actividad_por_acceso');
   });
   await t.test('responde 404 sin alterar otras cuentas', async () => {
     await reiniciar();
-    await assert.rejects(() => darBajaUsuario(pool, '999', 1), error => error.status === 404);
+    await assert.rejects(
+      () => darBajaUsuario(pool, '999', 1),
+      (error) => error.status === 404
+    );
     assert.equal((await db.query('SELECT count(*)::int AS n FROM usuario')).rows[0].n, 3);
   });
 });
 
 test('rechaza identificadores inválidos antes de conectar', async () => {
-  const pool = { connect() { assert.fail('No debe conectar'); } };
+  const pool = {
+    connect() {
+      assert.fail('No debe conectar');
+    },
+  };
   for (const id of ['0', '-1', '1x', '2147483648']) {
-    await assert.rejects(() => darBajaUsuario(pool, id, 1), error => error.status === 400);
+    await assert.rejects(
+      () => darBajaUsuario(pool, id, 1),
+      (error) => error.status === 400
+    );
   }
 });
 
@@ -132,10 +161,18 @@ test('la migración habilita la baja con pes_runtime sin permitir borrar histori
     GRANT SELECT ON rol,usuario,usuario_sede,usuario_laboratorio,token_revocado,historial_cambio TO pes_runtime;
     GRANT UPDATE(activo) ON usuario TO pes_runtime;
   `);
-  const migracion = readFileSync(path.join(__dirname, '../../database/migrations/003_baja_usuarios.sql'), 'utf8');
+  const migracion = readFileSync(
+    path.join(__dirname, '../../database/migrations/003_baja_usuarios.sql'),
+    'utf8'
+  );
   await db.exec(migracion);
   await db.exec('SET ROLE pes_runtime');
-  const pool = { connect: async () => ({ query: (sql, valores) => db.query(sql, valores), release() {} }) };
+  const pool = {
+    connect: async () => ({ query: (sql, valores) => db.query(sql, valores), release() {} }),
+  };
   assert.equal((await darBajaUsuario(pool, '2', 1)).accion, 'eliminado');
-  await assert.rejects(() => db.query('DELETE FROM historial_cambio'), error => error.code === '42501');
+  await assert.rejects(
+    () => db.query('DELETE FROM historial_cambio'),
+    (error) => error.code === '42501'
+  );
 });

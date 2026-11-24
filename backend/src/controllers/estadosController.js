@@ -15,14 +15,14 @@ const obtenerEstados = async (req, res) => {
     res.json({
       success: true,
       total: resultado.rowCount,
-      data: resultado.rows
+      data: resultado.rows,
     });
   } catch (error) {
     console.error('Error al obtener estados:', error.message);
 
     res.status(500).json({
       success: false,
-      message: 'Error al consultar los estados'
+      message: 'Error al consultar los estados',
     });
   }
 };

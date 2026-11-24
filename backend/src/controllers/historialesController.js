@@ -1,22 +1,15 @@
 const { presentarHistorial } = require('../services/nombresHistorial');
 const pool = require('../config/database');
 
-const {
-  verificarAccesoEquipo,
-} = require('../utils/accesoEquipos');
+const { verificarAccesoEquipo } = require('../utils/accesoEquipos');
 
-// ==========================================
 // VALIDAR IDENTIFICADOR
-// ==========================================
 
 const validarId = (id) => {
-  return /^[1-9]\d*$/.test(id) &&
-    Number.isSafeInteger(Number(id));
+  return /^[1-9]\d*$/.test(id) && Number.isSafeInteger(Number(id));
 };
 
-// ==========================================
 // VERIFICAR ACCESO AL EQUIPO
-// ==========================================
 
 const validarAccesoHistorial = async (req, res) => {
   const { id } = req.params;
@@ -39,10 +32,7 @@ const validarAccesoHistorial = async (req, res) => {
     return false;
   }
 
-  const autorizado = await verificarAccesoEquipo(
-    id,
-    req.usuario
-  );
+  const autorizado = await verificarAccesoEquipo(id, req.usuario);
 
   if (!autorizado) {
     res.status(404).json({
@@ -56,9 +46,7 @@ const validarAccesoHistorial = async (req, res) => {
   return true;
 };
 
-// ==========================================
 // HISTORIAL DE UBICACIONES
-// ==========================================
 
 const obtenerHistorialUbicacion = async (req, res) => {
   try {
@@ -133,12 +121,8 @@ const obtenerHistorialUbicacion = async (req, res) => {
       total: resultado.rowCount,
       data: resultado.rows,
     });
-
   } catch (error) {
-    console.error(
-      'Error al consultar historial de ubicación:',
-      error.message
-    );
+    console.error('Error al consultar historial de ubicación:', error.message);
 
     return res.status(500).json({
       success: false,
@@ -147,9 +131,7 @@ const obtenerHistorialUbicacion = async (req, res) => {
   }
 };
 
- // ==========================================
- // HISTORIAL DE ESTADOS
- // ==========================================
+// HISTORIAL DE ESTADOS
 
 const obtenerHistorialEstados = async (req, res) => {
   try {
@@ -203,12 +185,8 @@ const obtenerHistorialEstados = async (req, res) => {
       total: resultado.rowCount,
       data: resultado.rows,
     });
-
   } catch (error) {
-    console.error(
-      'Error al consultar historial de estados:',
-      error.message
-    );
+    console.error('Error al consultar historial de estados:', error.message);
 
     return res.status(500).json({
       success: false,
@@ -217,9 +195,7 @@ const obtenerHistorialEstados = async (req, res) => {
   }
 };
 
-// ==========================================
 // HISTORIAL DE MODIFICACIONES
-// ==========================================
 
 const obtenerHistorialCambios = async (req, res) => {
   try {
@@ -259,24 +235,17 @@ const obtenerHistorialCambios = async (req, res) => {
       total: resultado.rowCount,
       data: await presentarHistorial(pool, resultado.rows),
     });
-
   } catch (error) {
-    console.error(
-      'Error al consultar historial de modificaciones:',
-      error.message
-    );
+    console.error('Error al consultar historial de modificaciones:', error.message);
 
     return res.status(500).json({
       success: false,
-      message:
-        'Error al consultar el historial de modificaciones',
+      message: 'Error al consultar el historial de modificaciones',
     });
   }
 };
 
-// ==========================================
 // EXPORTACIONES
-// ==========================================
 
 module.exports = {
   obtenerHistorialUbicacion,

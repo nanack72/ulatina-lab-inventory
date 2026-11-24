@@ -14,9 +14,11 @@ export default function ModalRegistrarMantenimiento({
   token,
 }) {
   const [ubicacion, setUbicacion] = useState({ sede: '', laboratorio: '' });
-  const equiposFiltrados = equiposDisponibles.filter(eq =>
-    (!ubicacion.sede || String(eq.id_sede) === ubicacion.sede) &&
-    (!ubicacion.laboratorio || String(eq.id_laboratorio) === ubicacion.laboratorio));
+  const equiposFiltrados = equiposDisponibles.filter(
+    (eq) =>
+      (!ubicacion.sede || String(eq.id_sede) === ubicacion.sede) &&
+      (!ubicacion.laboratorio || String(eq.id_laboratorio) === ubicacion.laboratorio)
+  );
   const [equipo, setEquipo] = useState(''),
     [tipo, setTipo] = useState('Preventivo'),
     [motivo, setMotivo] = useState(''),
@@ -117,8 +119,15 @@ export default function ModalRegistrarMantenimiento({
         <fieldset disabled={guardando || !!idGuardado} className="mod-formulario mod-fieldset">
           <legend className="mod-sr">Datos de mantenimiento</legend>
           <div className="mod-campos">
-            <FiltrosUbicacion token={token} valor={ubicacion} disabled={guardando || !!idGuardado}
-              onChange={valor => { setUbicacion(valor); setEquipo(''); }} />
+            <FiltrosUbicacion
+              token={token}
+              valor={ubicacion}
+              disabled={guardando || !!idGuardado}
+              onChange={(valor) => {
+                setUbicacion(valor);
+                setEquipo('');
+              }}
+            />
           </div>
           <label className="mod-campo" htmlFor="mant-equipo">
             Equipo *

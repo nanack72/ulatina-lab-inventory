@@ -15,14 +15,14 @@ const obtenerCategorias = async (req, res) => {
     res.json({
       success: true,
       total: resultado.rowCount,
-      data: resultado.rows
+      data: resultado.rows,
     });
   } catch (error) {
     console.error('Error al obtener categorías:', error.message);
 
     res.status(500).json({
       success: false,
-      message: 'Error al consultar las categorías'
+      message: 'Error al consultar las categorías',
     });
   }
 };

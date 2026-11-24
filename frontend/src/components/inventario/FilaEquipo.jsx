@@ -1,26 +1,13 @@
 import { ChevronRight } from 'lucide-react';
 
-import {
-  claseEstado,
-  formatearSede,
-} from '../../utils/inventario';
+import { claseEstado, formatearSede } from '../../utils/inventario';
 
-// ==========================================
 // FILA DE EQUIPO - INVENTARIO PES
-// ==========================================
 
-export default function FilaEquipo({
-  equipo,
-  onVer,
-}) {
+export default function FilaEquipo({ equipo, onVer }) {
   const puedeVerDetalle = typeof onVer === 'function';
 
-  const ubicacion = [
-    formatearSede(equipo.sede),
-    equipo.ubicacion,
-  ]
-    .filter(Boolean)
-    .join(' · ');
+  const ubicacion = [formatearSede(equipo.sede), equipo.ubicacion].filter(Boolean).join(' · ');
 
   function abrirDetalle() {
     if (puedeVerDetalle) {
@@ -34,9 +21,7 @@ export default function FilaEquipo({
     <tr>
       {/* PLACA INSTITUCIONAL */}
       <td>
-          <span className="inv-placa">
-            {equipo.placa || '—'}
-          </span>
+        <span className="inv-placa">{equipo.placa || '—'}</span>
       </td>
 
       {/* NOMBRE Y SERIE */}
@@ -55,50 +40,34 @@ export default function FilaEquipo({
             <strong>{nombreEquipo}</strong>
           )}
 
-          <small>
-            Serie {equipo.serie || 'no registrada'}
-          </small>
+          <small>Serie {equipo.serie || 'no registrada'}</small>
         </div>
       </td>
 
       {/* CATEGORÍA */}
-      <td>
-        {equipo.categoria || '—'}
-      </td>
+      <td>{equipo.categoria || '—'}</td>
 
       {/* MARCA Y MODELO */}
       <td>
         <div className="inv-celda-doble">
-          <strong>
-            {equipo.marca || '—'}
-          </strong>
+          <strong>{equipo.marca || '—'}</strong>
 
-          <small>
-            {equipo.modelo || 'Sin modelo'}
-          </small>
+          <small>{equipo.modelo || 'Sin modelo'}</small>
         </div>
       </td>
 
       {/* UBICACIÓN */}
       <td>
         <div className="inv-celda-doble">
-          <strong>
-            {equipo.laboratorio || 'Sin laboratorio'}
-          </strong>
+          <strong>{equipo.laboratorio || 'Sin laboratorio'}</strong>
 
-          <small>
-            {ubicacion || 'Ubicación no detallada'}
-          </small>
+          <small>{ubicacion || 'Ubicación no detallada'}</small>
         </div>
       </td>
 
       {/* ESTADO */}
       <td>
-        <span
-          className={`inv-estado ${claseEstado(
-            equipo.estado
-          )}`}
-        >
+        <span className={`inv-estado ${claseEstado(equipo.estado)}`}>
           {equipo.estado || 'Sin estado'}
         </span>
       </td>
@@ -113,10 +82,7 @@ export default function FilaEquipo({
             aria-label={`Ver detalle de ${nombreEquipo}`}
             title={`Ver detalle de ${nombreEquipo}`}
           >
-            <ChevronRight
-              size={19}
-              aria-hidden="true"
-            />
+            <ChevronRight size={19} aria-hidden="true" />
           </button>
         )}
       </td>

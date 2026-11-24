@@ -2,34 +2,26 @@ const express = require('express');
 const router = express.Router();
 const { obtenerPaginaInventario } = require('../controllers/inventarioPaginadoController');
 
-// ==========================================
 // CONTROLADOR DE EQUIPOS
-// ==========================================
 
 const {
   obtenerEquipos,
   obtenerEquipoPorId,
   crearEquipo,
-  actualizarEquipo
+  actualizarEquipo,
 } = require('../controllers/equiposController');
 
-// ==========================================
 // CONTROLADOR DE HISTORIALES
-// ==========================================
 
 const {
   obtenerHistorialUbicacion,
   obtenerHistorialEstados,
-  obtenerHistorialCambios
+  obtenerHistorialCambios,
 } = require('../controllers/historialesController');
 
-// ==========================================
 // MIDDLEWARE DE AUTENTICACIÓN
-// ==========================================
 
-const {
-  verificarToken
-} = require('../middlewares/authMiddleware');
+const { verificarToken } = require('../middlewares/authMiddleware');
 
 // Proteger todas las rutas de inventario.
 // El usuario debe iniciar sesión y tener
@@ -37,28 +29,22 @@ const {
 router.use(verificarToken);
 router.use('/:id/fotos', require('./fotosEquipoRoutes'));
 
-// ==========================================
 // 1. CONSULTAR TODOS LOS EQUIPOS
 // GET /api/equipos
-// ==========================================
 
 router.get('/', obtenerEquipos);
 // Antes de /:id: la consulta completa se conserva para Inicio.
 router.get('/pagina', obtenerPaginaInventario);
 
-// ==========================================
 // 2. REGISTRAR UN EQUIPO
 // POST /api/equipos
-// ==========================================
 
 // El controlador valida el rol y laboratorio
 // del usuario antes de registrar el equipo.
 router.post('/', crearEquipo);
 
-// ==========================================
 // 3. ACTUALIZAR UN EQUIPO
 // PUT /api/equipos/:id
-// ==========================================
 
 // El controlador verifica los permisos
 // y registra los cambios mediante triggers.
@@ -69,9 +55,13 @@ router.post('/:id/restaurar', async (req, res) => {
     const { restaurarEquipo } = require('../services/restaurarEquipo');
     const pool = require('../config/database');
     await restaurarEquipo(pool, req.params.id, req.usuario);
-    return res.json({ success: true, message: 'Equipo restaurado. Ya está disponible en el inventario activo.' });
+    return res.json({
+      success: true,
+      message: 'Equipo restaurado. Ya está disponible en el inventario activo.',
+    });
   } catch (error) {
-    if (error.status) return res.status(error.status).json({ success: false, message: error.message });
+    if (error.status)
+      return res.status(error.status).json({ success: false, message: error.message });
     console.error('Error al restaurar equipo:', error);
     return res.status(500).json({ success: false, message: 'No fue posible restaurar el equipo.' });
   }
@@ -82,53 +72,38 @@ router.delete('/:id', async (req, res) => {
     const { eliminarEquipo } = require('../services/eliminarEquipo');
     const pool = require('../config/database');
     await eliminarEquipo(pool, req.params.id, req.usuario, req.body?.motivo);
-    return res.json({ success: true, message: 'Equipo eliminado del inventario. Se conservaron sus datos, fotos e historial.' });
+    return res.json({
+      success: true,
+      message: 'Equipo eliminado del inventario. Se conservaron sus datos, fotos e historial.',
+    });
   } catch (error) {
-    if (error.status) return res.status(error.status).json({ success: false, message: error.message });
+    if (error.status)
+      return res.status(error.status).json({ success: false, message: error.message });
     console.error('Error al eliminar equipo:', error);
     return res.status(500).json({ success: false, message: 'No fue posible eliminar el equipo.' });
   }
 });
 
-// ==========================================
 // 4. HISTORIAL DE UBICACIÓN
 // GET /api/equipos/:id/historial-ubicacion
-// ==========================================
 
-router.get(
-  '/:id/historial-ubicacion',
-  obtenerHistorialUbicacion
-);
+router.get('/:id/historial-ubicacion', obtenerHistorialUbicacion);
 
-// ==========================================
 // 5. HISTORIAL DE ESTADOS
 // GET /api/equipos/:id/historial-estados
-// ==========================================
 
-router.get(
-  '/:id/historial-estados',
-  obtenerHistorialEstados
-);
+router.get('/:id/historial-estados', obtenerHistorialEstados);
 
-// ==========================================
 // 6. HISTORIAL DE MODIFICACIONES
 // GET /api/equipos/:id/historial-cambios
-// ==========================================
 
-router.get(
-  '/:id/historial-cambios',
-  obtenerHistorialCambios
-);
+router.get('/:id/historial-cambios', obtenerHistorialCambios);
 
-// ==========================================
 // 7. CONSULTAR UN EQUIPO POR ID
 // GET /api/equipos/:id
-// ==========================================
 
 router.get('/:id', obtenerEquipoPorId);
 
-// ==========================================
 // EXPORTAR RUTAS
-// ==========================================
 
 module.exports = router;

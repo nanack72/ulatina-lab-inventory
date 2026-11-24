@@ -10,28 +10,52 @@ function cargar(pool) {
   const archivo = path.join(__dirname, '../src/controllers/equiposController.js');
   const requireLocal = createRequire(archivo);
   const modulo = { exports: {} };
-  vm.runInNewContext(readFileSync(archivo, 'utf8'), {
-    module: modulo, console,
-    require: nombre => nombre === '../config/database' ? pool : requireLocal(nombre),
-  }, { filename: archivo });
+  vm.runInNewContext(
+    readFileSync(archivo, 'utf8'),
+    {
+      module: modulo,
+      console,
+      require: (nombre) => (nombre === '../config/database' ? pool : requireLocal(nombre)),
+    },
+    { filename: archivo }
+  );
   return modulo.exports;
 }
 async function ejecutar(controlador, metodo, body, id = '1', usuario = 10) {
-  const res = { codigo: 200, status(codigo) { this.codigo = codigo; return this; },
-    json(datos) { this.datos = datos; return this; } };
+  const res = {
+    codigo: 200,
+    status(codigo) {
+      this.codigo = codigo;
+      return this;
+    },
+    json(datos) {
+      this.datos = datos;
+      return this;
+    },
+  };
   await controlador[metodo]({ body, params: { id }, usuario: { idUsuario: usuario } }, res);
   return res;
 }
 const equipoValido = { nombre: 'Nuevo', id_categoria: 1, id_estado: 1, id_laboratorio: 1 };
 
 test('rechaza tipos de ID, años y cuerpos incorrectos antes de abrir transacciones', async () => {
-  const controlador = cargar({ connect() { assert.fail('No debe consultar la base'); } });
+  const controlador = cargar({
+    connect() {
+      assert.fail('No debe consultar la base');
+    },
+  });
   for (const id of [[1], true, {}, '12abc', 1.5, 0, 2147483648]) {
-    assert.equal((await ejecutar(controlador, 'crearEquipo', { ...equipoValido, id_laboratorio: id })).codigo, 400);
+    assert.equal(
+      (await ejecutar(controlador, 'crearEquipo', { ...equipoValido, id_laboratorio: id })).codigo,
+      400
+    );
     assert.equal((await ejecutar(controlador, 'actualizarEquipo', { id_estado: id })).codigo, 400);
   }
   for (const anio of [[2024], {}, true, 2024.5]) {
-    assert.equal((await ejecutar(controlador, 'crearEquipo', { ...equipoValido, anio })).codigo, 400);
+    assert.equal(
+      (await ejecutar(controlador, 'crearEquipo', { ...equipoValido, anio })).codigo,
+      400
+    );
     assert.equal((await ejecutar(controlador, 'actualizarEquipo', { anio })).codigo, 400);
   }
   for (const body of [undefined, null, [], 'texto']) {
@@ -43,9 +67,14 @@ test('escrituras y permisos de equipos contra PostgreSQL temporal', async (t) =>
   const db = new PGlite();
   t.after(() => db.close());
   let liberaciones = 0;
-  const controlador = cargar({ connect: async () => ({
-    query: (sql, valores) => db.query(sql, valores), release() { liberaciones++; },
-  }) });
+  const controlador = cargar({
+    connect: async () => ({
+      query: (sql, valores) => db.query(sql, valores),
+      release() {
+        liberaciones++;
+      },
+    }),
+  });
   await db.exec(`
     CREATE TABLE rol (id_rol int PRIMARY KEY, nombre text);
     CREATE TABLE usuario (id_usuario int PRIMARY KEY, id_rol int, activo boolean, permiso_inventario text);
@@ -82,11 +111,19 @@ test('escrituras y permisos de equipos contra PostgreSQL temporal', async (t) =>
     const r = await ejecutar(controlador, 'crearEquipo', { ...equipoValido, anio: '2024' });
     assert.equal(r.codigo, 201);
     assert.equal(r.datos.data.anio, 2024);
-    assert.equal((await db.query('SELECT usuario FROM prueba_auditoria ORDER BY operacion')).rows[0].usuario, '10');
+    assert.equal(
+      (await db.query('SELECT usuario FROM prueba_auditoria ORDER BY operacion')).rows[0].usuario,
+      '10'
+    );
   });
   await t.test('edición parcial conserva estado y ubicación actuales', async () => {
-    await db.query("UPDATE equipo SET id_estado=2, id_laboratorio=2, ubicacion_detalle='Mesa nueva' WHERE id_equipo=1");
-    assert.equal((await ejecutar(controlador, 'actualizarEquipo', { comentarios: 'Editado' })).codigo, 200);
+    await db.query(
+      "UPDATE equipo SET id_estado=2, id_laboratorio=2, ubicacion_detalle='Mesa nueva' WHERE id_equipo=1"
+    );
+    assert.equal(
+      (await ejecutar(controlador, 'actualizarEquipo', { comentarios: 'Editado' })).codigo,
+      200
+    );
     const guardado = await consultar();
     assert.equal(guardado.id_estado, 2);
     assert.equal(guardado.id_laboratorio, 2);
@@ -94,31 +131,62 @@ test('escrituras y permisos de equipos contra PostgreSQL temporal', async (t) =>
     assert.equal(guardado.comentarios, 'Editado');
   });
   await t.test('traslado y cambio de estado autorizados se guardan', async () => {
-    assert.equal((await ejecutar(controlador, 'actualizarEquipo', { id_laboratorio: 1, ubicacion_detalle: 'Mesa 1' })).codigo, 200);
+    assert.equal(
+      (
+        await ejecutar(controlador, 'actualizarEquipo', {
+          id_laboratorio: 1,
+          ubicacion_detalle: 'Mesa 1',
+        })
+      ).codigo,
+      200
+    );
     assert.equal((await ejecutar(controlador, 'actualizarEquipo', { id_estado: 1 })).codigo, 200);
     assert.equal((await consultar()).id_laboratorio, 1);
     assert.equal((await consultar()).id_estado, 1);
   });
   await t.test('rechaza destinos no autorizados sin modificar el equipo', async () => {
-    assert.equal((await ejecutar(controlador, 'actualizarEquipo', { id_laboratorio: 3 })).codigo, 403);
+    assert.equal(
+      (await ejecutar(controlador, 'actualizarEquipo', { id_laboratorio: 3 })).codigo,
+      403
+    );
     assert.equal((await consultar()).id_laboratorio, 1);
   });
   await t.test('solo consulta y cuentas inactivas no pueden escribir', async () => {
-    for (const usuario of [20,40]) {
-      assert.equal((await ejecutar(controlador, 'actualizarEquipo', { nombre: 'No permitido' }, '1', usuario)).codigo, 403);
-      assert.equal((await ejecutar(controlador, 'crearEquipo', equipoValido, '1', usuario)).codigo, 403);
+    for (const usuario of [20, 40]) {
+      assert.equal(
+        (await ejecutar(controlador, 'actualizarEquipo', { nombre: 'No permitido' }, '1', usuario))
+          .codigo,
+        403
+      );
+      assert.equal(
+        (await ejecutar(controlador, 'crearEquipo', equipoValido, '1', usuario)).codigo,
+        403
+      );
     }
     assert.equal((await consultar()).nombre, 'Original');
   });
   await t.test('duplicados y relaciones inexistentes se revierten', async () => {
-    assert.equal((await ejecutar(controlador, 'crearEquipo', { ...equipoValido, placa_institucional: 'P-1' })).codigo, 409);
+    assert.equal(
+      (await ejecutar(controlador, 'crearEquipo', { ...equipoValido, placa_institucional: 'P-1' }))
+        .codigo,
+      409
+    );
     assert.equal((await ejecutar(controlador, 'actualizarEquipo', { id_estado: 999 })).codigo, 400);
     assert.equal((await consultar()).id_estado, 1);
   });
-  await t.test('superadministrador puede trasladar fuera de asignaciones; el técnico no puede editar allí', async () => {
-    assert.equal((await ejecutar(controlador, 'actualizarEquipo', { id_laboratorio: 3 }, '1', 30)).codigo, 200);
-    assert.equal((await ejecutar(controlador, 'actualizarEquipo', { comentarios: 'No permitido' })).codigo, 403);
-    assert.equal((await consultar()).comentarios, 'Editado');
-  });
+  await t.test(
+    'superadministrador puede trasladar fuera de asignaciones; el técnico no puede editar allí',
+    async () => {
+      assert.equal(
+        (await ejecutar(controlador, 'actualizarEquipo', { id_laboratorio: 3 }, '1', 30)).codigo,
+        200
+      );
+      assert.equal(
+        (await ejecutar(controlador, 'actualizarEquipo', { comentarios: 'No permitido' })).codigo,
+        403
+      );
+      assert.equal((await consultar()).comentarios, 'Editado');
+    }
+  );
   assert.ok(liberaciones > 0);
 });

@@ -8,8 +8,11 @@ export function resumirRevisionEquipos(equipos, anioActual = new Date().getFullY
     const umbral = equipo.anios_revision;
     const tieneUmbral = Number.isInteger(umbral) && umbral >= 1 && umbral <= 100;
     const valorAnio = equipo.anio;
-    const anio = (typeof valorAnio === 'number' || typeof valorAnio === 'string')
-      && /^\d{4}$/.test(String(valorAnio)) ? Number(valorAnio) : null;
+    const anio =
+      (typeof valorAnio === 'number' || typeof valorAnio === 'string') &&
+      /^\d{4}$/.test(String(valorAnio))
+        ? Number(valorAnio)
+        : null;
     const anioValido = anio !== null && anio >= 1900 && anio <= anioActual;
     if (tieneUmbral && !anioValido) resumen.sinAnio++;
     const antiguo = tieneUmbral && anioValido && anioActual - anio >= umbral;

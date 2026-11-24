@@ -11,7 +11,6 @@ export default function Reportes({ token }) {
   const { datos, cargando, error, recargar } = useListadoModulo(cargar);
   const [descargando, setDescargando] = useState(false),
     [errorDescarga, setErrorDescarga] = useState(''),
-
     [pagina, setPagina] = useState(1);
   const [limite, setLimite] = useState(10);
   const [ubicacion, setUbicacion] = useState({ sede: '', laboratorio: '' });
@@ -35,7 +34,9 @@ export default function Reportes({ token }) {
     mantenimiento = datos?.mantenimientos || {},
     laboratorios = datos?.equipos_por_laboratorio || [];
   const filtrados = laboratorios.filter(
-      (l) => (!ubicacion.sede || String(l.id_sede) === ubicacion.sede) && (!ubicacion.laboratorio || String(l.id_laboratorio) === ubicacion.laboratorio)
+      (l) =>
+        (!ubicacion.sede || String(l.id_sede) === ubicacion.sede) &&
+        (!ubicacion.laboratorio || String(l.id_laboratorio) === ubicacion.laboratorio)
     ),
     actual = Math.min(pagina, Math.max(1, Math.ceil(filtrados.length / limite)));
   return (
@@ -116,7 +117,15 @@ export default function Reportes({ token }) {
               <div className="inv-barra-filtros">
                 <h2 className="mod-titulo-tabla">Equipos por laboratorio</h2>
                 <div className="inv-selectores">
-                  <FiltrosUbicacion compacto token={token} valor={ubicacion} onChange={valor => { setUbicacion(valor); setPagina(1); }} />
+                  <FiltrosUbicacion
+                    compacto
+                    token={token}
+                    valor={ubicacion}
+                    onChange={(valor) => {
+                      setUbicacion(valor);
+                      setPagina(1);
+                    }}
+                  />
                 </div>
               </div>
               <div
@@ -163,7 +172,18 @@ export default function Reportes({ token }) {
                   <p className="mod-vacio">No hay laboratorios para mostrar.</p>
                 )}
               </div>
-              <PaginacionModulo limite={limite} singular="laboratorio" plural="laboratorios" alCambiarLimite={(valor) => { setLimite(valor); setPagina(1); }} pagina={actual} total={filtrados.length} alCambiar={setPagina} />
+              <PaginacionModulo
+                limite={limite}
+                singular="laboratorio"
+                plural="laboratorios"
+                alCambiarLimite={(valor) => {
+                  setLimite(valor);
+                  setPagina(1);
+                }}
+                pagina={actual}
+                total={filtrados.length}
+                alCambiar={setPagina}
+              />
             </section>
           </>
         )

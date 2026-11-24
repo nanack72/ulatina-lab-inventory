@@ -1,10 +1,10 @@
-/* ======================================================
+/* 
    ESTÁNDAR VISUAL DEL PROYECTO
-   Se importa AL FINAL en main.jsx para unificar:
+   Se importa en main.jsx para unificar:
    títulos, subtítulos, espaciados y tarjetas.
    Para cambiar el estilo de toda la app, editá solo las
    variables de :root.
-   ====================================================== */
+    */
 
 :root {
   --std-h1-size: 26px;

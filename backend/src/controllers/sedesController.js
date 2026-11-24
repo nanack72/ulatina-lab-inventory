@@ -10,14 +10,14 @@ const obtenerSedes = async (req, res) => {
     res.json({
       success: true,
       total: resultado.rowCount,
-      data: resultado.rows
+      data: resultado.rows,
     });
   } catch (error) {
     console.error('Error al obtener sedes:', error.message);
 
     res.status(500).json({
       success: false,
-      message: 'Error al consultar las sedes'
+      message: 'Error al consultar las sedes',
     });
   }
 };

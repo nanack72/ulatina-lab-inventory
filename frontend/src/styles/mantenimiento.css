@@ -107,8 +107,12 @@
   outline: 2px solid var(--verde);
   outline-offset: 3px;
 }
-.mant-boton-evidencias svg { flex-shrink: 0; }
-.mant-boton-evidencias span { font-variant-numeric: tabular-nums; }
+.mant-boton-evidencias svg {
+  flex-shrink: 0;
+}
+.mant-boton-evidencias span {
+  font-variant-numeric: tabular-nums;
+}
 @media (max-width: 800px) {
   .main-layout .main-page .mant-boton-evidencias {
     min-height: 44px;
@@ -116,5 +120,7 @@
   }
 }
 @media (forced-colors: active) {
-  .main-layout .main-page .mant-boton-evidencias { border-color: ButtonText; }
+  .main-layout .main-page .mant-boton-evidencias {
+    border-color: ButtonText;
+  }
 }

@@ -3,7 +3,7 @@
 
 const path = require('path');
 const fs = require('fs');
-const {leerLibroComoFilas}=require('../src/utils/leerExcelFilas');
+const { leerLibroComoFilas } = require('../src/utils/leerExcelFilas');
 
 // Cargar variables de entorno desde backend/.env
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
@@ -17,73 +17,72 @@ const EXCEL_PATH =
   process.env.EXCEL_SEED_PATH ||
   'C:\\Users\\oscar\\Desktop\\-\\PES-OSCAR_MONOGA\\Proyección de mantenimientos Ingenierias y Tics 2026-ANUAL.xlsx';
 
-
 const CATEGORIAS_REQUERIDAS = [
   {
     nombre: 'Cómputo Portátil',
-    descripcion: 'Computadoras portátiles (laptops) de uso académico y de laboratorio'
+    descripcion: 'Computadoras portátiles (laptops) de uso académico y de laboratorio',
   },
   {
     nombre: 'Cómputo de Escritorio',
-    descripcion: 'Estaciones de trabajo y computadoras de escritorio de laboratorio'
+    descripcion: 'Estaciones de trabajo y computadoras de escritorio de laboratorio',
   },
   {
     nombre: 'Servidores',
-    descripcion: 'Servidores físicos de rack y torre para virtualización e infraestructura'
+    descripcion: 'Servidores físicos de rack y torre para virtualización e infraestructura',
   },
   {
     nombre: 'Redes y Telecomunicaciones',
-    descripcion: 'Switches, routers, racks de comunicaciones y equipos de red (Cisco)'
+    descripcion: 'Switches, routers, racks de comunicaciones y equipos de red (Cisco)',
   },
   {
     nombre: 'Pantallas y Audiovisual',
-    descripcion: 'Tótems publicitarios, pantallas táctiles LCD y proyecciones'
+    descripcion: 'Tótems publicitarios, pantallas táctiles LCD y proyecciones',
   },
   {
     nombre: 'Maquinaria y Automatización',
-    descripcion: 'Tornos, fresadoras, impresoras 3D, bandas automatizadas, hornos y climatización'
+    descripcion: 'Tornos, fresadoras, impresoras 3D, bandas automatizadas, hornos y climatización',
   },
   {
     nombre: 'Equipos de Ensayo y Medición',
-    descripcion: 'Balanzas, mezcladoras, prensas, compactadores, bombas de vacío y equipos de ensayo'
-  }
+    descripcion:
+      'Balanzas, mezcladoras, prensas, compactadores, bombas de vacío y equipos de ensayo',
+  },
 ];
 
 const LABORATORIOS_REQUERIDOS = [
   {
     codigo: 'B1-LI',
-    nombre: 'Laboratorio de Informática (B1-LI)'
+    nombre: 'Laboratorio de Informática (B1-LI)',
   },
   {
     codigo: 'B1-CISCO1',
-    nombre: 'Laboratorio de Redes y Telecomunicaciones Cisco (B1-CISCO1)'
+    nombre: 'Laboratorio de Redes y Telecomunicaciones Cisco (B1-CISCO1)',
   },
   {
     codigo: 'LAB-LINKTECH',
-    nombre: 'Laboratorio Linktech (Ingeniería en Sistemas)'
+    nombre: 'Laboratorio Linktech (Ingeniería en Sistemas)',
   },
   {
     codigo: 'E-MULTIFUNCIONAL',
-    nombre: 'Edificio E - Laboratorio Multifuncional'
+    nombre: 'Edificio E - Laboratorio Multifuncional',
   },
   {
     codigo: 'LAB-MAT-CONST',
-    nombre: 'Laboratorio de Materiales de Construcción'
+    nombre: 'Laboratorio de Materiales de Construcción',
   },
   {
     codigo: 'LAB-PAVIMENTOS',
-    nombre: 'Laboratorio de Pavimentos'
+    nombre: 'Laboratorio de Pavimentos',
   },
   {
     codigo: 'LAB-FLUIDOS',
-    nombre: 'Laboratorio de Fluidos e Hidráulica'
+    nombre: 'Laboratorio de Fluidos e Hidráulica',
   },
   {
     codigo: 'LAB-ESTRUCTURAS',
-    nombre: 'Laboratorio de Estructuras'
-  }
+    nombre: 'Laboratorio de Estructuras',
+  },
 ];
-
 
 // Busca un usuario para asociarlo al trigger de auditoría de equipo
 async function resolverUsuarioResponsable(client) {
@@ -229,7 +228,6 @@ async function asegurarLaboratorios(client, idSedeHeredia) {
   return mapaLaboratorios;
 }
 
-
 // Limpia saltos de línea y espacios en blanco
 function limpiarTexto(valor) {
   if (valor === undefined || valor === null) return '';
@@ -257,13 +255,13 @@ function resolverCodigoLaboratorio(ubicacionTexto) {
   if (u.includes('multifuncional')) {
     return {
       codigo: 'E-MULTIFUNCIONAL',
-      ubicacionDetalle: 'Edificio E - Laboratorio Multifuncional'
+      ubicacionDetalle: 'Edificio E - Laboratorio Multifuncional',
     };
   }
   if (u.includes('materiales de construc')) {
     return {
       codigo: 'LAB-MAT-CONST',
-      ubicacionDetalle: 'Laboratorio de Materiales de Construcción'
+      ubicacionDetalle: 'Laboratorio de Materiales de Construcción',
     };
   }
   if (u.includes('pavimentos')) {
@@ -272,7 +270,7 @@ function resolverCodigoLaboratorio(ubicacionTexto) {
   if (u.includes('fluidos') || u.includes('hidr')) {
     return {
       codigo: 'LAB-FLUIDOS',
-      ubicacionDetalle: 'Laboratorio de Fluidos e Hidráulica'
+      ubicacionDetalle: 'Laboratorio de Fluidos e Hidráulica',
     };
   }
   if (u.includes('estructuras')) {
@@ -281,7 +279,7 @@ function resolverCodigoLaboratorio(ubicacionTexto) {
 
   return {
     codigo: 'E-MULTIFUNCIONAL',
-    ubicacionDetalle: limpiarLinea(ubicacionTexto).slice(0, 100) || 'Sede Heredia'
+    ubicacionDetalle: limpiarLinea(ubicacionTexto).slice(0, 100) || 'Sede Heredia',
   };
 }
 
@@ -370,7 +368,8 @@ function clasificarEquipo(nombreCrudo, codigoLab, detalleMantenimiento, observac
     categoria = 'Pantallas y Audiovisual';
     marca = 'LG / Institucional';
     modelo = 'Kiosco Táctil LCD';
-    caracteristicas = 'Pantalla táctil LCD vertical con conectividad a Internet y sistema integrado.';
+    caracteristicas =
+      'Pantalla táctil LCD vertical con conectividad a Internet y sistema integrado.';
   }
   // 5. Impresora Dremel 3D
   else if (nLower.includes('impresora') && nLower.includes('3d')) {
@@ -451,7 +450,8 @@ function clasificarEquipo(nombreCrudo, codigoLab, detalleMantenimiento, observac
 
   // Solo se conserva marca/modelo si aparecen literalmente en el Excel.
   // Nada se inventa: lo que no esté en la fuente queda en NULL.
-  const textoFuente = `${nombreCrudo} ${detalleMantenimiento} ${observacionesVidaUtil}`.toLowerCase();
+  const textoFuente =
+    `${nombreCrudo} ${detalleMantenimiento} ${observacionesVidaUtil}`.toLowerCase();
   const marcaFinal = marca && textoFuente.includes(marca.toLowerCase()) ? marca : null;
   const modeloFinal = modelo && textoFuente.includes(modelo.toLowerCase()) ? modelo : null;
   const detalleLimpio = limpiarLinea(detalleMantenimiento);
@@ -462,9 +462,7 @@ function clasificarEquipo(nombreCrudo, codigoLab, detalleMantenimiento, observac
     marca: marcaFinal ? marcaFinal.slice(0, 50) : null,
     modelo: modeloFinal ? modeloFinal.slice(0, 100) : null,
     anio,
-    caracteristicas: detalleLimpio
-      ? `Detalle de mantenimiento 2026: ${detalleLimpio}`
-      : null
+    caracteristicas: detalleLimpio ? `Detalle de mantenimiento 2026: ${detalleLimpio}` : null,
   };
 }
 
@@ -474,9 +472,8 @@ function leerFilasExcelHeredia(workbook) {
   let totalFilasAnalizadas = 0;
   let filasHerediaDetectadas = 0;
 
-  // --------------------------------------------------------------------------
   // 1. Hoja: "Mantenimientos 2026"
-  // --------------------------------------------------------------------------
+
   if (workbook.Sheets['Mantenimientos 2026']) {
     const filasHoja1 = workbook.Sheets['Mantenimientos 2026'];
 
@@ -532,7 +529,7 @@ function leerFilasExcelHeredia(workbook) {
         tipoMant ? `Mantenimiento 2026: ${tipoMant}` : null,
         obsVidaUtil ? `Estado/Vida útil: ${limpiarLinea(obsVidaUtil)}` : null,
         carreras ? `Carreras: ${carreras}` : null,
-        proveedor ? `Proveedor sugerido: ${proveedor}` : null
+        proveedor ? `Proveedor sugerido: ${proveedor}` : null,
       ].filter(Boolean);
 
       for (const placa of listaPlacasFinal) {
@@ -548,15 +545,14 @@ function leerFilasExcelHeredia(workbook) {
           modelo: info.modelo,
           anio: info.anio,
           caracteristicas: info.caracteristicas,
-          comentarios: comentariosPartes.join(' | ') || 'Migrado desde Proyección Anual 2026'
+          comentarios: comentariosPartes.join(' | ') || 'Migrado desde Proyección Anual 2026',
         });
       }
     }
   }
 
-  // --------------------------------------------------------------------------
   // 2. Hoja: "MANT-Anexo 5"
-  // --------------------------------------------------------------------------
+
   if (workbook.Sheets['MANT-Anexo 5']) {
     const filasAnexo = workbook.Sheets['MANT-Anexo 5'];
 
@@ -599,15 +595,13 @@ function leerFilasExcelHeredia(workbook) {
       }
 
       const detalleValido =
-        justificacion && !/^\d+$/.test(limpiarLinea(justificacion))
-          ? justificacion
-          : obsVidaUtil;
+        justificacion && !/^\d+$/.test(limpiarLinea(justificacion)) ? justificacion : obsVidaUtil;
 
       const comentariosPartes = [
         tipoMant ? `Mantenimiento Anexo 5: ${limpiarLinea(tipoMant)}` : null,
         obsVidaUtil ? `Observaciones: ${limpiarLinea(obsVidaUtil)}` : null,
         carrera ? `Carrera: ${carrera}` : null,
-        cantMant ? `Mantenimientos requeridos/año: ${cantMant}` : null
+        cantMant ? `Mantenimientos requeridos/año: ${cantMant}` : null,
       ].filter(Boolean);
 
       for (const placa of listaPlacasFinal) {
@@ -622,9 +616,8 @@ function leerFilasExcelHeredia(workbook) {
           marca: info.marca,
           modelo: info.modelo,
           anio: info.anio,
-          caracteristicas:
-            info.caracteristicas,
-          comentarios: comentariosPartes.join(' | ') || 'Migrado desde MANT-Anexo 5 (2026)'
+          caracteristicas: info.caracteristicas,
+          comentarios: comentariosPartes.join(' | ') || 'Migrado desde MANT-Anexo 5 (2026)',
         });
       }
     }
@@ -633,10 +626,9 @@ function leerFilasExcelHeredia(workbook) {
   return {
     totalFilasAnalizadas,
     filasHerediaDetectadas,
-    registrosExtraidos
+    registrosExtraidos,
   };
 }
-
 
 async function ejecutarSeed() {
   console.log('Cargando inventario de la Sede Heredia a Neon PostgreSQL...');
@@ -649,11 +641,8 @@ async function ejecutarSeed() {
   console.log(`[1/4] Leyendo archivo Excel:\n      ${EXCEL_PATH}`);
   const workbook = await leerLibroComoFilas(EXCEL_PATH);
 
-  const {
-    totalFilasAnalizadas,
-    filasHerediaDetectadas,
-    registrosExtraidos
-  } = leerFilasExcelHeredia(workbook);
+  const { totalFilasAnalizadas, filasHerediaDetectadas, registrosExtraidos } =
+    leerFilasExcelHeredia(workbook);
 
   console.log(`      -> Hojas disponibles: ${workbook.SheetNames.join(', ')}`);
   console.log(`      -> Filas de equipos leídas en el archivo: ${totalFilasAnalizadas}`);
@@ -689,10 +678,12 @@ async function ejecutarSeed() {
     // Resolver el usuario técnico/administrador para los triggers trg_historial_estado y trg_historial_ubicacion
     const idUsuarioAuditoria = await resolverUsuarioResponsable(client);
     await client.query("SELECT set_config('app.usuario_id', $1, true)", [
-      String(idUsuarioAuditoria)
+      String(idUsuarioAuditoria),
     ]);
 
-    console.log('\n[2/4] Asegurando catálogos maestros en PostgreSQL (Sede, Estado, Categorías, Laboratorios)...');
+    console.log(
+      '\n[2/4] Asegurando catálogos maestros en PostgreSQL (Sede, Estado, Categorías, Laboratorios)...'
+    );
     const idSedeHeredia = await asegurarSedeHeredia(client);
     const idEstadoOperativo = await asegurarEstadoOperativo(client);
     const mapaCategorias = await asegurarCategorias(client);
@@ -701,7 +692,9 @@ async function ejecutarSeed() {
     console.log(`      -> Sede Heredia (id_sede = ${idSedeHeredia})`);
     console.log(`      -> Estado Operativo (id_estado = ${idEstadoOperativo})`);
     console.log(`      -> Categorías aseguradas: ${Object.keys(mapaCategorias).length}`);
-    console.log(`      -> Laboratorios asegurados en Heredia: ${Object.keys(mapaLaboratorios).join(', ')}`);
+    console.log(
+      `      -> Laboratorios asegurados en Heredia: ${Object.keys(mapaLaboratorios).join(', ')}`
+    );
 
     console.log('\n[3/4] Insertando equipos en public.equipo (ON CONFLICT DO NOTHING)...');
 
@@ -741,7 +734,7 @@ async function ejecutarSeed() {
         item.anio,
         item.caracteristicas,
         item.comentarios,
-        item.ubicacion_detalle
+        item.ubicacion_detalle,
       ];
 
       const resInsert = await client.query(insertQuery, valores);
@@ -752,7 +745,7 @@ async function ejecutarSeed() {
           id_equipo: resInsert.rows[0].id_equipo,
           laboratorio: item.codigoLab,
           placa: item.placa_institucional,
-          nombre: item.nombre
+          nombre: item.nombre,
         });
       } else if (resInsert.rowCount > 0) {
         actualizados++;
@@ -762,7 +755,7 @@ async function ejecutarSeed() {
           origen: item.origen,
           laboratorio: item.codigoLab,
           placa: item.placa_institucional,
-          nombre: item.nombre
+          nombre: item.nombre,
         });
       }
     }
@@ -792,7 +785,9 @@ async function ejecutarSeed() {
     console.log('Carga de inventario completada con éxito.');
   } catch (error) {
     await client.query('ROLLBACK');
-    console.error('\n[ERROR] Se produjo un fallo durante la siembra. Transacción revertida (ROLLBACK):');
+    console.error(
+      '\n[ERROR] Se produjo un fallo durante la siembra. Transacción revertida (ROLLBACK):'
+    );
     console.error(error);
     process.exitCode = 1;
   } finally {

@@ -2,7 +2,6 @@ import Notificacion from '../components/comunes/Notificacion';
 import { useEffect, useState } from 'react';
 import { UserRound, Mail, Shield, LockKeyhole } from 'lucide-react';
 
-
 import CambiarContrasena from '../components/CambiarContrasena';
 import '../styles/miPerfil.css';
 
@@ -10,30 +9,22 @@ export default function MiPerfil({ usuario, token }) {
   const [mostrarCambio, setMostrarCambio] = useState(false);
   const [mensaje, setMensaje] = useState('');
 
-useEffect(() => {
-  if (!mensaje) return;
+  useEffect(() => {
+    if (!mensaje) return;
 
-  const temporizador = setTimeout(() => {
-    setMensaje('');
-  }, 4000);
+    const temporizador = setTimeout(() => {
+      setMensaje('');
+    }, 4000);
 
-  return () => clearTimeout(temporizador);
-}, [mensaje]);
+    return () => clearTimeout(temporizador);
+  }, [mensaje]);
 
-  const nombre =
-    usuario?.nombreCompleto ||
-    usuario?.nombre ||
-    'Sin información';
+  const nombre = usuario?.nombreCompleto || usuario?.nombre || 'Sin información';
 
-  const correo =
-    usuario?.correo ||
-    usuario?.email ||
-    'Sin información';
+  const correo = usuario?.correo || usuario?.email || 'Sin información';
 
   const rol =
-    typeof usuario?.rol === 'string'
-      ? usuario.rol
-      : usuario?.rol?.nombre || 'Sin asignar';
+    typeof usuario?.rol === 'string' ? usuario.rol : usuario?.rol?.nombre || 'Sin asignar';
 
   return (
     <div className="perfil-pagina">
@@ -104,9 +95,7 @@ useEffect(() => {
         </div>
       </section>
 
-    {mensaje && (
-    <Notificacion tipo="exito">{mensaje}</Notificacion>
-    )}
+      {mensaje && <Notificacion tipo="exito">{mensaje}</Notificacion>}
 
       {mostrarCambio && (
         <CambiarContrasena

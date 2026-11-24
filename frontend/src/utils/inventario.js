@@ -44,11 +44,7 @@ const CAMPOS_BUSCABLES = [
 ];
 
 export function texto(valor) {
-  if (
-    valor === null ||
-    valor === undefined ||
-    typeof valor === 'object'
-  ) {
+  if (valor === null || valor === undefined || typeof valor === 'object') {
     return '';
   }
 
@@ -67,9 +63,7 @@ export function formatearSede(sede) {
 
   if (!nombre) return '';
 
-  return /^sede\s/i.test(nombre)
-    ? nombre
-    : `Sede ${nombre}`;
+  return /^sede\s/i.test(nombre) ? nombre : `Sede ${nombre}`;
 }
 
 function nombreRelacion(valor) {
@@ -83,32 +77,23 @@ function nombreRelacion(valor) {
 
   return texto(
     valor.nombre ??
-    valor.descripcion ??
-    valor.nombre_categoria ??
-    valor.nombre_estado ??
-    valor.nombre_laboratorio ??
-    valor.nombre_sede
+      valor.descripcion ??
+      valor.nombre_categoria ??
+      valor.nombre_estado ??
+      valor.nombre_laboratorio ??
+      valor.nombre_sede
   );
 }
 
 export function adaptarEquipo(equipo, indice) {
-  const placa = texto(
-    equipo.placa_institucional ?? equipo.placa
-  );
+  const placa = texto(equipo.placa_institucional ?? equipo.placa);
 
-  const serie = texto(
-    equipo.numero_serie ?? equipo.serie
-  );
+  const serie = texto(equipo.numero_serie ?? equipo.serie);
 
   return {
-    clave:
-      equipo.id_equipo ??
-      equipo.id ??
-      `${placa}-${serie}-${indice}`,
+    clave: equipo.id_equipo ?? equipo.id ?? `${placa}-${serie}-${indice}`,
 
-    nombre: texto(
-      equipo.nombre ?? equipo.nombre_equipo
-    ),
+    nombre: texto(equipo.nombre ?? equipo.nombre_equipo),
 
     placa,
     serie,
@@ -117,33 +102,18 @@ export function adaptarEquipo(equipo, indice) {
     modelo: texto(equipo.modelo),
 
     categoria: nombreRelacion(
-      equipo.categoria ??
-      equipo.nombre_categoria ??
-      equipo.categoria_nombre
+      equipo.categoria ?? equipo.nombre_categoria ?? equipo.categoria_nombre
     ),
 
-    estado: nombreRelacion(
-      equipo.estado ??
-      equipo.nombre_estado ??
-      equipo.estado_nombre
-    ),
+    estado: nombreRelacion(equipo.estado ?? equipo.nombre_estado ?? equipo.estado_nombre),
 
     laboratorio: nombreRelacion(
-      equipo.laboratorio ??
-      equipo.nombre_laboratorio ??
-      equipo.laboratorio_nombre
+      equipo.laboratorio ?? equipo.nombre_laboratorio ?? equipo.laboratorio_nombre
     ),
 
-    sede: nombreRelacion(
-      equipo.sede ??
-      equipo.nombre_sede ??
-      equipo.sede_nombre
-    ),
+    sede: nombreRelacion(equipo.sede ?? equipo.nombre_sede ?? equipo.sede_nombre),
 
-    ubicacion: texto(
-      equipo.ubicacion_detalle ??
-      equipo.ubicacionDetalle
-    ),
+    ubicacion: texto(equipo.ubicacion_detalle ?? equipo.ubicacionDetalle),
 
     original: equipo,
   };
@@ -161,9 +131,7 @@ export function opcionesUnicas(equipos, propiedad) {
     }
   }
 
-  return [...mapa.values()].sort((a, b) =>
-    a.localeCompare(b, 'es')
-  );
+  return [...mapa.values()].sort((a, b) => a.localeCompare(b, 'es'));
 }
 
 export function filtrarEquipos(equipos, filtros) {
@@ -171,17 +139,11 @@ export function filtrarEquipos(equipos, filtros) {
 
   return equipos.filter((equipo) => {
     const coincideFiltros = FILTROS_SELECT.every(
-      ({ clave }) =>
-        !filtros[clave] ||
-        normalizar(equipo[clave]) ===
-          normalizar(filtros[clave])
+      ({ clave }) => !filtros[clave] || normalizar(equipo[clave]) === normalizar(filtros[clave])
     );
 
     const coincideBusqueda =
-      !termino ||
-      CAMPOS_BUSCABLES.some((campo) =>
-        normalizar(equipo[campo]).includes(termino)
-      );
+      !termino || CAMPOS_BUSCABLES.some((campo) => normalizar(equipo[campo]).includes(termino));
 
     return coincideFiltros && coincideBusqueda;
   });
@@ -198,11 +160,7 @@ export function tipoEstado(estado) {
     return 'mantenimiento';
   }
 
-  if (
-    valor.includes('baja') ||
-    valor.includes('fuera de servicio') ||
-    valor.includes('inactivo')
-  ) {
+  if (valor.includes('baja') || valor.includes('fuera de servicio') || valor.includes('inactivo')) {
     return 'baja';
   }
 
@@ -215,24 +173,11 @@ export function claseEstado(estado) {
 
 export function generarPaginas(actual, total) {
   if (total <= 7) {
-    return Array.from(
-      { length: total },
-      (_, indice) => indice + 1
-    );
+    return Array.from({ length: total }, (_, indice) => indice + 1);
   }
 
-  const validas = [
-    ...new Set([
-      1,
-      total,
-      actual - 1,
-      actual,
-      actual + 1,
-    ]),
-  ]
-    .filter(
-      (pagina) => pagina >= 1 && pagina <= total
-    )
+  const validas = [...new Set([1, total, actual - 1, actual, actual + 1])]
+    .filter((pagina) => pagina >= 1 && pagina <= total)
     .sort((a, b) => a - b);
 
   const resultado = [];
@@ -240,15 +185,8 @@ export function generarPaginas(actual, total) {
   validas.forEach((pagina, indice) => {
     const anterior = validas[indice - 1];
 
-    if (
-      indice > 0 &&
-      pagina - anterior > 1
-    ) {
-      resultado.push(
-        pagina - anterior === 2
-          ? anterior + 1
-          : '...'
-      );
+    if (indice > 0 && pagina - anterior > 1) {
+      resultado.push(pagina - anterior === 2 ? anterior + 1 : '...');
     }
 
     resultado.push(pagina);

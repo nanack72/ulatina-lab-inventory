@@ -41,22 +41,35 @@ test('paginación y filtros contra PostgreSQL temporal', async (t) => {
     assert.equal(r.total, 12);
     assert.equal(r.total_autorizados, 12);
     assert.equal(r.data.length, 5);
-    assert.deepEqual(r.data.map(e => e.id_equipo), [12, 11, 10, 9, 8]);
+    assert.deepEqual(
+      r.data.map((e) => e.id_equipo),
+      [12, 11, 10, 9, 8]
+    );
     assert.equal(r.paginas, 3);
     assert.deepEqual(r.opciones.sede, ['Heredia']);
     assert.ok(!r.opciones.laboratorio.includes('Laboratorio reservado'));
   });
   await t.test('segunda y última página, incluso si la solicitada ya no existe', async () => {
     const segunda = await consultarPaginaInventario(db, { pagina: '2' }, usuario);
-    assert.deepEqual(segunda.data.map(e => e.id_equipo), [7, 6, 5, 4, 3]);
+    assert.deepEqual(
+      segunda.data.map((e) => e.id_equipo),
+      [7, 6, 5, 4, 3]
+    );
     const ultima = await consultarPaginaInventario(db, { pagina: '999' }, usuario);
     assert.equal(ultima.pagina, 3);
-    assert.deepEqual(ultima.data.map(e => e.id_equipo), [2, 1]);
+    assert.deepEqual(
+      ultima.data.map((e) => e.id_equipo),
+      [2, 1]
+    );
   });
   await t.test('combina filtros y conserva opciones fuera de la página visible', async () => {
-    const r = await consultarPaginaInventario(db, { categoria: 'COMPUTO', estado: 'operativo' }, usuario);
+    const r = await consultarPaginaInventario(
+      db,
+      { categoria: 'COMPUTO', estado: 'operativo' },
+      usuario
+    );
     assert.equal(r.total, 5);
-    assert.ok(r.data.every(e => e.id_categoria === 1 && e.id_estado === 1));
+    assert.ok(r.data.every((e) => e.id_categoria === 1 && e.id_estado === 1));
     assert.ok(r.opciones.categoria.includes('Proyección'));
     assert.equal(r.opciones.laboratorio.length, 2);
   });
@@ -64,15 +77,24 @@ test('paginación y filtros contra PostgreSQL temporal', async (t) => {
     assert.equal((await consultarPaginaInventario(db, { busqueda: 'camara' }, usuario)).total, 1);
     assert.equal((await consultarPaginaInventario(db, { busqueda: '100%' }, usuario)).total, 1);
     assert.equal((await consultarPaginaInventario(db, { busqueda: 'PL_1' }, usuario)).total, 4);
-    assert.equal((await consultarPaginaInventario(db, { busqueda: "' OR 1=1 --" }, usuario)).total, 0);
-    assert.equal((await consultarPaginaInventario(db, { busqueda: 'estacion 12' }, usuario)).total, 1);
+    assert.equal(
+      (await consultarPaginaInventario(db, { busqueda: "' OR 1=1 --" }, usuario)).total,
+      0
+    );
+    assert.equal(
+      (await consultarPaginaInventario(db, { busqueda: 'estacion 12' }, usuario)).total,
+      1
+    );
   });
   await t.test('no filtra solo la página actual ni muestra equipos ajenos', async () => {
     const r = await consultarPaginaInventario(db, { busqueda: 'SER-1' }, usuario);
     assert.equal(r.total, 4);
-    assert.ok(r.data.every(e => e.id_laboratorio !== 3));
-    const restringido = await consultarPaginaInventario(db, { laboratorio: 'Laboratorio B' },
-      { idUsuario: 30, rol: 'Administrador' });
+    assert.ok(r.data.every((e) => e.id_laboratorio !== 3));
+    const restringido = await consultarPaginaInventario(
+      db,
+      { laboratorio: 'Laboratorio B' },
+      { idUsuario: 30, rol: 'Administrador' }
+    );
     assert.equal(restringido.total, 0);
     assert.deepEqual(restringido.opciones.laboratorio, ['Laboratorio A']);
   });
@@ -95,11 +117,28 @@ test('paginación y filtros contra PostgreSQL temporal', async (t) => {
 });
 
 test('rechaza parámetros inválidos antes de consultar la base', async () => {
-  const db = { query() { assert.fail('No debe consultar'); } };
+  const db = {
+    query() {
+      assert.fail('No debe consultar');
+    },
+  };
   const usuario = { idUsuario: 10, rol: 'Tecnico' };
-  for (const query of [{ pagina: '0' }, { pagina: '1x' }, { pagina: ['1','2'] },
-    { limite: '101' }, { limite: '-1' }, { sede: {} }, { busqueda: 'a'.repeat(201) }]) {
-    await assert.rejects(() => consultarPaginaInventario(db, query, usuario), error => error.status === 400);
+  for (const query of [
+    { pagina: '0' },
+    { pagina: '1x' },
+    { pagina: ['1', '2'] },
+    { limite: '101' },
+    { limite: '-1' },
+    { sede: {} },
+    { busqueda: 'a'.repeat(201) },
+  ]) {
+    await assert.rejects(
+      () => consultarPaginaInventario(db, query, usuario),
+      (error) => error.status === 400
+    );
   }
-  await assert.rejects(() => consultarPaginaInventario(db, {}, {}), error => error.status === 403);
+  await assert.rejects(
+    () => consultarPaginaInventario(db, {}, {}),
+    (error) => error.status === 403
+  );
 });

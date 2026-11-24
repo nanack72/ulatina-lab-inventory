@@ -31,7 +31,17 @@ export default function Incidencias({ token }) {
   const busquedaDiferida = useBusquedaDiferida(busqueda);
   const cargar = useCallback(
     (signal) =>
-      consultarIncidencias({ busqueda: busquedaDiferida, prioridad, estado, id_sede: ubicacion.sede, id_laboratorio: ubicacion.laboratorio }, token, signal),
+      consultarIncidencias(
+        {
+          busqueda: busquedaDiferida,
+          prioridad,
+          estado,
+          id_sede: ubicacion.sede,
+          id_laboratorio: ubicacion.laboratorio,
+        },
+        token,
+        signal
+      ),
     [ubicacion.sede, ubicacion.laboratorio, busquedaDiferida, prioridad, estado, token]
   );
   const { datos, cargando, error, recargar } = useListadoModulo(cargar);
@@ -114,11 +124,27 @@ export default function Incidencias({ token }) {
             onChange={(v) => filtro(setBusqueda, v)}
           />
           <div className="inv-selectores">
-            <FiltrosUbicacion compacto token={token} valor={ubicacion} onChange={valor => { setUbicacion(valor); setPagina(1); }} />
-            <FiltroSelect etiqueta="Prioridad" valor={prioridad} opciones={PRIORIDADES_INCIDENCIA}
-              onChange={valor => filtro(setPrioridad, valor)} />
-            <FiltroSelect etiqueta="Estado" valor={estado} opciones={ESTADOS_INCIDENCIA}
-              onChange={valor => filtro(setEstado, valor)} />
+            <FiltrosUbicacion
+              compacto
+              token={token}
+              valor={ubicacion}
+              onChange={(valor) => {
+                setUbicacion(valor);
+                setPagina(1);
+              }}
+            />
+            <FiltroSelect
+              etiqueta="Prioridad"
+              valor={prioridad}
+              opciones={PRIORIDADES_INCIDENCIA}
+              onChange={(valor) => filtro(setPrioridad, valor)}
+            />
+            <FiltroSelect
+              etiqueta="Estado"
+              valor={estado}
+              opciones={ESTADOS_INCIDENCIA}
+              onChange={(valor) => filtro(setEstado, valor)}
+            />
           </div>
         </div>
         <TablaIncidencias
@@ -130,7 +156,13 @@ export default function Incidencias({ token }) {
         <PaginacionModulo
           pagina={actual}
           total={lista.length}
-          limite={limite} singular="incidencia" plural="incidencias" alCambiarLimite={(valor) => { setLimite(valor); setPagina(1); }}
+          limite={limite}
+          singular="incidencia"
+          plural="incidencias"
+          alCambiarLimite={(valor) => {
+            setLimite(valor);
+            setPagina(1);
+          }}
           alCambiar={setPagina}
           cargando={cargando}
         />

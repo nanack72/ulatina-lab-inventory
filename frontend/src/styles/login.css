@@ -1,7 +1,7 @@
-/* =========================================================
+/* 
    LOGIN U LATINA — presentación institucional / autenticación
    Estilos locales a .login-page. No modifican el resto del sistema.
-   ========================================================= */
+    */
 
 .login-page {
   --login-green-deep: #064c3c;
@@ -17,10 +17,24 @@
   /* Una sola capa de color para ambas columnas: el verde se difumina
      gradualmente hacia el blanco, sin un corte vertical visible. */
   background:
-    radial-gradient(ellipse 48% 62% at 53% 81%, rgba(13, 224, 155, 0.54) 0%, rgba(24, 184, 132, 0.28) 38%, transparent 74%),
+    radial-gradient(
+      ellipse 48% 62% at 53% 81%,
+      rgba(13, 224, 155, 0.54) 0%,
+      rgba(24, 184, 132, 0.28) 38%,
+      transparent 74%
+    ),
     radial-gradient(ellipse 40% 54% at 52% 13%, rgba(20, 188, 134, 0.33) 0%, transparent 75%),
     radial-gradient(ellipse 40% 65% at 19% 99%, rgba(11, 155, 109, 0.42) 0%, transparent 80%),
-    linear-gradient(104deg, #087359 0%, #004e3e 29%, #075943 42%, #148766 51%, #8ac7b3 61%, #d3e9df 74%, #f8faf9 100%);
+    linear-gradient(
+      104deg,
+      #087359 0%,
+      #004e3e 29%,
+      #075943 42%,
+      #148766 51%,
+      #8ac7b3 61%,
+      #d3e9df 74%,
+      #f8faf9 100%
+    );
 }
 
 /* ---- Columna institucional ---- */
@@ -264,7 +278,10 @@
   border: 1px solid #d5e2e7;
   border-radius: 12px;
   background: linear-gradient(100deg, #f9fbfd 0%, #edf4f7 100%);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
 }
 
 .login-input-wrapper:focus-within {
@@ -314,7 +331,9 @@
   background: transparent;
   color: #688199;
   cursor: pointer;
-  transition: color 0.2s ease, background 0.2s ease;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease;
 }
 
 .login-password-toggle:hover:not(:disabled) {
@@ -393,7 +412,10 @@
   font-size: 17px;
   font-weight: 730;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
 }
 
 .login-submit:hover:not(:disabled) {
@@ -540,13 +562,23 @@
 }
 
 @keyframes loginFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes loginScaleIn {
-  from { opacity: 0; transform: scale(0.96); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 /* ---- Adaptación a laptop, tableta y móvil ---- */
@@ -750,11 +782,15 @@
     font-size: max(1rem, 16px);
   }
 
-  .login-page .login-options { flex-wrap: wrap; }
+  .login-page .login-options {
+    flex-wrap: wrap;
+  }
 }
 
 @media (pointer: coarse) {
-  .login-page .login-input-wrapper input { font-size: max(1rem, 16px); }
+  .login-page .login-input-wrapper input {
+    font-size: max(1rem, 16px);
+  }
 }
 
 @media (max-width: 390px) {

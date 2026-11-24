@@ -10,7 +10,9 @@
   color: var(--texto, #263443);
   box-shadow: 0 24px 80px rgb(0 0 0 / 22%);
 }
-.equipo-confirmacion-dialogo:modal { overscroll-behavior: contain; }
+.equipo-confirmacion-dialogo:modal {
+  overscroll-behavior: contain;
+}
 .equipo-confirmacion-dialogo::backdrop {
   background: rgb(13 29 24 / 55%);
   overflow: hidden;
@@ -27,12 +29,25 @@
   box-shadow: none;
   overflow-wrap: anywhere;
 }
-.equipo-confirmacion-dialogo h2 { font-size: 21px; line-height: 1.35; }
-.equipo-confirmacion-dialogo p { line-height: 1.6; }
-.equipo-confirmacion-dialogo button { min-height: 44px; }
+.equipo-confirmacion-dialogo h2 {
+  font-size: 21px;
+  line-height: 1.35;
+}
+.equipo-confirmacion-dialogo p {
+  line-height: 1.6;
+}
+.equipo-confirmacion-dialogo button {
+  min-height: 44px;
+}
 @media (max-width: 600px) {
   .equipo-confirmacion-dialogo .traslado-confirmacion,
-  .equipo-confirmacion-dialogo .cambio-estado-confirmacion { padding: 22px 18px; }
-  .equipo-confirmacion-dialogo .cambio-estado-confirmacion-botones { flex-direction: column; }
-  .equipo-confirmacion-dialogo .registro-botones button { width: 100%; }
+  .equipo-confirmacion-dialogo .cambio-estado-confirmacion {
+    padding: 22px 18px;
+  }
+  .equipo-confirmacion-dialogo .cambio-estado-confirmacion-botones {
+    flex-direction: column;
+  }
+  .equipo-confirmacion-dialogo .registro-botones button {
+    width: 100%;
+  }
 }
