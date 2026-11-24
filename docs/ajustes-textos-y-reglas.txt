@@ -1,0 +1,38 @@
+AJUSTES DE TEXTOS E INTEGRACIÓN · 23/11/2026
+
+Presentación
+- Mensajes públicos con etiquetas de campos, sin nombres de columnas, instrucciones
+  de migraciones ni códigos de requerimientos. Los detalles técnicos quedan en el código.
+- Trato formal uniforme en los textos revisados y correcciones de singular/plural.
+- Historiales con nombres de categorías y otras relaciones, manteniendo los valores
+  originales de auditoría y agregando campos *_visible a las respuestas.
+- Sin nombres disponibles, se indica No disponible; no se inventan nombres ni responsables.
+- Las fotos iniciales pueden adjuntarse después. El botón Guardar y continuar después
+  no significa finalizar la orden de mantenimiento.
+
+Reglas corregidas
+- Mantenimientos nuevos comprueban la marca de eliminación bajo el bloqueo del equipo.
+- Incidencias consultan un equipo no eliminado dentro de una transacción y mantienen
+  un bloqueo compartido hasta insertar y confirmar o revertir la operación.
+- Al finalizar una orden se consideran otros correctivos abiertos; mientras existan,
+  el equipo permanece En mantenimiento, incluso ante un intento de enviarlo a Operativo.
+
+Instalación
+Aplicar el parche desde la raíz del repositorio, reiniciar el backend y recargar la interfaz.
+No requiere paquetes nuevos ni migraciones de base de datos.
+
+Comprobaciones
+- 82 archivos del frontend sin errores de lint y compilación completa correcta.
+- 99 pruebas del frontend aprobadas.
+- 79 pruebas del backend aprobadas y 3 grupos de integración real omitidos.
+- Comprobación visual de ambos historiales con nombres en lugar de identificadores.
+- Pruebas sobre PostgreSQL temporal para nombres, eliminación lógica, permisos y órdenes
+  simultáneamente abiertas. Estas no equivalen a probar concurrencia entre conexiones en Neon.
+
+Límites y pendientes
+Los nombres antiguos se resuelven contra los catálogos actuales. Si un catálogo cambió
+de nombre, no se puede reconstruir su nombre anterior sin una copia histórica que ya
+lo conserve; este parche no reescribe auditoría ni introduce un nombre histórico ficticio.
+Las pruebas reales de integración y los restantes requisitos conjuntos señalados en
+la revisión (insumos, recomendación de baja, reportes, capacitación, etc.) no se sustituyen
+con estas correcciones de textos e integración.

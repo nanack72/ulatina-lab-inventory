@@ -58,7 +58,7 @@ async function tieneActividad(cliente, id) {
 async function darBajaUsuario(pool, id, actor) {
   if (!/^[1-9]\d*$/.test(String(id)) || Number(id) > 2147483647 ||
     !Number.isSafeInteger(Number(actor)) || Number(actor) <= 0) {
-    throw fallo('Identificador de usuario no válido.', 400);
+    throw fallo("Seleccione un usuario válido.", 400);
   }
   id = Number(id);
   actor = Number(actor);
@@ -110,7 +110,8 @@ async function darBajaUsuario(pool, id, actor) {
   } catch (error) {
     await cliente.query('ROLLBACK').catch(() => {});
     if (error.code === '42501') {
-      throw fallo('Faltan permisos de base de datos para dar de baja usuarios. Aplique la migración 003.', 503);
+      console.error('Permisos insuficientes al dar de baja usuarios; revisar migración 003:', error);
+      throw fallo("No fue posible dar de baja la cuenta. Contacte al responsable del sistema.", 503);
     }
     throw error;
   } finally {

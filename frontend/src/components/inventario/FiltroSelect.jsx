@@ -6,6 +6,7 @@ export default function FiltroSelect({
   valor,
   opciones,
   onChange,
+  disabled = false,
 }) {
   const id = useId();
   return (
@@ -13,6 +14,7 @@ export default function FiltroSelect({
       <label className="selector-etiqueta" htmlFor={id}>Filtrar por {etiqueta.toLowerCase()}</label>
       <select
         id={id}
+        disabled={disabled}
         name={etiqueta}
         aria-label={`Filtrar por ${etiqueta.toLowerCase()}`}
         value={valor}
@@ -22,11 +24,11 @@ export default function FiltroSelect({
       >
         <option value="">{etiqueta}</option>
 
-        {opciones.map((opcion) => (
-          <option key={opcion} value={opcion}>
-            {opcion}
-          </option>
-        ))}
+        {opciones.map((opcion) => {
+          const valorOpcion = typeof opcion === 'string' ? opcion : opcion.valor;
+          const textoOpcion = typeof opcion === 'string' ? opcion : opcion.texto;
+          return <option key={valorOpcion} value={valorOpcion}>{textoOpcion}</option>;
+        })}
       </select>
 
       <ChevronDown

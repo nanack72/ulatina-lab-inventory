@@ -1,6 +1,7 @@
+const { nombreCampo } = require('./nombresCampos');
 function validarEntradaMantenimiento(body, actualizacion = false) {
   if (!body || typeof body !== 'object' || Array.isArray(body))
-    return 'Envíe un objeto con los datos del mantenimiento.';
+    return "Complete los datos del mantenimiento.";
   for (const campo of ['id_equipo', 'id_nuevo_estado']) {
     const v = body[campo];
     if (v === undefined || v === null || v === '') continue;
@@ -9,7 +10,7 @@ function validarEntradaMantenimiento(body, actualizacion = false) {
       !/^[1-9]\d*$/.test(String(v)) ||
       Number(v) > 2147483647
     )
-      return campo + ' debe ser un entero positivo válido.';
+      return 'Seleccione un valor válido para ' + nombreCampo(campo) + '.';
   }
   for (const campo of [
     'tipo_mantenimiento',
@@ -21,7 +22,7 @@ function validarEntradaMantenimiento(body, actualizacion = false) {
     const v = body[campo];
     if (v === undefined || v === null) continue;
     if (typeof v !== 'string' || v.length > 10000)
-      return campo + ' debe ser texto de hasta 10000 caracteres.';
+      return nombreCampo(campo) + ' debe ser texto de hasta 10000 caracteres.';
   }
   if (
     body.descripcion_trabajo !== undefined &&

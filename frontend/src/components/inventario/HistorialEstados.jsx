@@ -36,7 +36,7 @@ function nombreEstado(nombre, id) {
     return 'Sin estado anterior';
   }
 
-  return `Estado ${id}`;
+  return 'Estado no disponible';
 }
 
 export default function HistorialEstados({
@@ -196,9 +196,7 @@ export default function HistorialEstados({
 
                 const responsable =
                   texto(movimiento.nombre_usuario) ||
-                  (movimiento.id_usuario != null
-                    ? `Usuario ${movimiento.id_usuario}`
-                    : 'No disponible');
+                  'Responsable no disponible';
 
                 return (
                   <article
@@ -252,7 +250,7 @@ export default function HistorialEstados({
                         <span>Motivo</span>
                         <p>
                           {texto(movimiento.motivo) ||
-                            'No registrado'}
+                            'Sin registrar'}
                         </p>
                       </div>
 
@@ -260,11 +258,6 @@ export default function HistorialEstados({
                         <span>
                           Responsable:{' '}
                           <strong>{responsable}</strong>
-                        </span>
-
-                        <span>
-                          Movimiento #
-                          {movimiento.id_historial_estado}
                         </span>
                       </div>
                     </div>

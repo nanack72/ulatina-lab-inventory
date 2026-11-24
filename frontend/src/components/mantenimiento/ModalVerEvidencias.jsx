@@ -94,16 +94,16 @@ export default function ModalVerEvidencias({
       <DialogoModulo
         abierto={abierto}
         alCerrar={alCerrar}
-        titulo={'Evidencias del mantenimiento #' + mantenimiento.id_bitacora}
+        titulo="Fotografías del mantenimiento"
         descripcion={
-          mantenimiento.nombre_equipo + ' · ' + (mantenimiento.placa_institucional || 'Sin placa')
+          (mantenimiento.nombre_equipo || 'Equipo sin nombre') + ' · ' + (mantenimiento.placa_institucional || 'Sin placa') + ' · ' + formatearFechaMantenimiento(mantenimiento.fecha_mantenimiento)
         }
         ocupado={subiendo}
       >
         {ordenFinalizada ? (
           <div className="mant-evidencias-solo-lectura" role="note">
             <Lock size={15} aria-hidden="true" />
-            <span>Orden finalizada — historial técnico de solo consulta (RN11).</span>
+            <span>Este mantenimiento finalizó. Puede consultar sus datos y fotografías.</span>
           </div>
         ) : (
           <div className="mant-evidencias-requisitos">
@@ -146,7 +146,7 @@ export default function ModalVerEvidencias({
                 <article className="mod-evidencia" key={e.id_evidencia}>
                   <button
                     type="button"
-                    aria-label={'Ampliar evidencia ' + e.id_evidencia}
+                    aria-label={'Ampliar fotografía: ' + e.tipo_evidencia}
                     onClick={() => setAmpliada(e)}
                   >
                     <ImagenProtegida evidencia={e} token={token} />

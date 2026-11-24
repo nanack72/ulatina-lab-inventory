@@ -497,7 +497,7 @@ router.put('/:id', async (req, res) => {
 
     if (!esId(idUsuario)) {
       throw errorSolicitud(
-        'Identificador de usuario no válido.'
+        "Seleccione un usuario válido."
       );
     }
 

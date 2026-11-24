@@ -453,3 +453,15 @@ button.ini-equipo:hover {
   }
   .ini-revision-cifras dd { margin: 0; }
 }
+
+/* Misma paleta de cifras que en Reportes. */
+.ini-pagina .ini-kpi-texto strong {
+  color: var(--verde);
+}
+.ini-pagina .ini-kpi--ambar .ini-kpi-texto strong {
+  color: #885b12;
+}
+.ini-pagina .ini-revision-banda .ini-kpi-texto strong,
+.ini-pagina .ini-revision-cifras dd {
+  color: var(--peligro);
+}

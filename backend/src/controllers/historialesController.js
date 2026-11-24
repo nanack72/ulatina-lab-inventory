@@ -1,3 +1,4 @@
+const { presentarHistorial } = require('../services/nombresHistorial');
 const pool = require('../config/database');
 
 const {
@@ -256,7 +257,7 @@ const obtenerHistorialCambios = async (req, res) => {
     return res.status(200).json({
       success: true,
       total: resultado.rowCount,
-      data: resultado.rows,
+      data: await presentarHistorial(pool, resultado.rows),
     });
 
   } catch (error) {

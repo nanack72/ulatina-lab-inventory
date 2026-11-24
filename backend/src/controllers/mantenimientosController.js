@@ -103,7 +103,7 @@ const validarEvidenciasParaCierre = async (client, idBitacora, tipoMantenimiento
         if (faltantes.length > 0) {
             return {
                 valido: false,
-                mensaje: `Para finalizar un mantenimiento correctivo debe adjuntar evidencia fotográfica "Antes" y "Después" (RN14 / RU09). Faltan: ${faltantes.join(' y ')}.`
+                mensaje: `Para finalizar un mantenimiento correctivo debe adjuntar evidencia fotográfica "Antes" y "Después". Faltan: ${faltantes.join(' y ')}.`
             };
         }
 
@@ -113,7 +113,7 @@ const validarEvidenciasParaCierre = async (client, idBitacora, tipoMantenimiento
     if (tipos.length === 0) {
         return {
             valido: false,
-            mensaje: 'Para finalizar una orden de mantenimiento debe adjuntar al menos una fotografía de evidencia (RN14).'
+            mensaje: "Para finalizar una orden de mantenimiento debe adjuntar al menos una fotografía de evidencia."
         };
     }
 
@@ -158,7 +158,7 @@ const crearMantenimiento = async (req, res) => {
     ) {
         return res.status(400).json({
             success: false,
-            message: 'Los campos id_equipo, tipo_mantenimiento y descripcion_trabajo son obligatorios'
+            message: "Seleccione un equipo y el tipo de mantenimiento, e indique el trabajo realizado."
         });
     }
 
@@ -168,7 +168,7 @@ const crearMantenimiento = async (req, res) => {
     if (isNaN(equipoId) || equipoId <= 0) {
         return res.status(400).json({
             success: false,
-            message: 'El identificador del equipo (id_equipo) debe ser un número entero positivo válido'
+            message: "Seleccione un equipo válido."
         });
     }
 
@@ -218,7 +218,7 @@ const crearMantenimiento = async (req, res) => {
     if (estadoMantenimientoFinal === 'Completado') {
         return res.status(400).json({
             success: false,
-            message: 'No es posible registrar una orden directamente como Completado porque requiere evidencia fotográfica previa (RN14). Registre la orden en "En Proceso", adjunte la evidencia y luego finalícela.'
+            message: "No es posible registrar una orden directamente como Completado porque requiere evidencia fotográfica previa. Registre la orden en \"En Proceso\", adjunte la evidencia y luego finalícela."
         });
     }
 
@@ -288,7 +288,7 @@ const crearMantenimiento = async (req, res) => {
             if (!tieneAcceso) {
                 return res.status(403).json({
                     success: false,
-                    message: 'Acceso denegado: no estás asignado al laboratorio de este equipo'
+                    message: "Acceso denegado: no está asignado al laboratorio de este equipo"
                 });
             }
         }
@@ -306,7 +306,7 @@ const crearMantenimiento = async (req, res) => {
             if (isNaN(nuevoEstadoId) || nuevoEstadoId <= 0) {
                 return res.status(400).json({
                     success: false,
-                    message: 'El id_nuevo_estado debe ser un número entero positivo válido'
+                    message: "Seleccione un estado válido."
                 });
             }
 
@@ -322,7 +322,7 @@ const crearMantenimiento = async (req, res) => {
             if (estadoResult.rowCount === 0) {
                 return res.status(400).json({
                     success: false,
-                    message: 'El estado de equipo especificado (id_nuevo_estado) no existe'
+                    message: "El estado seleccionado no está disponible."
                 });
             }
         }
@@ -339,7 +339,8 @@ const crearMantenimiento = async (req, res) => {
                 SELECT
                     e.id_equipo,
                     e.id_estado,
-                    es.nombre AS estado_actual
+                    es.nombre AS estado_actual,
+                    e.eliminado_en
                 FROM public.equipo e
                 LEFT JOIN public.estado es
                     ON e.id_estado = es.id_estado
@@ -360,7 +361,7 @@ const crearMantenimiento = async (req, res) => {
             const equipoBloqueado = equipoBloqueadoRes.rows[0];
 
             // Impedir mantenimientos nuevos sobre equipos dados de baja
-            if (esEstadoBaja(equipoBloqueado.estado_actual)) {
+            if (equipoBloqueado.eliminado_en || esEstadoBaja(equipoBloqueado.estado_actual)) {
                 await client.query('ROLLBACK');
                 return res.status(409).json({
                     success: false,
@@ -387,7 +388,7 @@ const crearMantenimiento = async (req, res) => {
                     await client.query('ROLLBACK');
                     return res.status(409).json({
                         success: false,
-                        message: `El equipo ya cuenta con un mantenimiento correctivo activo (orden #${ordenActiva.id_bitacora} - ${ordenActiva.estado_mantenimiento}). Debe finalizarlo antes de registrar uno nuevo (RN16).`
+                        message: `El equipo ya cuenta con un mantenimiento correctivo activo (orden #${ordenActiva.id_bitacora} - ${ordenActiva.estado_mantenimiento}). Debe finalizarlo antes de registrar uno nuevo.`
                     });
                 }
 
@@ -601,7 +602,7 @@ const obtenerMantenimientoPorId = async (req, res) => {
         if (!/^[1-9]\d*$/.test(id)) {
             return res.status(400).json({
                 success: false,
-                message: 'El identificador del mantenimiento no es válido'
+                message: "Seleccione un mantenimiento válido."
             });
         }
 
@@ -689,7 +690,7 @@ const obtenerMantenimientoPorId = async (req, res) => {
             if (!tieneAcceso) {
                 return res.status(403).json({
                     success: false,
-                    message: 'Acceso denegado: no tienes permisos para consultar registros del laboratorio de este equipo'
+                    message: "Acceso denegado: no tiene permisos para consultar registros del laboratorio de este equipo"
                 });
             }
         }
@@ -820,7 +821,7 @@ const obtenerHistorialPorEquipo = async (req, res) => {
             if (!tieneAcceso) {
                 return res.status(403).json({
                     success: false,
-                    message: 'Acceso denegado: no tienes permisos sobre el laboratorio de este equipo'
+                    message: "Acceso denegado: no tiene permisos sobre el laboratorio de este equipo"
                 });
             }
         }
@@ -914,7 +915,7 @@ const actualizarEstadoMantenimiento = async (req, res) => {
     if (!/^[1-9]\d*$/.test(id)) {
         return res.status(400).json({
             success: false,
-            message: 'El identificador del mantenimiento no es válido'
+            message: "Seleccione un mantenimiento válido."
         });
     }
 
@@ -927,7 +928,7 @@ const actualizarEstadoMantenimiento = async (req, res) => {
     ) {
         return res.status(400).json({
             success: false,
-            message: 'Debe proporcionar al menos un campo para actualizar (estado_mantenimiento, descripcion_trabajo, horas_invertidas o id_nuevo_estado)'
+            message: "Indique qué desea actualizar: estado, trabajo realizado u horas invertidas."
         });
     }
 
@@ -1023,7 +1024,7 @@ const actualizarEstadoMantenimiento = async (req, res) => {
             if (!tieneAcceso) {
                 return res.status(403).json({
                     success: false,
-                    message: 'Acceso denegado: no tienes permisos para modificar mantenimientos en el laboratorio de este equipo'
+                    message: "Acceso denegado: no tiene permisos para modificar mantenimientos en el laboratorio de este equipo"
                 });
             }
         }
@@ -1044,7 +1045,7 @@ const actualizarEstadoMantenimiento = async (req, res) => {
             ) {
                 return res.status(400).json({
                     success: false,
-                    message: 'El id_nuevo_estado debe ser un número entero positivo válido'
+                    message: "Seleccione un estado válido."
                 });
             }
 
@@ -1060,7 +1061,7 @@ const actualizarEstadoMantenimiento = async (req, res) => {
             if (estadoResult.rowCount === 0) {
                 return res.status(400).json({
                     success: false,
-                    message: 'El estado de equipo especificado (id_nuevo_estado) no existe'
+                    message: "El estado seleccionado no está disponible."
                 });
             }
         }
@@ -1105,7 +1106,7 @@ const actualizarEstadoMantenimiento = async (req, res) => {
                 await client.query('ROLLBACK');
                 return res.status(409).json({
                     success: false,
-                    message: 'Esta orden de mantenimiento ya fue finalizada y es de solo consulta (RN11).'
+                    message: "Esta orden de mantenimiento ya fue finalizada y es de solo consulta."
                 });
             }
 
@@ -1123,6 +1124,19 @@ const actualizarEstadoMantenimiento = async (req, res) => {
                         success: false,
                         message: validacionEvidencias.mensaje
                     });
+                }
+
+                // El cierre de una orden no libera un equipo con otro correctivo abierto.
+                const pendientes = await client.query(`
+                    SELECT 1 FROM public.bitacora_mantenimiento
+                    WHERE id_equipo = $1 AND id_bitacora <> $2
+                      AND LOWER(TRIM(tipo_mantenimiento)) = 'correctivo'
+                      AND LOWER(TRIM(estado_mantenimiento)) IN ('en proceso', 'pendiente repuesto')
+                    LIMIT 1`, [ordenBloqueada.id_equipo, id]);
+                if (pendientes.rowCount > 0) {
+                    const estadoPendiente = await resolverEstadoPorNombre(client, 'En mantenimiento', 'Equipo con mantenimiento correctivo pendiente');
+                    if (!estadoPendiente) throw new Error('No se pudo resolver el estado de mantenimiento.');
+                    nuevoEstadoEquipoId = estadoPendiente.id_estado;
                 }
 
                 // RF22 / RN13: al finalizar, devolver automáticamente el equipo a 'Operativo'

@@ -462,7 +462,7 @@ export default function Inventario({
                         className="inv-tabla-vacia"
                       >
                         {totalAutorizados === 0
-                          ? (verEliminados ? 'No hay equipos eliminados en tus laboratorios autorizados.' : 'No hay equipos disponibles para tu usuario.')
+                          ? (verEliminados ? 'No hay equipos eliminados en sus laboratorios autorizados.' : 'No hay equipos disponibles para su cuenta.')
                           : 'No se encontraron equipos con los filtros seleccionados.'}
                       </td>
                     </tr>

@@ -144,13 +144,14 @@ const obtenerResumenGeneral = async (req, res) => {
       pool.query(
         `SELECT
            l.id_laboratorio,
+           l.id_sede,
            l.codigo,
            l.nombre,
            COUNT(e.id_equipo)::int AS cantidad_equipos
          FROM public.laboratorio l
          LEFT JOIN public.equipo e ON e.id_laboratorio = l.id_laboratorio AND e.eliminado_en IS NULL
          WHERE ${condicion}
-         GROUP BY l.id_laboratorio, l.codigo, l.nombre
+         GROUP BY l.id_laboratorio, l.id_sede, l.codigo, l.nombre
          ORDER BY cantidad_equipos DESC, l.codigo`,
         params
       )

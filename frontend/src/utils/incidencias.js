@@ -60,9 +60,9 @@ export const COLORES_ESTADO_INCIDENCIA = {
 };
 
 export function formatearFechaIncidencia(fechaIso) {
-  if (!fechaIso) return 'N/D';
+  if (!fechaIso) return "No disponible";
   const fecha = new Date(fechaIso);
-  if (isNaN(fecha.getTime())) return 'N/D';
+  if (isNaN(fecha.getTime())) return "No disponible";
 
   return new Intl.DateTimeFormat('es-CR', {
     timeZone: 'America/Costa_Rica',

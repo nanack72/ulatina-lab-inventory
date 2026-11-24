@@ -181,7 +181,7 @@ export default function HistorialCambios({
                         <span>Valor anterior</span>
                         <strong>
                           {valorVisible(
-                            registro.valor_anterior
+                            registro.valor_anterior_visible ?? registro.valor_anterior
                           )}
                         </strong>
                       </div>
@@ -196,7 +196,7 @@ export default function HistorialCambios({
                         <span>Valor nuevo</span>
                         <strong>
                           {valorVisible(
-                            registro.valor_nuevo
+                            registro.valor_nuevo_visible ?? registro.valor_nuevo
                           )}
                         </strong>
                       </div>

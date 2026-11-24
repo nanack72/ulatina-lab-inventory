@@ -124,7 +124,7 @@ function obtenerLaboratorio(
 
   return (
     nombresLaboratorios?.[id] ||
-    `Laboratorio ${id}`
+    'Laboratorio no disponible'
   );
 }
 
@@ -339,11 +339,7 @@ export default function HistorialUbicaciones({
 
                 const responsable =
                   texto(movimiento.nombre_usuario) ||
-                  (
-                    movimiento.id_usuario != null
-                      ? `Usuario ${movimiento.id_usuario}`
-                      : 'No disponible'
-                  );
+                  'Responsable no disponible';
 
                 return (
                   <article
@@ -433,11 +429,6 @@ export default function HistorialUbicaciones({
                         <span>
                           Responsable:{' '}
                           <strong>{responsable}</strong>
-                        </span>
-
-                        <span>
-                          Movimiento #
-                          {movimiento.id_historial_ubicacion}
                         </span>
                       </div>
                     </div>

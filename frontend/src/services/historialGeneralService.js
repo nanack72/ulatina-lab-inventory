@@ -1,10 +1,13 @@
 export async function obtenerHistorialGeneral(token, filtros = {}, signal) {
   const parametros = new URLSearchParams({
+    id_sede: filtros.id_sede || '',
+    id_laboratorio: filtros.id_laboratorio || '',
     tipo: filtros.tipo || 'todos',
     busqueda: filtros.busqueda || '',
     desde: filtros.desde || '',
     hasta: filtros.hasta || '',
     pagina: String(filtros.pagina || 1),
+    limite: String(filtros.limite || 10),
   });
 
   const respuesta = await fetch(

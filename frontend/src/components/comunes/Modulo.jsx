@@ -1,3 +1,4 @@
+import Paginacion from '../inventario/Paginacion';
 import Notificacion from './Notificacion';
 import { useEffect, useId, useRef } from 'react';
 import { ChevronLeft, ChevronRight, RefreshCw, Search, X } from 'lucide-react';
@@ -60,14 +61,19 @@ export function BusquedaModulo({ valor, onChange, etiqueta }) {
 export function Insignia({ children, tono = 'neutral' }) {
   return <span className={'mod-insignia mod-insignia-' + tono}>{children}</span>;
 }
-export function PaginacionModulo({ pagina, total, limite = 10, alCambiar, cargando }) {
+export function PaginacionModulo({ pagina, total, limite = 10, alCambiar, cargando, alCambiarLimite, singular, plural }) {
+  if (alCambiarLimite) {
+    return <Paginacion pagina={pagina} total={total} limite={limite}
+      onCambiar={alCambiar} onCambiarLimite={alCambiarLimite}
+      cargando={cargando} singular={singular || 'registro'} plural={plural || 'registros'} />;
+  }
   const paginas = Math.max(1, Math.ceil(total / limite));
   const actual = Math.min(pagina, paginas);
   return (
     <footer className="inv-paginacion">
       <p className="inv-resumen-paginacion">
         Mostrando {total ? (actual - 1) * limite + 1 : 0}–{Math.min(actual * limite, total)} de{' '}
-        {total} registros
+        {total} {total === 1 ? 'registro' : 'registros'}
       </p>
       <nav className="inv-controles-paginacion" aria-label="Páginas de resultados">
         <button

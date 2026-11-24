@@ -53,7 +53,7 @@ const ETIQUETAS_MANTENIMIENTO = {
 
 function TarjetaResumen({ titulo, valor, detalle, icono: Icono, tono }) {
   return (
-    <article className="ini-kpi">
+    <article className={`ini-kpi ini-kpi--${tono}`}>
       <span className={`ini-icono ini-icono--${tono}`}>
         <Icono size={20} aria-hidden="true" />
       </span>
@@ -137,8 +137,6 @@ function BotonEquipo({ id, onVerEquipo, className, children }) {
 export default function Inicio({
   usuario,
   token,
-  puedeRegistrar = false,
-  onRegistrarEquipo,
   onVerEquipo,
   onIrA,
   onSesionExpirada,
@@ -237,16 +235,7 @@ export default function Inicio({
           </p>
         </div>
 
-        {puedeRegistrar && (
-          <button
-            type="button"
-            className="btn btn-lg btn-primario"
-            onClick={onRegistrarEquipo}
-          >
-            <Plus size={17} aria-hidden="true" />
-            Registrar equipo
-          </button>
-        )}
+
       </header>
 
       {errorEquipos && (
@@ -406,7 +395,7 @@ export default function Inicio({
                           <td>
                             <span
                               className={`ini-pill ${
-                                correctivo ? 'ini-pill--ambar' : 'ini-pill--gris'
+                                correctivo ? 'ini-pill--ambar' : 'ini-pill--verde'
                               }`}
                             >
                               {m.tipo_mantenimiento}

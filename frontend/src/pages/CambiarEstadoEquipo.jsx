@@ -172,7 +172,7 @@ export default function CambiarEstadoEquipo({
     }
 
     if (!nuevoEstado) {
-      return 'Debés seleccionar el nuevo estado.';
+      return "Debe seleccionar el nuevo estado.";
     }
 
     if (!estadoDestino) {
@@ -339,7 +339,7 @@ export default function CambiarEstadoEquipo({
                   <span>Placa institucional</span>
                   <strong>
                     {texto(equipo.placa_institucional) ||
-                      'No registrada'}
+                      'Sin registrar'}
                   </strong>
                 </div>
 
@@ -347,7 +347,7 @@ export default function CambiarEstadoEquipo({
                   <span>Número de serie</span>
                   <strong>
                     {texto(equipo.numero_serie) ||
-                      'No registrado'}
+                      'Sin registrar'}
                   </strong>
                 </div>
               </div>

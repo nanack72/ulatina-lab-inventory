@@ -7,7 +7,7 @@ import '../../styles/notificaciones.css';
 const TIPOS = {
   exito: { titulo: 'Operación completada', icono: CheckCircle2, duracion: 6500 },
   error: { titulo: 'Ocurrió un problema', icono: AlertCircle, duracion: 0 },
-  advertencia: { titulo: 'Revisá la información', icono: TriangleAlert, duracion: 0 },
+  advertencia: { titulo: "Revise la información", icono: TriangleAlert, duracion: 0 },
   info: { titulo: 'Información', icono: Info, duracion: 8000 },
 };
 

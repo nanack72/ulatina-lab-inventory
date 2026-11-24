@@ -61,13 +61,13 @@ const subirEvidencia = async (req, res) => {
 
   try {
     if (!req.file) {
-      return rechazar(400, 'Debe adjuntar una imagen en el campo "foto"');
+      return rechazar(400, "Seleccione una fotografía para adjuntar");
     }
 
     const { id_bitacora, tipo_evidencia, descripcion } = req.body;
 
     if (!esIdValido(id_bitacora)) {
-      return rechazar(400, 'El id_bitacora no es válido');
+      return rechazar(400, "Seleccione un mantenimiento válido.");
     }
 
     const tipo = resolverTipo(tipo_evidencia);
@@ -95,7 +95,7 @@ const subirEvidencia = async (req, res) => {
     if (normalizar(bitacora.estado_mantenimiento) === 'completado') {
       return rechazar(
         409,
-        'No se pueden agregar evidencias a un mantenimiento ya finalizado (RN11).'
+        "No se pueden agregar evidencias a un mantenimiento ya finalizado."
       );
     }
 
@@ -108,7 +108,7 @@ const subirEvidencia = async (req, res) => {
       if (!acceso) {
         return rechazar(
           403,
-          'Acceso denegado: no estás asignado al laboratorio de este equipo'
+          "Acceso denegado: no está asignado al laboratorio de este equipo"
         );
       }
     }
@@ -161,7 +161,7 @@ const obtenerEvidenciasPorBitacora = async (req, res) => {
     if (!esIdValido(id_bitacora)) {
       return res.status(400).json({
         success: false,
-        message: 'El id_bitacora no es válido'
+        message: "Seleccione un mantenimiento válido."
       });
     }
 
@@ -184,7 +184,7 @@ const obtenerEvidenciasPorBitacora = async (req, res) => {
         return res.status(403).json({
           success: false,
           message:
-            'Acceso denegado: no tienes permisos sobre el laboratorio de este equipo'
+            "Acceso denegado: no tiene permisos sobre el laboratorio de este equipo"
         });
       }
     }

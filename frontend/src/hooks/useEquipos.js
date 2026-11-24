@@ -43,7 +43,7 @@ export function useEquipos(token, onSesionExpirada) {
 
         if (err.status === 401) {
           setError(
-            'Tu sesión expiró o ya no es válida. Iniciá sesión nuevamente.'
+            "Su sesión expiró o ya no es válida. Inicie sesión nuevamente."
           );
 
           alExpirarSesion.current?.();

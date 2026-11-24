@@ -1,3 +1,4 @@
+import { ChevronDown } from 'lucide-react';
 import Notificacion from '../comunes/Notificacion';
 import { useEffect, useRef, useState } from 'react';
 import { listarFotos, agregarFoto, borrarFoto } from '../../services/fotosEquipoService';
@@ -39,7 +40,7 @@ export default function FotosEquipo({ idEquipo,token,puedeAgregar=false,puedeEli
     {error&&!eliminando&&<Notificacion tipo="error">{error}</Notificacion>}{mensaje&&<Notificacion tipo="exito">{mensaje}</Notificacion>}
     <CarruselFotos fotos={fotos} idEquipo={idEquipo} token={token} puedeEliminar={puedeEliminar} ocupado={ocupado}
       onEliminar={foto=>{setError('');setConfirmado(false);setEliminando(foto);}} />
-    {puedeAgregar&&<details className="fotos-agregar"><summary>Agregar fotos al equipo</summary><AdjuntarFotos archivos={archivos} onChange={setArchivos} disabled={ocupado}/>
+    {puedeAgregar&&<details className="fotos-agregar"><summary><span>Agregar fotos al equipo</span><ChevronDown size={16} aria-hidden="true" className="fotos-agregar-flecha" /></summary><AdjuntarFotos archivos={archivos} onChange={setArchivos} disabled={ocupado}/>
       <button type="button" className="btn btn-primario" disabled={ocupado||!archivos.length} onClick={subir}>
         {ocupado?'Guardando…':`Guardar fotos (${archivos.length})`}</button></details>}
     <dialog ref={dialogo} className="cfg-dialogo" aria-labelledby="foto-eliminar-titulo" onClose={()=>setEliminando(null)}

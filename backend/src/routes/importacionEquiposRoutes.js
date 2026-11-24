@@ -1,3 +1,4 @@
+const { nombreCampo } = require('../utils/nombresCampos');
 const express = require('express');
 const multer = require('multer');
 const ExcelJS = require('exceljs');
@@ -134,7 +135,7 @@ function recibirArchivo(req, res, next) {
         message:
           error.status
             ? error.message
-            : 'Debe enviar un único archivo Excel en el campo archivo.',
+            : "Seleccione un único archivo de Excel.",
       });
     }
 
@@ -490,7 +491,7 @@ function validarFila(entrada, catalogos) {
     const valor = entrada[campo];
 
     if (valor != null && typeof valor !== 'string') {
-      errores.push(`El campo ${campo} debe ser texto.`);
+      errores.push(`El campo ${nombreCampo(campo)} debe ser texto.`);
       datos[campo] = null;
       continue;
     }
@@ -507,7 +508,7 @@ function validarFila(entrada, catalogos) {
 
     if (Array.from(texto).length > limite) {
       errores.push(
-        `El campo ${campo} supera el límite de ${limite} caracteres.`
+        `El campo ${nombreCampo(campo)} supera el límite de ${limite} caracteres.`
       );
     }
   }
@@ -576,7 +577,7 @@ async function validarLote(cliente, filas, catalogos) {
       if (grupo.length > 1) {
         for (const resultado of grupo) {
           resultado.errores.push(
-            `${campo}: «${valor}» está repetido en el archivo.`
+            `${nombreCampo(campo)}: «${valor}» está repetido en el archivo.`
           );
         }
       }
@@ -979,7 +980,7 @@ router.post('/confirmar', async (req, res) => {
             ? 'La placa o el número de serie ya fue registrado.'
             : error.code === '23503'
               ? 'Una categoría, estado o laboratorio ya no está disponible.'
-              : 'Los datos no cumplen las restricciones de la base de datos.';
+              : "No fue posible guardar este equipo. Revise los datos e inténtelo nuevamente.";
 
         resultados.push({
           fila: resultado.fila,

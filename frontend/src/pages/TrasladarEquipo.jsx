@@ -213,11 +213,11 @@ export default function TrasladarEquipo({
 
   function validarTraslado() {
     if (!idValido(formulario.id_sede)) {
-      return 'Debés seleccionar una sede.';
+      return "Debe seleccionar una sede.";
     }
 
     if (!idValido(formulario.id_laboratorio)) {
-      return 'Debés seleccionar un laboratorio.';
+      return "Debe seleccionar un laboratorio.";
     }
 
     const laboratorioAutorizado = laboratoriosFiltrados.some(
@@ -227,7 +227,7 @@ export default function TrasladarEquipo({
     );
 
     if (!laboratorioAutorizado) {
-      return 'No tenés disponible ese laboratorio para el traslado.';
+      return "No tiene disponible ese laboratorio para el traslado.";
     }
 
     if (!hayCambios) {
@@ -401,7 +401,7 @@ export default function TrasladarEquipo({
                       {nombreRelacion(laboratorioActual) ||
                        nombreRelacion(equipo.laboratorio) ||
                        equipo.nombre_laboratorio ||
-                       `Laboratorio ${equipo.id_laboratorio}`}
+                       'Laboratorio no disponible'}
                     </strong>
                   </div>
 
@@ -568,7 +568,7 @@ export default function TrasladarEquipo({
                 <strong>
                   {nombreRelacion(laboratorioActual) ||
                    equipo?.nombre_laboratorio ||
-                   `Laboratorio ${equipo?.id_laboratorio}`}
+                   'Laboratorio no disponible'}
                 </strong>
                 <small>
                   {ubicacionActual || 'Sin detalle'}

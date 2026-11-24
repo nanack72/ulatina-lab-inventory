@@ -51,7 +51,7 @@ function obtenerValor(...valores) {
 function nombreSede(valor) {
   const nombre = texto(valor);
 
-  if (!nombre) return 'No registrada';
+  if (!nombre) return 'Sin registrar';
 
   return /^sede\s/i.test(nombre)
     ? nombre
@@ -74,7 +74,7 @@ function Campo({ etiqueta, valor, texto = false }) {
           texto ? 'detalle-campo-valor--texto' : ''
         }`}
       >
-        {valor || 'No registrado'}
+        {valor || 'Sin registrar'}
       </span>
     </div>
   );
@@ -340,12 +340,12 @@ export default function EquipoDetalle({
               <div className="detalle-identificadores">
                 <span>
                   <Tag size={14} />
-                  Placa: {placa || 'No registrada'}
+                  Placa: {placa || 'Sin registrar'}
                 </span>
 
                 <span>
                   <Hash size={14} />
-                  Serie: {serie || 'No registrada'}
+                  Serie: {serie || 'Sin registrar'}
                 </span>
               </div>
 

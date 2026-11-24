@@ -1,4 +1,4 @@
-import { Camera, Lock } from 'lucide-react';
+import { Images, Lock } from 'lucide-react';
 import { Insignia } from '../comunes/Modulo';
 import {
   formatearFechaMantenimiento,
@@ -84,7 +84,7 @@ export default function TablaMantenimientos({
                   <select
                     className={`mod-select-estado mod-insignia-${TONO_ESTADO[m.estado_mantenimiento] || 'neutro'}`}
                     name={'estado-' + m.id_bitacora}
-                    aria-label={'Estado del mantenimiento ' + m.id_bitacora}
+                    aria-label={'Estado del mantenimiento de ' + m.nombre_equipo}
                     value={m.estado_mantenimiento}
                     disabled={actualizandoId !== null && actualizandoId !== undefined}
                     onChange={(e) => alCambiarEstado(m.id_bitacora, e.target.value)}
@@ -100,14 +100,13 @@ export default function TablaMantenimientos({
               <td>
                 <button
                   type="button"
-                  className="btn btn-contorno"
+                  className="mant-boton-evidencias"
+                  title="Ver evidencias"
+                  aria-label={`Ver evidencias de ${m.nombre_equipo}: ${Number(m.total_evidencias) || 0} fotos`}
                   onClick={() => alSeleccionarEvidencias(m)}
                 >
-                  <Camera size={15} aria-hidden="true" />
-                  <span>
-                    Evidencias
-                    {Number(m.total_evidencias) > 0 ? ` (${m.total_evidencias})` : ''}
-                  </span>
+                  <Images size={18} aria-hidden="true" />
+                  <span aria-hidden="true">{Number(m.total_evidencias) || 0}</span>
                 </button>
               </td>
             </tr>

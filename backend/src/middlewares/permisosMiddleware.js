@@ -33,7 +33,7 @@ const permitirRoles = (...rolesPermitidos) => {
         ) {
             return res.status(403).json({
                 success: false,
-                message: 'Acceso denegado: no tienes permisos para realizar esta acción'
+                message: "Acceso denegado: no tiene permisos para realizar esta acción"
             });
         }
 
@@ -78,7 +78,7 @@ const validarSedeAsignada = async (req, res, next) => {
         if (!idSede) {
             return res.status(400).json({
                 success: false,
-                message: 'Debe especificar el id de la sede para validar permisos de acceso'
+                message: 'Seleccione una sede para continuar.'
             });
         }
 
@@ -99,7 +99,7 @@ const validarSedeAsignada = async (req, res, next) => {
         if (resultado.rowCount === 0) {
             return res.status(403).json({
                 success: false,
-                message: 'Acceso denegado: no estás asignado a esta sede'
+                message: "Acceso denegado: no está asignado a esta sede"
             });
         }
 
@@ -153,7 +153,7 @@ const validarLaboratorioAsignado = async (req, res, next) => {
         if (!idLaboratorio) {
             return res.status(400).json({
                 success: false,
-                message: 'Debe especificar el id del laboratorio para validar permisos de acceso'
+                message: 'Seleccione un laboratorio para continuar.'
             });
         }
 
@@ -177,7 +177,7 @@ const validarLaboratorioAsignado = async (req, res, next) => {
         if (resultado.rowCount === 0) {
             return res.status(403).json({
                 success: false,
-                message: 'Acceso denegado: no estás asignado a este laboratorio'
+                message: "Acceso denegado: no está asignado a este laboratorio"
             });
         }
 

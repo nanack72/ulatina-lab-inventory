@@ -1,6 +1,7 @@
+import Paginacion from '../components/inventario/Paginacion';
 import Notificacion from '../components/comunes/Notificacion';
 import { useEffect, useRef, useState } from 'react';
-import { Search, RefreshCw, ChevronLeft, ChevronRight, Plus, Pencil, Trash2 } from 'lucide-react';
+import { Search, RefreshCw, Plus, Pencil, Trash2 } from 'lucide-react';
 
 import {
   consultarConfiguracion,
@@ -8,11 +9,9 @@ import {
   eliminarConfiguracion,
 } from '../services/configuracionService';
 
-import { generarPaginas } from '../utils/inventario';
 import '../styles/inventario.css';
 import '../styles/configuracion.css';
 
-const POR_PAGINA = 5;
 
 const CATALOGOS = {
   roles: { nombre: 'Roles', singular: 'rol', id: 'id_rol',
@@ -81,6 +80,7 @@ export default function Configuracion({ token, soloRoles = false }) {
   const [busqueda, setBusqueda] = useState('');
   const [filtroSede, setFiltroSede] = useState('');
   const [pagina, setPagina] = useState(1);
+  const [limite, setLimite] = useState(10);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
   const [recarga, setRecarga] = useState(0);
@@ -274,11 +274,10 @@ export default function Configuracion({ token, soloRoles = false }) {
   );
 
   const total = filtrados.length;
-  const totalPaginas = Math.max(1, Math.ceil(total / POR_PAGINA));
+  const totalPaginas = Math.max(1, Math.ceil(total / limite));
   const paginaActual = Math.min(pagina, totalPaginas);
-  const inicio = (paginaActual - 1) * POR_PAGINA;
-  const fin = Math.min(inicio + POR_PAGINA, total);
-  const visibles = filtrados.slice(inicio, inicio + POR_PAGINA);
+  const inicio = (paginaActual - 1) * limite;
+  const visibles = filtrados.slice(inicio, inicio + limite);
 
   return (
     <div className="cfg-pagina">
@@ -454,57 +453,9 @@ export default function Configuracion({ token, soloRoles = false }) {
               </table>
             </div>
 
-            <div className="inv-paginacion">
-              <p>
-                {total === 0
-                  ? 'Mostrando 0 registros'
-                  : `Mostrando ${inicio + 1}–${fin} de ${total.toLocaleString(
-                      'es-CR'
-                    )} registros`}
-              </p>
-
-              <nav className="inv-controles-paginacion" aria-label="Paginación del catálogo">
-                <button
-                  type="button"
-                  aria-label="Página anterior"
-                  disabled={paginaActual <= 1}
-                  onClick={() => setPagina(paginaActual - 1)}
-                >
-                  <ChevronLeft size={15} />
-                </button>
-
-                {generarPaginas(paginaActual, totalPaginas).map(
-                  (numero, indice) =>
-                    numero === '...' ? (
-                      <span key={`puntos-${indice}`}>...</span>
-                    ) : (
-                      <button
-                        key={numero}
-                        type="button"
-                        className={
-                          paginaActual === numero ? 'inv-pagina-activa' : ''
-                        }
-                        aria-label={`Ir a la página ${numero}`}
-                        aria-current={
-                          paginaActual === numero ? 'page' : undefined
-                        }
-                        onClick={() => setPagina(numero)}
-                      >
-                        {numero}
-                      </button>
-                    )
-                )}
-
-                <button
-                  type="button"
-                  aria-label="Página siguiente"
-                  disabled={paginaActual >= totalPaginas}
-                  onClick={() => setPagina(paginaActual + 1)}
-                >
-                  <ChevronRight size={15} />
-                </button>
-              </nav>
-            </div>
+            <Paginacion pagina={paginaActual} total={total} limite={limite}
+              singular="registro" plural="registros" onCambiar={setPagina}
+              onCambiarLimite={(valor) => { setLimite(valor); setPagina(1); }} />
           </>
         )}
       </section>

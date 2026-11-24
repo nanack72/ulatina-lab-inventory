@@ -20,7 +20,7 @@ router.get('/', async(req,res) => {
 });
 router.post('/', (req,res,next) => {
   if (!puedeRegistrarInventario(req.usuario)) return res.status(403).json({success:false,message:'No tiene permisos para agregar fotos.'});
-  upload(req,res,error => error ? res.status(error.code==='LIMIT_FILE_SIZE'?413:400).json({success:false,message:'Adjunte una sola foto de hasta 5 MB en el campo foto.'}) : next());
+  upload(req,res,error => error ? res.status(error.code==='LIMIT_FILE_SIZE'?413:400).json({success:false,message:"Seleccione una sola foto de hasta 5 MB."}) : next());
 }, async(req,res) => {
   try { res.status(201).json({success:true,data:await servicio.subirFotoEquipo(pool,req.params.id,req.usuario.idUsuario,req.file)}); }
   catch(error) { responder(res,error); }

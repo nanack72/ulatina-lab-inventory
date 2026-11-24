@@ -17,7 +17,7 @@ export async function iniciarSesion(correo, contrasena) {
     });
   } catch {
     throw new Error(
-      'No se pudo conectar con el servidor. Verificá que esté encendido.'
+      "No se pudo conectar con el servidor. Verifique que esté encendido."
     );
   }
 

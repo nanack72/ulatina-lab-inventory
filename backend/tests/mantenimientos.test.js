@@ -56,7 +56,7 @@ test('Reglas de negocio de mantenimientos: RF21/RN12, RN16, RN14/RU09, RF22/RN13
     CREATE TABLE usuario(id_usuario int PRIMARY KEY, nombre_completo text, correo_institucional text);
     CREATE TABLE usuario_sede(id_usuario_sede int, id_usuario int, id_sede int);
     CREATE TABLE usuario_laboratorio(id_usuario_sede int, id_sede int, id_laboratorio int);
-    CREATE TABLE equipo(id_equipo int PRIMARY KEY, id_laboratorio int, id_estado int, nombre text, placa_institucional text, numero_serie text, marca text, modelo text);
+    CREATE TABLE equipo(id_equipo int PRIMARY KEY, id_laboratorio int, id_estado int, nombre text, placa_institucional text, numero_serie text, marca text, modelo text, eliminado_en timestamptz);
     CREATE TABLE bitacora_mantenimiento(
       id_bitacora serial PRIMARY KEY,
       id_equipo int,
@@ -90,7 +90,7 @@ test('Reglas de negocio de mantenimientos: RF21/RN12, RN16, RN14/RU09, RF22/RN13
       (2, 'En mantenimiento', 'Equipo en mantenimiento'),
       (3, 'Dado de baja', 'Equipo dado de baja');
     INSERT INTO usuario VALUES (1, 'Admin', 'admin@ulatina.cr');
-    INSERT INTO equipo VALUES (10, 1, 1, 'Osciloscopio Digital', 'PLA-010', 'SER-010', 'Tektronix', 'TBS1052B');
+    INSERT INTO equipo VALUES (10, 1, 1, 'Osciloscopio Digital', 'PLA-010', 'SER-010', 'Tektronix', 'TBS1052B', NULL);
   `);
 
   const poolFalso = {
@@ -221,6 +221,26 @@ test('Reglas de negocio de mantenimientos: RF21/RN12, RN16, RN14/RU09, RF22/RN13
   });
   assert.strictEqual(listado.codigo, 200);
   assert.strictEqual(listado.body.data[0].total_evidencias, 2);
+
+  // No aceptar órdenes nuevas sobre un equipo eliminado lógicamente.
+  await db.exec('UPDATE equipo SET eliminado_en=NOW() WHERE id_equipo=10');
+  const eliminado = await invocar(moduloCtrl.exports.crearMantenimiento, {body:{id_equipo:10,tipo_mantenimiento:'Preventivo',descripcion_trabajo:'Equipo eliminado',horas_invertidas:1}});
+  assert.strictEqual(eliminado.codigo,409);
+  await db.exec('UPDATE equipo SET eliminado_en=NULL WHERE id_equipo=10');
+
+  // Completar un preventivo no libera un equipo con un correctivo abierto,
+  // incluso si el solicitante intenta marcarlo como Operativo.
+  const otroCorrectivo = await invocar(moduloCtrl.exports.crearMantenimiento, {body:{id_equipo:10,tipo_mantenimiento:'Correctivo',descripcion_trabajo:'Reparación pendiente',horas_invertidas:1}});
+  assert.strictEqual(otroCorrectivo.codigo,201);
+  const preventivo = await invocar(moduloCtrl.exports.crearMantenimiento, {body:{id_equipo:10,tipo_mantenimiento:'Preventivo',descripcion_trabajo:'Inspección complementaria',horas_invertidas:1}});
+  assert.strictEqual(preventivo.codigo,201);
+  await db.query('INSERT INTO evidencia_fotografica(id_bitacora,tipo_evidencia,url_foto) VALUES($1,$2,$3)',[preventivo.body.data.id_bitacora,'Antes','/prueba.png']);
+  const cerrarPreventivo = await invocar(moduloCtrl.exports.actualizarEstadoMantenimiento,{params:{id:String(preventivo.body.data.id_bitacora)},body:{estado_mantenimiento:'Completado',id_nuevo_estado:1}});
+  assert.strictEqual(cerrarPreventivo.codigo,200);
+  const estadoPendiente = await db.query('SELECT es.nombre FROM equipo e JOIN estado es ON es.id_estado=e.id_estado WHERE e.id_equipo=10');
+  assert.strictEqual(estadoPendiente.rows[0].nombre,'En mantenimiento');
+  const reparacion = await db.query('SELECT estado_mantenimiento FROM bitacora_mantenimiento WHERE id_bitacora=$1',[otroCorrectivo.body.data.id_bitacora]);
+  assert.strictEqual(reparacion.rows[0].estado_mantenimiento,'En Proceso');
 });
 
 test('Mantenimientos e Incidencias - Control de acceso y trazabilidad', { skip: !integrar }, async (t) => {

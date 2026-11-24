@@ -1,3 +1,4 @@
+const { nombreCampo } = require('../utils/nombresCampos');
 const CAMPOS = ['id_equipo', 'nombre', 'numero_serie', 'placa_institucional',
   'marca', 'modelo', 'ubicacion_detalle', 'id_categoria', 'categoria',
   'id_estado', 'estado', 'id_laboratorio', 'codigo_laboratorio', 'laboratorio',
@@ -83,14 +84,14 @@ async function consultarPaginaInventario(db, query, usuario) {
   const textos = ['busqueda', ...FILTROS].map(campo => {
     const valor = query[campo] ?? '';
     if (typeof valor !== 'string' || valor.length > 200) {
-      throw solicitudInvalida(`El filtro ${campo} no es válido`);
+      throw solicitudInvalida(`El filtro de ${nombreCampo(campo)} no es válido`);
     }
     return valor.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   });
   function entero(campo, defecto, maximo) {
     const valor = query[campo] ?? String(defecto);
     if (typeof valor !== 'string' || !/^[1-9]\d*$/.test(valor) || Number(valor) > maximo) {
-      throw solicitudInvalida(`El parámetro ${campo} no es válido`);
+      throw solicitudInvalida(`La selección de ${nombreCampo(campo)} no es válido`);
     }
     return Number(valor);
   }

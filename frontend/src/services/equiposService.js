@@ -4,7 +4,7 @@ const API_URL = '/api/equipos';
 
 export async function obtenerEquipos(token, signal) {
   if (!token) {
-    throw new Error('Debés iniciar sesión para consultar el inventario.');
+    throw new Error("Debe iniciar sesión para consultar el inventario.");
   }
 
   const { respuesta, resultado } = await solicitarInventario(
@@ -38,11 +38,11 @@ export async function obtenerEquipos(token, signal) {
 
 export async function obtenerEquipoPorId(idEquipo, token, signal) {
   if (!token) {
-    throw new Error('Debés iniciar sesión para consultar el equipo.');
+    throw new Error("Debe iniciar sesión para consultar el equipo.");
   }
 
   if (!Number.isInteger(Number(idEquipo)) || Number(idEquipo) <= 0) {
-    throw new Error('El identificador del equipo no es válido.');
+    throw new Error("No se pudo identificar el equipo. Vuelva al inventario y selecciónelo nuevamente.");
   }
 
   const { respuesta, resultado } = await solicitarInventario(
@@ -62,9 +62,9 @@ export async function obtenerEquipoPorId(idEquipo, token, signal) {
     let mensaje = resultado?.message;
 
     if (respuesta.status === 401) {
-      mensaje = 'Tu sesión ya no es válida. Iniciá sesión nuevamente.';
+      mensaje = "Su sesión ya no es válida. Inicie sesión nuevamente.";
     } else if (respuesta.status === 403 || respuesta.status === 404) {
-      mensaje = 'No se encontró el equipo o no tenés acceso a él.';
+      mensaje = "No se encontró el equipo o no tiene acceso a él.";
     }
 
     const error = new Error(
@@ -95,7 +95,7 @@ export async function obtenerEquipoPorId(idEquipo, token, signal) {
 export async function registrarEquipo(datosEquipo, token) {
   if (!token) {
     throw new Error(
-      'Debés iniciar sesión para registrar equipos.'
+      "Debe iniciar sesión para registrar equipos."
     );
   }
 
@@ -119,12 +119,12 @@ export async function registrarEquipo(datosEquipo, token) {
       resultado?.message || 'No fue posible registrar el equipo.';
 
     if (respuesta.status === 401) {
-      mensaje = 'Tu sesión ya no es válida. Iniciá sesión nuevamente.';
+      mensaje = "Su sesión ya no es válida. Inicie sesión nuevamente.";
     }
 
     if (respuesta.status === 403) {
       mensaje =
-        'No tenés permisos para registrar equipos en este laboratorio.';
+        "No tiene permisos para registrar equipos en este laboratorio.";
     }
 
     const error = new Error(mensaje);
@@ -151,7 +151,7 @@ export async function registrarEquipo(datosEquipo, token) {
 export async function actualizarEquipo(idEquipo, datosEquipo, token) {
   if (!token) {
     throw new Error(
-      'Debés iniciar sesión para modificar equipos.'
+      "Debe iniciar sesión para modificar equipos."
     );
   }
 
@@ -159,7 +159,7 @@ export async function actualizarEquipo(idEquipo, datosEquipo, token) {
     !Number.isSafeInteger(Number(idEquipo)) ||
     Number(idEquipo) <= 0
   ) {
-    throw new Error('El identificador del equipo no es válido.');
+    throw new Error("No se pudo identificar el equipo. Vuelva al inventario y selecciónelo nuevamente.");
   }
 
   const { respuesta, resultado } = await solicitarInventario(
@@ -184,13 +184,13 @@ export async function actualizarEquipo(idEquipo, datosEquipo, token) {
 
     if (respuesta.status === 401) {
       mensaje =
-        'Tu sesión ya no es válida. Iniciá sesión nuevamente.';
+        "Su sesión ya no es válida. Inicie sesión nuevamente.";
     } else if (respuesta.status === 403) {
       mensaje =
-        'No tenés permisos para modificar este equipo.';
+        "No tiene permisos para modificar este equipo.";
     } else if (respuesta.status === 404) {
       mensaje =
-        'No se encontró el equipo o no tenés acceso a él.';
+        "No se encontró el equipo o no tiene acceso a él.";
     }
 
     const error = new Error(mensaje);
@@ -226,7 +226,7 @@ export async function trasladarEquipo(
 ) {
   if (!token) {
     throw new Error(
-      'Debés iniciar sesión para trasladar equipos.'
+      "Debe iniciar sesión para trasladar equipos."
     );
   }
 
@@ -234,7 +234,7 @@ export async function trasladarEquipo(
 
   if (!Number.isSafeInteger(id) || id <= 0) {
     throw new Error(
-      'El identificador del equipo no es válido.'
+      "No se pudo identificar el equipo. Vuelva al inventario y selecciónelo nuevamente."
     );
   }
 
@@ -247,7 +247,7 @@ export async function trasladarEquipo(
     idLaboratorio <= 0
   ) {
     throw new Error(
-      'Debés seleccionar un laboratorio válido.'
+      "Debe seleccionar un laboratorio válido."
     );
   }
 
@@ -284,10 +284,10 @@ export async function trasladarEquipo(
 
     if (respuesta.status === 401) {
       mensaje =
-        'Tu sesión ya no es válida. Iniciá sesión nuevamente.';
+        "Su sesión ya no es válida. Inicie sesión nuevamente.";
     } else if (respuesta.status === 403) {
       mensaje =
-        'No tenés permisos para trasladar el equipo a ese laboratorio.';
+        "No tiene permisos para trasladar el equipo a ese laboratorio.";
     } else if (respuesta.status === 404) {
       mensaje =
         'El equipo o laboratorio no está disponible.';
@@ -320,7 +320,7 @@ export async function obtenerHistorialUbicacion(
 ) {
   if (!token) {
     throw new Error(
-      'Debés iniciar sesión para consultar el historial.'
+      "Debe iniciar sesión para consultar el historial."
     );
   }
 
@@ -328,7 +328,7 @@ export async function obtenerHistorialUbicacion(
 
   if (!Number.isSafeInteger(id) || id <= 0) {
     throw new Error(
-      'El identificador del equipo no es válido.'
+      "No se pudo identificar el equipo. Vuelva al inventario y selecciónelo nuevamente."
     );
   }
 
@@ -382,13 +382,13 @@ export async function obtenerHistorialEstados(
 
   if (!Number.isSafeInteger(id) || id <= 0) {
     throw new Error(
-      'El identificador del equipo no es válido.'
+      "No se pudo identificar el equipo. Vuelva al inventario y selecciónelo nuevamente."
     );
   }
 
   if (!token) {
     throw new Error(
-      'Debés iniciar sesión para consultar el historial.'
+      "Debe iniciar sesión para consultar el historial."
     );
   }
 

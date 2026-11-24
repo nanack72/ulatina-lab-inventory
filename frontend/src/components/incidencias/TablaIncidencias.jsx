@@ -1,5 +1,12 @@
 import { Insignia } from '../comunes/Modulo';
 import { formatearFechaIncidencia, ESTADOS_INCIDENCIA } from '../../utils/incidencias';
+const TONO_ESTADO = {
+  Abierta: 'ambar',
+  'En Revisión': 'ambar',
+  Resuelta: 'verde',
+  Descartada: 'neutral',
+};
+
 export default function TablaIncidencias({
   incidencias = [],
   cargando,
@@ -65,6 +72,7 @@ export default function TablaIncidencias({
               </td>
               <td>
                 <select
+                  className={`mod-select-estado mod-insignia-${TONO_ESTADO[i.estado_incidencia] || 'neutral'}`}
                   name={'estado-' + i.id_incidencia}
                   aria-label={'Estado de ' + i.titulo}
                   value={i.estado_incidencia}

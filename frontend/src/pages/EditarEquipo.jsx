@@ -124,7 +124,7 @@ export default function EditarEquipo({
     }
 
     if (!formulario.nombre.trim()) {
-      setError('Debés ingresar el nombre del equipo.');
+      setError("Debe ingresar el nombre del equipo.");
       return;
     }
 
@@ -141,7 +141,7 @@ export default function EditarEquipo({
         anio > new Date().getFullYear() + 1
       )
     ) {
-      setError('Ingresá un año válido.');
+      setError("Ingrese un año válido.");
       return;
     }
 

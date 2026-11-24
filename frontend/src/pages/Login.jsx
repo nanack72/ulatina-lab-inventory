@@ -33,7 +33,7 @@ export default function Login({ onLogin }) {
     setError('');
 
     if (!correo.trim() || !contrasena) {
-      setError('Ingresá tu correo y contraseña.');
+      setError("Ingrese su correo y contraseña.");
       return;
     }
 
@@ -159,7 +159,7 @@ export default function Login({ onLogin }) {
           <div className="login-heading">
             <h1>Bienvenido</h1>
             <p>
-              Iniciá sesión con tu cuenta institucional
+              Inicie sesión con su cuenta institucional
               para continuar.
             </p>
           </div>
@@ -245,7 +245,7 @@ export default function Login({ onLogin }) {
                   onChange={(event) =>
                     setContrasena(event.target.value)
                   }
-                  placeholder="Ingresá tu contraseña"
+                  placeholder="Ingrese su contraseña"
                   autoComplete="current-password"
                   required
                   disabled={cargando}
@@ -318,7 +318,7 @@ export default function Login({ onLogin }) {
                 className="login-forgot"
                 onClick={() => setMostrarModalRecuperacion(true)}
               >
-                ¿Olvidaste tu contraseña?
+                ¿Olvidó su contraseña?
               </button>
             </div>
 

@@ -1,3 +1,4 @@
+const { nombreCampo } = require('../utils/nombresCampos');
 const fallo = (mensaje) => Object.assign(new Error(mensaje), { status: 400 });
 function entero(valor, nombre, defecto) {
   if (valor === undefined || valor === '') return defecto;
@@ -6,13 +7,13 @@ function entero(valor, nombre, defecto) {
     !/^[1-9]\d*$/.test(String(valor)) ||
     Number(valor) > 2147483647
   )
-    throw fallo(nombre + ' debe ser un entero positivo.');
+    throw fallo('Seleccione un valor válido para ' + nombreCampo(nombre) + '.');
   return Number(valor);
 }
 function texto(valor, nombre, max = 200) {
   if (valor === undefined) return '';
   if (typeof valor !== 'string' || valor.length > max)
-    throw fallo('Filtro ' + nombre + ' inválido.');
+    throw fallo('Filtro de ' + nombreCampo(nombre) + ' inválido.');
   return valor.trim();
 }
 function fecha(valor, nombre) {
@@ -23,7 +24,7 @@ function fecha(valor, nombre) {
     !Number.isFinite(Date.parse(v)) ||
     new Date(v).toISOString().slice(0, 10) !== v
   )
-    throw fallo('Fecha ' + nombre + ' inválida. Use AAAA-MM-DD.');
+    throw fallo('Fecha ' + nombreCampo(nombre) + ' inválida. Use AAAA-MM-DD.');
   return v;
 }
 async function listarMantenimientos(pool, query, usuario) {

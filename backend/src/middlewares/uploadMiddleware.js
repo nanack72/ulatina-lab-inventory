@@ -87,7 +87,7 @@ const subirFoto = (req, res, next) => {
       const mensaje =
         error.code === 'LIMIT_FILE_SIZE'
           ? 'La imagen supera el tamaño máximo de 5 MB'
-          : 'No se pudo procesar la imagen enviada (use el campo "foto")';
+          : "No se pudo procesar la imagen. Seleccione una sola fotografía.";
 
       return res.status(error.code === 'LIMIT_FILE_SIZE' ? 413 : 400).json({
         success: false,

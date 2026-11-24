@@ -1,3 +1,4 @@
+import Paginacion from '../components/inventario/Paginacion';
 import Notificacion from '../components/comunes/Notificacion';
 import { useEffect, useRef, useState } from 'react';
 import { Search, RefreshCw, Plus, Pencil, ChevronLeft, ChevronRight, ShieldCheck, Trash2 } from 'lucide-react';
@@ -18,7 +19,6 @@ import '../styles/inventario.css';
 import '../styles/configuracion.css';
 import '../styles/usuarios.css';
 
-const POR_PAGINA = 5;
 const LABORATORIOS_POR_PAGINA = 5;
 
 const PERMISOS_INVENTARIO = [
@@ -65,6 +65,7 @@ export default function Usuarios({ token, usuarioActual }) {
   const [filtroSedeLaboratorios, setFiltroSedeLaboratorios] = useState('');
   const [paginaLaboratorios, setPaginaLaboratorios] = useState(1);
   const [pagina, setPagina] = useState(1);
+  const [limite, setLimite] = useState(10);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
   const [mensaje, setMensaje] = useState('');
@@ -320,15 +321,14 @@ export default function Usuarios({ token, usuarioActual }) {
   const total = filtrados.length;
   const totalPaginas = Math.max(
     1,
-    Math.ceil(total / POR_PAGINA)
+    Math.ceil(total / limite)
   );
 
   const paginaActual = Math.min(pagina, totalPaginas);
-  const inicio = (paginaActual - 1) * POR_PAGINA;
-  const fin = Math.min(inicio + POR_PAGINA, total);
+  const inicio = (paginaActual - 1) * limite;
   const visibles = filtrados.slice(
     inicio,
-    inicio + POR_PAGINA
+    inicio + limite
   );
 
   const laboratoriosDisponibles = opciones.laboratorios.filter(
@@ -564,69 +564,9 @@ export default function Usuarios({ token, usuarioActual }) {
               </table>
             </div>
 
-            <div className="inv-paginacion">
-              <p>
-                {total === 0
-                  ? 'Mostrando 0 usuarios'
-                  : `Mostrando ${inicio + 1}–${fin} de ${total.toLocaleString(
-                      'es-CR'
-                    )} usuarios`}
-              </p>
-
-              <nav className="inv-controles-paginacion" aria-label="Paginación de usuarios">
-                <button
-                  type="button"
-                  aria-label="Página anterior"
-                  disabled={paginaActual <= 1}
-                  onClick={() =>
-                    setPagina(paginaActual - 1)
-                  }
-                >
-                  <ChevronLeft size={15} />
-                </button>
-
-                {generarPaginas(
-                  paginaActual,
-                  totalPaginas
-                ).map((numero, indice) =>
-                  numero === '...' ? (
-                    <span key={`puntos-${indice}`}>
-                      ...
-                    </span>
-                  ) : (
-                    <button
-                      key={numero}
-                      type="button"
-                      className={
-                        paginaActual === numero
-                          ? 'inv-pagina-activa'
-                          : ''
-                      }
-                      aria-label={`Ir a la página ${numero}`}
-                      aria-current={
-                        paginaActual === numero
-                          ? 'page'
-                          : undefined
-                      }
-                      onClick={() => setPagina(numero)}
-                    >
-                      {numero}
-                    </button>
-                  )
-                )}
-
-                <button
-                  type="button"
-                  aria-label="Página siguiente"
-                  disabled={paginaActual >= totalPaginas}
-                  onClick={() =>
-                    setPagina(paginaActual + 1)
-                  }
-                >
-                  <ChevronRight size={15} />
-                </button>
-              </nav>
-            </div>
+            <Paginacion pagina={paginaActual} total={total} limite={limite}
+              singular="usuario" plural="usuarios" onCambiar={setPagina}
+              onCambiarLimite={(valor) => { setLimite(valor); setPagina(1); }} />
           </>
         )}
       </section>

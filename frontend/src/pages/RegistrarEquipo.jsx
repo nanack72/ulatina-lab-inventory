@@ -146,23 +146,23 @@ export default function RegistrarEquipo({
 
   function validarFormulario() {
     if (!formulario.nombre.trim()) {
-      return 'Debés ingresar el nombre del equipo.';
+      return "Debe ingresar el nombre del equipo.";
     }
 
     if (!formulario.id_categoria) {
-      return 'Debés seleccionar una categoría.';
+      return "Debe seleccionar una categoría.";
     }
 
     if (!formulario.id_estado) {
-      return 'Debés seleccionar el estado del equipo.';
+      return "Debe seleccionar el estado del equipo.";
     }
 
     if (!formulario.id_sede) {
-      return 'Debés seleccionar una sede.';
+      return "Debe seleccionar una sede.";
     }
 
     if (!formulario.id_laboratorio) {
-      return 'Debés seleccionar un laboratorio.';
+      return "Debe seleccionar un laboratorio.";
     }
 
     const autorizado = laboratoriosFiltrados.some(
@@ -172,7 +172,7 @@ export default function RegistrarEquipo({
     );
 
     if (!autorizado) {
-      return 'El laboratorio seleccionado no está disponible para tu usuario.';
+      return 'El laboratorio seleccionado no está disponible para su cuenta.';
     }
 
     if (
@@ -183,7 +183,7 @@ export default function RegistrarEquipo({
         Number(formulario.anio) > new Date().getFullYear() + 1
       )
     ) {
-      return 'Ingresá un año válido.';
+      return "Ingrese un año válido.";
     }
 
     return '';
