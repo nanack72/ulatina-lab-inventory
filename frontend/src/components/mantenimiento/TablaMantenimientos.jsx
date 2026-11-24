@@ -1,4 +1,4 @@
-import { Camera } from 'lucide-react';
+import { Camera, Lock } from 'lucide-react';
 import { Insignia } from '../comunes/Modulo';
 import {
   formatearFechaMantenimiento,
@@ -72,18 +72,28 @@ export default function TablaMantenimientos({
                 </Insignia>
               </td>
               <td>
-                <select
-                  className={`mod-select-estado mod-insignia-${TONO_ESTADO[m.estado_mantenimiento] || 'neutro'}`}
-                  name={'estado-' + m.id_bitacora}
-                  aria-label={'Estado del mantenimiento ' + m.id_bitacora}
-                  value={m.estado_mantenimiento}
-                  disabled={actualizandoId !== null && actualizandoId !== undefined}
-                  onChange={(e) => alCambiarEstado(m.id_bitacora, e.target.value)}
-                >
-                  {ESTADOS_MANTENIMIENTO.map((e) => (
-                    <option key={e}>{e}</option>
-                  ))}
-                </select>
+                {m.estado_mantenimiento === 'Completado' ? (
+                  <span
+                    className="mod-insignia mod-insignia-verde mant-badge-estado--cerrado"
+                    title="Orden finalizada (solo consulta)"
+                  >
+                    <Lock size={12} aria-hidden="true" />
+                    <span>Completado</span>
+                  </span>
+                ) : (
+                  <select
+                    className={`mod-select-estado mod-insignia-${TONO_ESTADO[m.estado_mantenimiento] || 'neutro'}`}
+                    name={'estado-' + m.id_bitacora}
+                    aria-label={'Estado del mantenimiento ' + m.id_bitacora}
+                    value={m.estado_mantenimiento}
+                    disabled={actualizandoId !== null && actualizandoId !== undefined}
+                    onChange={(e) => alCambiarEstado(m.id_bitacora, e.target.value)}
+                  >
+                    {ESTADOS_MANTENIMIENTO.map((e) => (
+                      <option key={e}>{e}</option>
+                    ))}
+                  </select>
+                )}
               </td>
               <td>{m.nombre_tecnico || m.tecnico}</td>
               <td>{formatearHoras(m.horas_invertidas)}</td>
@@ -94,7 +104,10 @@ export default function TablaMantenimientos({
                   onClick={() => alSeleccionarEvidencias(m)}
                 >
                   <Camera size={15} aria-hidden="true" />
-                  Evidencias
+                  <span>
+                    Evidencias
+                    {Number(m.total_evidencias) > 0 ? ` (${m.total_evidencias})` : ''}
+                  </span>
                 </button>
               </td>
             </tr>

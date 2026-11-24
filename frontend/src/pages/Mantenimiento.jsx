@@ -17,6 +17,7 @@ import {
 } from '../services/mantenimientosService';
 import { obtenerEquipos } from '../services/equiposService';
 import { TIPOS_MANTENIMIENTO, ESTADOS_MANTENIMIENTO } from '../utils/mantenimiento';
+import '../styles/mantenimiento.css';
 
 export default function Mantenimiento({ token }) {
   const [busqueda, setBusqueda] = useState(''),
@@ -156,6 +157,7 @@ export default function Mantenimiento({ token }) {
           abierto
           mantenimiento={seleccionado}
           alCerrar={() => setSeleccionado(null)}
+          alSubirEvidencia={recargar}
           token={token}
         />
       )}

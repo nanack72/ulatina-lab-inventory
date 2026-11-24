@@ -146,30 +146,37 @@ export default function ModalRegistrarMantenimiento({
               </select>
             </label>
             <label className="mod-campo" htmlFor="mant-estado">
-              Estado
+              Estado inicial
               <select
                 id="mant-estado"
                 name="estado_mantenimiento"
                 value={estado}
                 onChange={(e) => setEstado(e.target.value)}
               >
-                {ESTADOS_MANTENIMIENTO.map((t) => (
+                {ESTADOS_MANTENIMIENTO.filter((t) => t !== 'Completado').map((t) => (
                   <option key={t}>{t}</option>
                 ))}
               </select>
             </label>
           </div>
           {tipo === 'Correctivo' && (
-            <label className="mod-campo" htmlFor="mant-motivo">
-              Motivo de la falla
-              <input
-                id="mant-motivo"
-                name="motivo_falla"
-                value={motivo}
-                maxLength={10000}
-                onChange={(e) => setMotivo(e.target.value)}
-              />
-            </label>
+            <>
+              <div className="mant-aviso-regla" role="note">
+                Al registrar un correctivo, el equipo pasará automáticamente a estado{' '}
+                <strong>En mantenimiento</strong>. Para finalizar la orden luego, deberá adjuntar
+                evidencias <strong>Antes</strong> y <strong>Después</strong>.
+              </div>
+              <label className="mod-campo" htmlFor="mant-motivo">
+                Motivo de la falla
+                <input
+                  id="mant-motivo"
+                  name="motivo_falla"
+                  value={motivo}
+                  maxLength={10000}
+                  onChange={(e) => setMotivo(e.target.value)}
+                />
+              </label>
+            </>
           )}
           <label className="mod-campo" htmlFor="mant-trabajo">
             Trabajo realizado *
