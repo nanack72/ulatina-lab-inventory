@@ -1,15 +1,3 @@
--- ============================================================
--- SISTEMA DE GESTIÓN DE INVENTARIO TECNOLÓGICO
--- Migración 010: Almacenamiento comprimido de evidencias en PostgreSQL (RNF03)
--- ============================================================
--- Ejecutar como: neondb_owner
--- Agrega las columnas opcionales mime y datos (bytea) a
--- public.evidencia_fotografica para almacenar fotografías comprimidas
--- directamente en la base de datos compartida, manteniendo
--- compatibilidad con registros históricos que solo tengan url_foto.
--- No concede UPDATE, DELETE ni TRUNCATE (RN11 / RNF06).
--- ============================================================
-
 BEGIN;
 
 SET LOCAL ROLE pes_owner;
