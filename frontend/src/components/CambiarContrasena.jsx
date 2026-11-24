@@ -1,12 +1,9 @@
+import Notificacion from './comunes/Notificacion';
 import { useState } from 'react';
 import { LockKeyhole, Eye, EyeOff, X } from 'lucide-react';
 import '../styles/cambiarContrasena.css';
 
-export default function CambiarContrasena({
-  token,
-  onCerrar,
-  onContrasenaCambiada,
-}) {
+export default function CambiarContrasena({ token, onCerrar, onContrasenaCambiada }) {
   const [actual, setActual] = useState('');
   const [nueva, setNueva] = useState('');
   const [confirmacion, setConfirmacion] = useState('');
@@ -19,8 +16,8 @@ export default function CambiarContrasena({
     setError('');
 
     if (nueva.length < 12 || nueva.length > 72) {
-    setError('La nueva contraseña debe tener entre 12 y 72 caracteres.');
-    return;
+      setError('La nueva contraseña debe tener entre 12 y 72 caracteres.');
+      return;
     }
 
     if (nueva !== confirmacion) {
@@ -51,9 +48,7 @@ export default function CambiarContrasena({
       const resultado = await respuesta.json().catch(() => ({}));
 
       if (!respuesta.ok) {
-        throw new Error(
-          resultado.message || 'No se pudo cambiar la contraseña.'
-        );
+        throw new Error(resultado.message || 'No se pudo cambiar la contraseña.');
       }
 
       setActual('');
@@ -69,12 +64,7 @@ export default function CambiarContrasena({
 
   return (
     <div className="cc-fondo">
-      <section
-        className="cc-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="cc-titulo"
-      >
+      <section className="cc-modal" role="dialog" aria-modal="true" aria-labelledby="cc-titulo">
         <div className="cc-encabezado">
           <div className="cc-titulo">
             <LockKeyhole size={21} />
@@ -93,8 +83,7 @@ export default function CambiarContrasena({
         </div>
 
         <p className="cc-descripcion">
-          Para proteger su cuenta, ingrese su contraseña actual
-          y establezca una nueva.
+          Para proteger su cuenta, ingrese su contraseña actual y establezca una nueva.
         </p>
 
         <form onSubmit={guardar}>
@@ -119,9 +108,7 @@ export default function CambiarContrasena({
             minLength={12}
           />
 
-          <label htmlFor="cc-confirmacion">
-            Confirmar nueva contraseña
-          </label>
+          <label htmlFor="cc-confirmacion">Confirmar nueva contraseña</label>
           <input
             id="cc-confirmacion"
             type={mostrar ? 'text' : 'password'}
@@ -140,7 +127,11 @@ export default function CambiarContrasena({
             {mostrar ? 'Ocultar contraseñas' : 'Mostrar contraseñas'}
           </button>
 
-          {error && <p className="cc-error" role="alert">{error}</p>}
+          {error && (
+            <Notificacion tipo="error" alCerrar={() => setError('')}>
+              {error}
+            </Notificacion>
+          )}
 
           <div className="cc-acciones">
             <button
@@ -152,11 +143,7 @@ export default function CambiarContrasena({
               Cancelar
             </button>
 
-            <button
-              type="submit"
-              className="btn btn-primario"
-              disabled={cargando}
-            >
+            <button type="submit" className="btn btn-primario" disabled={cargando}>
               {cargando ? 'Guardando...' : 'Guardar contraseña'}
             </button>
           </div>

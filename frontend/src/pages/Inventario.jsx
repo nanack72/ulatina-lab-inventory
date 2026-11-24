@@ -1,13 +1,7 @@
+import Notificacion from '../components/comunes/Notificacion';
 import { useEffect, useRef, useState } from 'react';
 
-import {
-  Search,
-  Plus,
-  RefreshCw,
-  AlertCircle,
-  X,
-  Upload,
-} from 'lucide-react';
+import { Search, Plus, RefreshCw, X, Upload } from 'lucide-react';
 
 import FiltroSelect from '../components/inventario/FiltroSelect';
 import FilaEquipo from '../components/inventario/FilaEquipo';
@@ -18,18 +12,11 @@ import ImportarEquipos from '../components/inventario/ImportarEquipos';
 
 import { useInventarioPaginado } from '../hooks/useInventarioPaginado';
 
-import {
-
-  EQUIPOS_POR_PAGINA,
-  FILTROS_INICIALES,
-  FILTROS_SELECT,
-} from '../utils/inventario';
+import { EQUIPOS_POR_PAGINA, FILTROS_INICIALES, FILTROS_SELECT } from '../utils/inventario';
 
 import '../styles/inventario.css';
 
-// ==========================================
 // INVENTARIO DE EQUIPOS
-// ==========================================
 
 export default function Inventario({
   token,
@@ -39,13 +26,9 @@ export default function Inventario({
   onVerEquipo,
   onSesionExpirada,
 }) {
-  // ========================================
   // ESTADOS DEL INVENTARIO
-  // ========================================
 
-  const [filtros, setFiltros] = useState(
-    FILTROS_INICIALES
-  );
+  const [filtros, setFiltros] = useState(FILTROS_INICIALES);
 
   const [vista, setVista] = useState('activos');
   const [equipoRestaurar, setEquipoRestaurar] = useState(null);
@@ -56,8 +39,16 @@ export default function Inventario({
   const [pagina, setPagina] = useState(1);
   const [limite, setLimite] = useState(EQUIPOS_POR_PAGINA);
 
-  const { equipos: equiposPagina, total, totalAutorizados, paginaActual, opciones,
-    cargando, error, recargar } = useInventarioPaginado(token, filtrosConsulta, pagina, limite, onSesionExpirada);
+  const {
+    equipos: equiposPagina,
+    total,
+    totalAutorizados,
+    paginaActual,
+    opciones,
+    cargando,
+    error,
+    recargar,
+  } = useInventarioPaginado(token, filtrosConsulta, pagina, limite, onSesionExpirada);
 
   const tablaRef = useRef(null);
   const enfocarPaginaRef = useRef(false);
@@ -70,9 +61,7 @@ export default function Inventario({
 
   const [mostrarImportacion, setMostrarImportacion] = useState(false);
 
-  // ========================================
   // FILTROS Y NAVEGACIÓN
-  // ========================================
 
   function cambiarVista(nuevaVista) {
     if (nuevaVista === (verEliminados ? 'eliminados' : 'activos')) return;
@@ -88,9 +77,12 @@ export default function Inventario({
     evento.preventDefault();
     const botones = Array.from(evento.currentTarget.querySelectorAll('[role="tab"]'));
     const indice = botones.indexOf(document.activeElement);
-    const siguiente = evento.key === 'Home' ? 0
-      : evento.key === 'End' ? botones.length - 1
-      : (indice + (evento.key === 'ArrowRight' ? 1 : -1) + botones.length) % botones.length;
+    const siguiente =
+      evento.key === 'Home'
+        ? 0
+        : evento.key === 'End'
+          ? botones.length - 1
+          : (indice + (evento.key === 'ArrowRight' ? 1 : -1) + botones.length) % botones.length;
     botones[siguiente]?.focus();
     botones[siguiente]?.click();
   }
@@ -99,9 +91,7 @@ export default function Inventario({
     setFiltros((anteriores) => ({
       ...anteriores,
       [clave]: valor,
-      ...(clave === 'sede'
-        ? { laboratorio: '' }
-        : {}),
+      ...(clave === 'sede' ? { laboratorio: '' } : {}),
     }));
 
     setPagina(1);
@@ -125,17 +115,13 @@ export default function Inventario({
     setLimite(nuevoLimite);
   }
 
-  // ========================================
   // FILTROS ACTIVOS
-  // ========================================
 
   const filtrosActivos = [
-    ...FILTROS_SELECT
-      .filter(({ clave }) => filtros[clave])
-      .map(({ clave, chip }) => ({
-        clave,
-        nombre: chip(filtros[clave]),
-      })),
+    ...FILTROS_SELECT.filter(({ clave }) => filtros[clave]).map(({ clave, chip }) => ({
+      clave,
+      nombre: chip(filtros[clave]),
+    })),
 
     ...(filtros.busqueda
       ? [
@@ -147,13 +133,9 @@ export default function Inventario({
       : []),
   ];
 
-  // ========================================
   // PERMISOS Y ACCESO AL DETALLE
-  // ========================================
 
-  const mostrarRegistrar =
-    puedeRegistrar &&
-    typeof onRegistrarEquipo === 'function';
+  const mostrarRegistrar = puedeRegistrar && typeof onRegistrarEquipo === 'function';
 
   // La consulta entrega equipos adaptados para
   // la tabla y conserva el registro original.
@@ -164,30 +146,22 @@ export default function Inventario({
         }
       : undefined;
 
-  // ========================================
   // INTERFAZ
-  // ========================================
 
   return (
     <div className="inv-pagina">
-
-      {/* ==================================
+      {/* 
           ENCABEZADO DEL INVENTARIO
-          ================================== */}
+           */}
 
       <div className="inv-encabezado">
-
         <div className="inv-encabezado-texto">
           <h1>Inventario</h1>
 
-          <p>
-            Administre y consulte los equipos
-            tecnológicos registrados.
-          </p>
+          <p>Administre y consulte los equipos tecnológicos registrados.</p>
         </div>
 
         <div className="inv-acciones">
-
           {/* ACTUALIZAR INVENTARIO */}
           <button
             type="button"
@@ -197,10 +171,7 @@ export default function Inventario({
             title="Actualizar equipos"
             aria-label="Actualizar inventario"
           >
-            <RefreshCw
-              size={17}
-              aria-hidden="true"
-            />
+            <RefreshCw size={17} aria-hidden="true" />
           </button>
 
           {puedeRegistrar && (
@@ -221,24 +192,22 @@ export default function Inventario({
               className="btn btn-lg btn-primario inv-boton-registrar"
               onClick={onRegistrarEquipo}
             >
-              <Plus
-                size={17}
-                aria-hidden="true"
-              />
+              <Plus size={17} aria-hidden="true" />
 
               <span>Registrar equipo</span>
             </button>
           )}
-
         </div>
       </div>
 
-      {/* ==================================
+      {/* 
           CONTENEDOR PRINCIPAL
-          ================================== */}
+           */}
 
       {equipoRestaurar && puedeGestionarEliminados && (
-        <RestaurarEquipo equipo={equipoRestaurar} token={token}
+        <RestaurarEquipo
+          equipo={equipoRestaurar}
+          token={token}
           onCerrar={() => setEquipoRestaurar(null)}
           onRestaurado={(mensaje) => {
             setEquipoRestaurar(null);
@@ -248,9 +217,14 @@ export default function Inventario({
           onSesionExpirada={onSesionExpirada}
         />
       )}
-      {avisoRestauracion && <p className="inv-mensaje" role="status">{avisoRestauracion}</p>}
+      {avisoRestauracion && <Notificacion tipo="exito">{avisoRestauracion}</Notificacion>}
       {puedeGestionarEliminados && (
-        <div className="inv-pestanas" role="tablist" aria-label="Vista del inventario" onKeyDown={navegarVistas}>
+        <div
+          className="inv-pestanas"
+          role="tablist"
+          aria-label="Vista del inventario"
+          onKeyDown={navegarVistas}
+        >
           {[
             ['activos', 'Activos'],
             ['eliminados', 'Eliminados'],
@@ -278,220 +252,182 @@ export default function Inventario({
         id="inv-panel-vista"
         className="inv-contenedor"
         role={puedeGestionarEliminados ? 'tabpanel' : undefined}
-        aria-labelledby={puedeGestionarEliminados ? `inv-pestana-${verEliminados ? 'eliminados' : 'activos'}` : undefined}
+        aria-labelledby={
+          puedeGestionarEliminados
+            ? `inv-pestana-${verEliminados ? 'eliminados' : 'activos'}`
+            : undefined
+        }
         tabIndex={puedeGestionarEliminados ? 0 : undefined}
       >
-
-        {/* ==================================
+        {/* 
             BUSCADOR Y FILTROS
-            ================================== */}
+             */}
 
         <div className="inv-barra-filtros">
-
           {/* BUSCADOR */}
           <div className="inv-buscador">
-
-            <Search
-              size={18}
-              aria-hidden="true"
-            />
+            <Search size={18} aria-hidden="true" />
 
             <input
               type="search"
               placeholder="Buscar por placa, serie, marca o modelo..."
               aria-label="Buscar equipos"
               value={filtros.busqueda}
-              onChange={(evento) =>
-                cambiarFiltro(
-                  'busqueda',
-                  evento.target.value
-                )
-              }
+              onChange={(evento) => cambiarFiltro('busqueda', evento.target.value)}
             />
-
           </div>
 
           {/* SELECTORES */}
           <div className="inv-selectores">
-
-
-            {FILTROS_SELECT.map(
-              ({ clave, etiqueta }) => (
-                <FiltroSelect
-                  key={clave}
-                  etiqueta={etiqueta}
-                  valor={filtros[clave]}
-                  opciones={opciones[clave]}
-                  onChange={(valor) =>
-                    cambiarFiltro(clave, valor)
-                  }
-                />
-              )
-            )}
-
-
-
+            {FILTROS_SELECT.map(({ clave, etiqueta }) => (
+              <FiltroSelect
+                key={clave}
+                etiqueta={etiqueta}
+                valor={filtros[clave]}
+                opciones={opciones[clave]}
+                onChange={(valor) => cambiarFiltro(clave, valor)}
+              />
+            ))}
           </div>
         </div>
 
-        {/* ==================================
+        {/* 
             FILTROS ACTIVOS
-            ================================== */}
+             */}
 
         {filtrosActivos.length > 0 && (
           <div className="inv-filtros-activos">
-
-            <span className="inv-etiqueta-filtros">
-              Filtros activos:
-            </span>
+            <span className="inv-etiqueta-filtros">Filtros activos:</span>
 
             <div className="inv-chips">
+              {filtrosActivos.map(({ clave, nombre }) => (
+                <button
+                  key={clave}
+                  type="button"
+                  className="inv-chip"
+                  onClick={() => cambiarFiltro(clave, '')}
+                  title={`Quitar filtro ${nombre}`}
+                >
+                  {nombre}
 
-              {filtrosActivos.map(
-                ({ clave, nombre }) => (
-                  <button
-                    key={clave}
-                    type="button"
-                    className="inv-chip"
-                    onClick={() =>
-                      cambiarFiltro(clave, '')
-                    }
-                    title={`Quitar filtro ${nombre}`}
-                  >
-                    {nombre}
-
-                    <X
-                      size={12}
-                      aria-hidden="true"
-                    />
-                  </button>
-                )
-              )}
-
+                  <X size={12} aria-hidden="true" />
+                </button>
+              ))}
             </div>
 
-            <button
-              type="button"
-              className="inv-limpiar"
-              onClick={limpiarFiltros}
-            >
+            <button type="button" className="inv-limpiar" onClick={limpiarFiltros}>
               Limpiar filtros
             </button>
-
           </div>
         )}
 
-        {/* ==================================
+        {/* 
             MENSAJE DE ERROR
-            ================================== */}
+             */}
 
         {error && (
-          <div
-            className="inv-mensaje inv-mensaje--error"
-            role="alert"
-          >
-            <AlertCircle size={19} />
-
+          <Notificacion tipo="error">
             <span>{error}</span>
 
-            <button
-              type="button"
-              onClick={recargar}
-            >
+            <button type="button" onClick={recargar}>
               Reintentar
             </button>
-          </div>
+          </Notificacion>
         )}
 
-        {/* ==================================
+        {/* 
             CARGANDO EQUIPOS
-            ================================== */}
+             */}
 
         {cargando && !error && (
-          <div
-            className="inv-mensaje"
-            role="status"
-          >
+          <div className="inv-mensaje" role="status">
             Cargando equipos autorizados...
           </div>
         )}
 
-        {/* ==================================
+        {/* 
             TABLA DEL INVENTARIO
-            ================================== */}
+             */}
 
         {!cargando && !error && (
           <>
-
-            <div ref={tablaRef} className="inv-tabla-contenedor" tabIndex={0} role="region" aria-label="Tabla del inventario">
-
+            <div
+              ref={tablaRef}
+              className="inv-tabla-contenedor"
+              tabIndex={0}
+              role="region"
+              aria-label="Tabla del inventario"
+            >
               <table className="inv-tabla">
-                <caption className="inv-sr-only">{verEliminados ? 'Equipos eliminados de los laboratorios autorizados' : 'Equipos del inventario autorizado'}</caption>
+                <caption className="inv-sr-only">
+                  {verEliminados
+                    ? 'Equipos eliminados de los laboratorios autorizados'
+                    : 'Equipos del inventario autorizado'}
+                </caption>
 
                 {/* ENCABEZADOS */}
                 {verEliminados ? (
-                  <thead><tr>
-                    <th scope="col">Placa</th><th scope="col">Equipo</th>
-                    <th scope="col">Ubicación</th><th scope="col">Fecha de eliminación</th>
-                    <th scope="col">Eliminado por</th><th scope="col">Motivo</th>
-                    <th scope="col">Acciones</th>
-                  </tr></thead>
+                  <thead>
+                    <tr>
+                      <th scope="col">Placa</th>
+                      <th scope="col">Equipo</th>
+                      <th scope="col">Ubicación</th>
+                      <th scope="col">Fecha de eliminación</th>
+                      <th scope="col">Eliminado por</th>
+                      <th scope="col">Motivo</th>
+                      <th scope="col">Acciones</th>
+                    </tr>
+                  </thead>
                 ) : (
-                <thead>
-                  <tr>
-                    <th scope="col">Placa</th>
-                    <th scope="col">Equipo</th>
-                    <th scope="col">Categoría</th>
-                    <th scope="col">
-                      Marca / Modelo
-                    </th>
-                    <th scope="col">Ubicación</th>
-                    <th scope="col">Estado</th>
+                  <thead>
+                    <tr>
+                      <th scope="col">Placa</th>
+                      <th scope="col">Equipo</th>
+                      <th scope="col">Categoría</th>
+                      <th scope="col">Marca / Modelo</th>
+                      <th scope="col">Ubicación</th>
+                      <th scope="col">Estado</th>
 
-                    {/* FLECHA DE DETALLE */}
-                    <th
-                      scope="col"
-                      className="inv-columna-detalle"
-                    >
-                      <span className="inv-sr-only">
-                        Ver detalle
-                      </span>
-                    </th>
-                  </tr>
-                </thead>
+                      {/* FLECHA DE DETALLE */}
+                      <th scope="col" className="inv-columna-detalle">
+                        <span className="inv-sr-only">Ver detalle</span>
+                      </th>
+                    </tr>
+                  </thead>
                 )}
 
                 {/* FILAS */}
                 <tbody>
-
                   {equiposPagina.length === 0 ? (
                     <tr>
-                      <td
-                        colSpan={7}
-                        className="inv-tabla-vacia"
-                      >
+                      <td colSpan={7} className="inv-tabla-vacia">
                         {totalAutorizados === 0
-                          ? (verEliminados ? 'No hay equipos eliminados en tus laboratorios autorizados.' : 'No hay equipos disponibles para tu usuario.')
+                          ? verEliminados
+                            ? 'No hay equipos eliminados en sus laboratorios autorizados.'
+                            : 'No hay equipos disponibles para su cuenta.'
                           : 'No se encontraron equipos con los filtros seleccionados.'}
                       </td>
                     </tr>
                   ) : (
-                    equiposPagina.map((equipo) => (
+                    equiposPagina.map((equipo) =>
                       verEliminados ? (
-                        <FilaEquipoEliminado key={equipo.clave} equipo={equipo} onRestaurar={setEquipoRestaurar} />
+                        <FilaEquipoEliminado
+                          key={equipo.clave}
+                          equipo={equipo}
+                          onRestaurar={setEquipoRestaurar}
+                        />
                       ) : (
                         <FilaEquipo key={equipo.clave} equipo={equipo} onVer={abrirDetalle} />
                       )
-                    ))
+                    )
                   )}
-
                 </tbody>
               </table>
             </div>
 
-            {/* ==================================
+            {/* 
                 PAGINACIÓN
-                ================================== */}
+                 */}
 
             <Paginacion
               pagina={paginaActual}
@@ -500,10 +436,8 @@ export default function Inventario({
               onCambiar={cambiarPagina}
               onCambiarLimite={cambiarLimite}
             />
-
           </>
         )}
-
       </section>
 
       {mostrarImportacion && (

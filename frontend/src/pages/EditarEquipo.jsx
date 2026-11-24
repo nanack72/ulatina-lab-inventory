@@ -1,18 +1,9 @@
+import { notificar } from '../utils/notificaciones';
+import Notificacion from '../components/comunes/Notificacion';
 import { useEffect, useRef, useState } from 'react';
-import {
-  ArrowLeft,
-  Save,
-  Monitor,
-  Cpu,
-  FileText,
-  AlertCircle,
-  CheckCircle2,
-} from 'lucide-react';
+import { ArrowLeft, Save, Monitor, Cpu, FileText } from 'lucide-react';
 
-import {
-  obtenerEquipoPorId,
-  actualizarEquipo,
-} from '../services/equiposService';
+import { obtenerEquipoPorId, actualizarEquipo } from '../services/equiposService';
 
 import { Campo, Seccion } from '../components/inventario/FormularioEquipo';
 import { prepararCambiosEquipo } from '../utils/edicionEquipo';
@@ -21,17 +12,10 @@ import '../styles/registrarEquipo.css';
 
 // Convierte valores nulos a texto vacío para los inputs.
 function texto(valor) {
-  return valor === null || valor === undefined
-    ? ''
-    : String(valor);
+  return valor === null || valor === undefined ? '' : String(valor);
 }
 
-export default function EditarEquipo({
-  idEquipo,
-  token,
-  onCancelar,
-  onActualizado,
-}) {
+export default function EditarEquipo({ idEquipo, token, onCancelar, onActualizado }) {
   const [equipoOriginal, setEquipoOriginal] = useState(null);
 
   const [formulario, setFormulario] = useState({
@@ -48,13 +32,8 @@ export default function EditarEquipo({
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
-  const [exito, setExito] = useState('');
 
   const enviandoRef = useRef(false);
-  const errorRef = useRef(null);
-  useEffect(() => {
-    if (error) errorRef.current?.focus();
-  }, [error]);
 
   // Cargar la información real del equipo.
   useEffect(() => {
@@ -63,14 +42,9 @@ export default function EditarEquipo({
     async function cargarEquipo() {
       setCargando(true);
       setError('');
-      setExito('');
 
       try {
-        const equipo = await obtenerEquipoPorId(
-          idEquipo,
-          token,
-          controlador.signal
-        );
+        const equipo = await obtenerEquipoPorId(idEquipo, token, controlador.signal);
 
         if (controlador.signal.aborted) return;
 
@@ -78,12 +52,8 @@ export default function EditarEquipo({
 
         setFormulario({
           nombre: texto(equipo.nombre ?? equipo.nombre_equipo),
-          placa_institucional: texto(
-            equipo.placa_institucional ?? equipo.placa
-          ),
-          numero_serie: texto(
-            equipo.numero_serie ?? equipo.serie
-          ),
+          placa_institucional: texto(equipo.placa_institucional ?? equipo.placa),
+          numero_serie: texto(equipo.numero_serie ?? equipo.serie),
           marca: texto(equipo.marca),
           modelo: texto(equipo.modelo),
           anio: texto(equipo.anio ?? equipo.año),
@@ -93,9 +63,7 @@ export default function EditarEquipo({
       } catch (err) {
         if (controlador.signal.aborted) return;
 
-        setError(
-          err.message || 'No fue posible cargar el equipo.'
-        );
+        setError(err.message || 'No fue posible cargar el equipo.');
       } finally {
         if (!controlador.signal.aborted) {
           setCargando(false);
@@ -117,39 +85,27 @@ export default function EditarEquipo({
     }));
 
     setError('');
-    setExito('');
   }
 
   async function guardarCambios(evento) {
     evento.preventDefault();
 
-    if (
-      enviandoRef.current ||
-      cargando ||
-      !equipoOriginal
-    ) {
+    if (enviandoRef.current || cargando || !equipoOriginal) {
       return;
     }
 
     if (!formulario.nombre.trim()) {
-      setError('Debés ingresar el nombre del equipo.');
+      setError('Debe ingresar el nombre del equipo.');
       return;
     }
 
-    const anio =
-      formulario.anio === ''
-        ? null
-        : Number(formulario.anio);
+    const anio = formulario.anio === '' ? null : Number(formulario.anio);
 
     if (
       anio !== null &&
-      (
-        !Number.isInteger(anio) ||
-        anio < 1900 ||
-        anio > new Date().getFullYear() + 1
-      )
+      (!Number.isInteger(anio) || anio < 1900 || anio > new Date().getFullYear() + 1)
     ) {
-      setError('Ingresá un año válido.');
+      setError('Ingrese un año válido.');
       return;
     }
 
@@ -162,21 +118,17 @@ export default function EditarEquipo({
     enviandoRef.current = true;
     setGuardando(true);
     setError('');
-    setExito('');
 
     try {
       await actualizarEquipo(idEquipo, datosEquipo, token);
 
-      setExito('Equipo actualizado correctamente.');
+      notificar({ tipo: 'exito', mensaje: 'Equipo actualizado correctamente.' });
 
       if (typeof onActualizado === 'function') {
         onActualizado();
       }
     } catch (err) {
-      setError(
-        err.message ||
-        'No fue posible actualizar el equipo.'
-      );
+      setError(err.message || 'No fue posible actualizar el equipo.');
     } finally {
       enviandoRef.current = false;
       setGuardando(false);
@@ -185,41 +137,20 @@ export default function EditarEquipo({
 
   return (
     <div className="registro-pagina">
-      <button
-        type="button"
-        className="registro-volver"
-        onClick={onCancelar}
-        disabled={guardando}
-      >
+      <button type="button" className="registro-volver" onClick={onCancelar} disabled={guardando}>
         <ArrowLeft size={17} />
         Volver al inventario
       </button>
 
       <div className="registro-encabezado">
         <h1>Editar equipo</h1>
-        <p>
-          Modifique la información general del equipo tecnológico.
-        </p>
+        <p>Modifique la información general del equipo tecnológico.</p>
       </div>
 
       {error && (
-        <div
-          className="registro-alerta registro-alerta-error"
-          role="alert" ref={errorRef} tabIndex={-1}
-        >
-          <AlertCircle size={19} />
+        <Notificacion tipo="error">
           <span>{error}</span>
-        </div>
-      )}
-
-      {exito && (
-        <div
-          className="registro-alerta registro-alerta-exito"
-          role="status"
-        >
-          <CheckCircle2 size={19} />
-          <span>{exito}</span>
-        </div>
+        </Notificacion>
       )}
 
       {cargando ? (
@@ -229,10 +160,7 @@ export default function EditarEquipo({
       ) : equipoOriginal ? (
         <form onSubmit={guardarCambios}>
           <div className="registro-grid">
-            <Seccion
-              titulo="Identificación del equipo"
-              icono={Monitor}
-            >
+            <Seccion titulo="Identificación del equipo" icono={Monitor}>
               <div className="registro-campos-grid">
                 <Campo etiqueta="Nombre del equipo" requerido htmlFor="editar-nombre">
                   <input
@@ -268,10 +196,7 @@ export default function EditarEquipo({
               </div>
             </Seccion>
 
-            <Seccion
-              titulo="Características técnicas"
-              icono={Cpu}
-            >
+            <Seccion titulo="Características técnicas" icono={Cpu}>
               <div className="registro-campos-grid">
                 <Campo etiqueta="Marca" htmlFor="editar-marca">
                   <input
@@ -319,14 +244,11 @@ export default function EditarEquipo({
               </div>
             </Seccion>
 
-            <Seccion
-              titulo="Comentarios y observaciones"
-              icono={FileText}
-            >
+            <Seccion titulo="Comentarios y observaciones" icono={FileText}>
               <Campo etiqueta="Comentarios" htmlFor="editar-comentarios">
                 <textarea
                   id="editar-comentarios"
-                    name="comentarios"
+                  name="comentarios"
                   value={formulario.comentarios}
                   onChange={actualizarCampo}
                   rows={5}
@@ -335,24 +257,17 @@ export default function EditarEquipo({
               </Campo>
             </Seccion>
 
-            <Seccion
-              titulo="Información que se conserva"
-              icono={FileText}
-            >
+            <Seccion titulo="Información que se conserva" icono={FileText}>
               <p className="registro-aviso">
-                La categoría, sede, laboratorio, ubicación
-                detallada y estado actual no se modificarán
-                desde este formulario. Los cambios de ubicación
-                y estado se realizarán desde sus funciones
-                específicas para conservar el historial.
+                La categoría, sede, laboratorio, ubicación detallada y estado actual no se
+                modificarán desde este formulario. Los cambios de ubicación y estado se realizarán
+                desde sus funciones específicas para conservar el historial.
               </p>
             </Seccion>
           </div>
 
           <div className="registro-acciones">
-            <span>
-              Los campos marcados con * son obligatorios.
-            </span>
+            <span>Los campos marcados con * son obligatorios.</span>
 
             <div className="registro-botones">
               <button
@@ -364,15 +279,9 @@ export default function EditarEquipo({
                 Cancelar
               </button>
 
-              <button
-                type="submit"
-                className="btn btn-lg btn-primario"
-                disabled={guardando}
-              >
+              <button type="submit" className="btn btn-lg btn-primario" disabled={guardando}>
                 <Save size={17} />
-                {guardando
-                  ? 'Guardando cambios...'
-                  : 'Guardar cambios'}
+                {guardando ? 'Guardando cambios...' : 'Guardar cambios'}
               </button>
             </div>
           </div>

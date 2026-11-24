@@ -80,3 +80,47 @@
   display: flex;
   justify-content: flex-end;
 }
+
+/* Acceso compacto a la galería; conserva un área cómoda para tocar. */
+.main-layout .main-page .mant-boton-evidencias {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 64px;
+  min-height: 36px;
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: var(--verde-suave, #eef5f1);
+  color: var(--verde);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.4;
+  cursor: pointer;
+}
+.main-layout .main-page .mant-boton-evidencias:hover {
+  background: #deece4;
+}
+.main-layout .main-page .mant-boton-evidencias:focus-visible {
+  outline: 2px solid var(--verde);
+  outline-offset: 3px;
+}
+.mant-boton-evidencias svg {
+  flex-shrink: 0;
+}
+.mant-boton-evidencias span {
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 800px) {
+  .main-layout .main-page .mant-boton-evidencias {
+    min-height: 44px;
+    font-size: 16px;
+  }
+}
+@media (forced-colors: active) {
+  .main-layout .main-page .mant-boton-evidencias {
+    border-color: ButtonText;
+  }
+}

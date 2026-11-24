@@ -1,3 +1,4 @@
+const { nombreCampo } = require('../utils/nombresCampos');
 const express = require('express');
 const pool = require('../config/database');
 const { verificarToken } = require('../middlewares/authMiddleware');
@@ -7,10 +8,7 @@ const router = express.Router();
 const { modificarRol, esRolSistema } = require('../services/rolesService');
 
 // Todas las operaciones de esta sección requieren Superadministrador.
-router.use(
-  verificarToken,
-  permitirRoles('Superadministrador')
-);
+router.use(verificarToken, permitirRoles('Superadministrador'));
 
 // Los nombres SQL provienen únicamente de esta lista fija.
 const CATALOGOS = {
@@ -90,9 +88,14 @@ function validarDatos(configuracion, body) {
     if (reglas.tipo === 'anios') {
       if (valor === '' || valor === null || valor === undefined) {
         datos[campo] = null;
-      } else if ((typeof valor !== 'number' && typeof valor !== 'string') ||
-          !/^[1-9]\d*$/.test(String(valor)) || Number(valor) > 100) {
-        return { error: 'Los años para revisión deben ser un entero entre 1 y 100, o quedar vacíos.' };
+      } else if (
+        (typeof valor !== 'number' && typeof valor !== 'string') ||
+        !/^[1-9]\d*$/.test(String(valor)) ||
+        Number(valor) > 100
+      ) {
+        return {
+          error: 'Los años para revisión deben ser un entero entre 1 y 100, o quedar vacíos.',
+        };
       } else {
         datos[campo] = Number(valor);
       }
@@ -108,10 +111,7 @@ function validarDatos(configuracion, body) {
     }
 
     if (reglas.tipo === 'id') {
-      const id =
-        typeof valor === 'number' || typeof valor === 'string'
-          ? Number(valor)
-          : NaN;
+      const id = typeof valor === 'number' || typeof valor === 'string' ? Number(valor) : NaN;
 
       if (!Number.isSafeInteger(id) || id <= 0 || id > 2147483647) {
         return { error: 'Seleccione una sede válida.' };
@@ -123,7 +123,7 @@ function validarDatos(configuracion, body) {
 
     if (valor === null || valor === undefined) {
       if (reglas.obligatorio) {
-        return { error: `El campo ${campo} es obligatorio.` };
+        return { error: `El campo ${nombreCampo(campo)} es obligatorio.` };
       }
 
       datos[campo] = null;
@@ -131,18 +131,18 @@ function validarDatos(configuracion, body) {
     }
 
     if (typeof valor !== 'string') {
-      return { error: `El campo ${campo} debe ser texto.` };
+      return { error: `El campo ${nombreCampo(campo)} debe ser texto.` };
     }
 
     const texto = valor.trim();
 
     if (reglas.obligatorio && !texto) {
-      return { error: `El campo ${campo} es obligatorio.` };
+      return { error: `El campo ${nombreCampo(campo)} es obligatorio.` };
     }
 
     if (Array.from(texto).length > reglas.max) {
       return {
-        error: `El campo ${campo} admite hasta ${reglas.max} caracteres.`,
+        error: `El campo ${nombreCampo(campo)} admite hasta ${reglas.max} caracteres.`,
       };
     }
 
@@ -153,7 +153,8 @@ function validarDatos(configuracion, body) {
 }
 
 function responderError(res, error, operacion) {
-  if (error.status) return res.status(error.status).json({ success: false, message: error.message });
+  if (error.status)
+    return res.status(error.status).json({ success: false, message: error.message });
   if (error.code === '23505') {
     return res.status(409).json({
       success: false,
@@ -199,12 +200,9 @@ router.get('/:catalogo', async (req, res) => {
         ORDER BY l.id_laboratorio DESC
       `;
     } else {
-      const columnas = [
-        config.id,
-        ...Object.keys(config.campos),
-      ].join(', ');
+      const columnas = [config.id, ...Object.keys(config.campos)].join(', ');
 
-        consulta = `
+      consulta = `
         SELECT ${columnas}
         FROM public.${config.tabla}
         ORDER BY ${config.id} DESC
@@ -215,7 +213,10 @@ router.get('/:catalogo', async (req, res) => {
 
     return res.json({
       success: true,
-      data: config.tabla === 'rol' ? resultado.rows.map(rol => ({ ...rol, protegido: esRolSistema(rol.nombre) })) : resultado.rows,
+      data:
+        config.tabla === 'rol'
+          ? resultado.rows.map((rol) => ({ ...rol, protegido: esRolSistema(rol.nombre) }))
+          : resultado.rows,
     });
   } catch (error) {
     return responderError(res, error, 'consultar');
@@ -239,7 +240,12 @@ router.post('/:catalogo', async (req, res) => {
   const parametros = campos.map((_, indice) => `$${indice + 1}`);
 
   try {
-    if (config.tabla === 'rol') return res.status(201).json(await modificarRol(pool, 'crear', null, validacion.datos.nombre, req.usuario.idUsuario));
+    if (config.tabla === 'rol')
+      return res
+        .status(201)
+        .json(
+          await modificarRol(pool, 'crear', null, validacion.datos.nombre, req.usuario.idUsuario)
+        );
     const resultado = await pool.query(
       `
         INSERT INTO public.${config.tabla} (${campos.join(', ')})
@@ -274,14 +280,21 @@ router.put('/:catalogo/:id', async (req, res) => {
   const campos = Object.keys(config.campos);
   const valores = campos.map((campo) => validacion.datos[campo]);
 
-  const asignaciones = campos.map(
-    (campo, indice) => `${campo} = $${indice + 1}`
-  );
+  const asignaciones = campos.map((campo, indice) => `${campo} = $${indice + 1}`);
 
   valores.push(req.registroId);
 
   try {
-    if (config.tabla === 'rol') return res.json(await modificarRol(pool, 'editar', req.registroId, validacion.datos.nombre, req.usuario.idUsuario));
+    if (config.tabla === 'rol')
+      return res.json(
+        await modificarRol(
+          pool,
+          'editar',
+          req.registroId,
+          validacion.datos.nombre,
+          req.usuario.idUsuario
+        )
+      );
     const resultado = await pool.query(
       `
         UPDATE public.${config.tabla}
@@ -314,7 +327,10 @@ router.delete('/:catalogo/:id', async (req, res) => {
   const config = req.catalogoConfig;
 
   try {
-    if (config.tabla === 'rol') return res.json(await modificarRol(pool, 'eliminar', req.registroId, null, req.usuario.idUsuario));
+    if (config.tabla === 'rol')
+      return res.json(
+        await modificarRol(pool, 'eliminar', req.registroId, null, req.usuario.idUsuario)
+      );
     const resultado = await pool.query(
       `
         DELETE FROM public.${config.tabla}

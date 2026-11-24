@@ -1,3 +1,7 @@
+import FiltrosUbicacion from '../components/comunes/FiltrosUbicacion';
+import Paginacion from '../components/inventario/Paginacion';
+import '../styles/inventario.css';
+import Notificacion from '../components/comunes/Notificacion';
 import { useEffect, useState } from 'react';
 import {
   History,
@@ -6,19 +10,13 @@ import {
   Settings2,
   Search,
   RefreshCw,
-  ChevronLeft,
-  ChevronRight,
   ChevronDown,
   ArrowRight,
-  AlertCircle,
   UserRound,
 } from 'lucide-react';
 
 import { obtenerHistorialGeneral } from '../services/historialGeneralService';
-import { generarPaginas } from '../utils/inventario';
 import '../styles/historialGeneral.css';
-
-const MOVIMIENTOS_POR_PAGINA = 5;
 
 const TIPOS = [
   { valor: 'todos', texto: 'Todos' },
@@ -93,20 +91,15 @@ function mostrarValor(valor) {
   return String(valor);
 }
 
-function Movimiento({
-  registro,
-  expandido,
-  onExpandir,
-  onVerEquipo,
-}) {
+function Movimiento({ registro, expandido, onExpandir, onVerEquipo }) {
   const configuracion = CONFIGURACION[registro.tipo] || {
     icono: History,
     nombre: 'Movimiento',
   };
 
   const Icono = configuracion.icono;
-  const anterior = mostrarValor(registro.valor_anterior);
-  const nuevo = mostrarValor(registro.valor_nuevo);
+  const anterior = mostrarValor(registro.valor_anterior_visible ?? registro.valor_anterior);
+  const nuevo = mostrarValor(registro.valor_nuevo_visible ?? registro.valor_nuevo);
 
   return (
     <article className="hg-registro">
@@ -117,15 +110,11 @@ function Movimiento({
           </span>
 
           <div className="hg-registro-titulo">
-            <span className="hg-etiqueta">
-              {configuracion.nombre}
-            </span>
+            <span className="hg-etiqueta">{configuracion.nombre}</span>
 
             <strong>{nombreAccion(registro.accion)}</strong>
 
-            <span className="hg-registro-fecha">
-              {formatoFecha(registro.fecha)}
-            </span>
+            <span className="hg-registro-fecha">{formatoFecha(registro.fecha)}</span>
           </div>
         </div>
 
@@ -148,9 +137,7 @@ function Movimiento({
           <button
             type="button"
             className="hg-enlace-equipo"
-            onClick={() =>
-              onVerEquipo?.({ id_equipo: registro.id_equipo })
-            }
+            onClick={() => onVerEquipo?.({ id_equipo: registro.id_equipo })}
           >
             {registro.nombre_equipo || 'Equipo sin nombre'}
             <ArrowRight size={14} />
@@ -166,13 +153,7 @@ function Movimiento({
         <div className="hg-valor hg-valor-anterior">
           <small>Valor anterior</small>
 
-          <p
-            className={
-              expandido ? 'hg-texto-completo' : 'hg-texto-corto'
-            }
-          >
-            {anterior}
-          </p>
+          <p className={expandido ? 'hg-texto-completo' : 'hg-texto-corto'}>{anterior}</p>
         </div>
 
         <span className="hg-flecha">
@@ -182,13 +163,7 @@ function Movimiento({
         <div className="hg-valor hg-valor-nuevo">
           <small>Valor nuevo</small>
 
-          <p
-            className={
-              expandido ? 'hg-texto-completo' : 'hg-texto-corto'
-            }
-          >
-            {nuevo}
-          </p>
+          <p className={expandido ? 'hg-texto-completo' : 'hg-texto-corto'}>{nuevo}</p>
         </div>
       </div>
 
@@ -201,27 +176,22 @@ function Movimiento({
         >
           {expandido ? 'Ocultar detalles' : 'Ver detalles'}
 
-          <ChevronDown
-            size={16}
-            className={expandido ? 'hg-chevron-abierto' : ''}
-          />
+          <ChevronDown size={16} className={expandido ? 'hg-chevron-abierto' : ''} />
         </button>
       </div>
     </article>
   );
 }
 
-export default function Historial({
-  token,
-  onVerEquipo,
-  onSesionExpirada,
-}) {
+export default function Historial({ token, onVerEquipo, onSesionExpirada }) {
   const [tipo, setTipo] = useState('todos');
   const [textoBusqueda, setTextoBusqueda] = useState('');
   const [busqueda, setBusqueda] = useState('');
   const [desde, setDesde] = useState('');
   const [hasta, setHasta] = useState('');
+  const [ubicacion, setUbicacion] = useState({ sede: '', laboratorio: '' });
   const [pagina, setPagina] = useState(1);
+  const [limite, setLimite] = useState(10);
   const [registros, setRegistros] = useState([]);
   const [total, setTotal] = useState(0);
   const [cargando, setCargando] = useState(true);
@@ -248,7 +218,16 @@ export default function Historial({
       try {
         const resultado = await obtenerHistorialGeneral(
           token,
-          { tipo, busqueda, desde, hasta, pagina },
+          {
+            tipo,
+            busqueda,
+            desde,
+            hasta,
+            pagina,
+            limite,
+            id_sede: ubicacion.sede,
+            id_laboratorio: ubicacion.laboratorio,
+          },
           controlador.signal
         );
 
@@ -283,18 +262,13 @@ export default function Historial({
     busqueda,
     desde,
     hasta,
+    ubicacion.sede,
+    ubicacion.laboratorio,
     pagina,
+    limite,
     recarga,
     onSesionExpirada,
   ]);
-
-  const totalPaginas = Math.max(
-    1,
-    Math.ceil(total / MOVIMIENTOS_POR_PAGINA)
-  );
-
-  const inicio = (pagina - 1) * MOVIMIENTOS_POR_PAGINA;
-  const fin = Math.min(inicio + MOVIMIENTOS_POR_PAGINA, total);
 
   return (
     <section className="hg-pagina">
@@ -302,15 +276,14 @@ export default function Historial({
         <div>
           <h1>Historial</h1>
 
-          <p>
-            Consulte la trazabilidad de los equipos tecnológicos
-            y sus movimientos registrados.
-          </p>
+          <p>Consulte la trazabilidad de los equipos tecnológicos y sus movimientos registrados.</p>
         </div>
 
         <div className="hg-contador">
           <History size={17} />
-          <span>{total} movimientos</span>
+          <span>
+            {total} {total === 1 ? 'movimiento' : 'movimientos'}
+          </span>
         </div>
       </div>
 
@@ -319,11 +292,7 @@ export default function Historial({
           <button
             key={opcion.valor}
             type="button"
-            className={
-              tipo === opcion.valor
-                ? 'hg-pestana activa'
-                : 'hg-pestana'
-            }
+            className={tipo === opcion.valor ? 'hg-pestana activa' : 'hg-pestana'}
             onClick={() => {
               setTipo(opcion.valor);
               setPagina(1);
@@ -348,6 +317,17 @@ export default function Historial({
         </label>
 
         <div className="hg-fechas">
+          <div className="inv-selectores">
+            <FiltrosUbicacion
+              compacto
+              token={token}
+              valor={ubicacion}
+              onChange={(valor) => {
+                setUbicacion(valor);
+                setPagina(1);
+              }}
+            />
+          </div>
           <label>
             <span>Desde</span>
 
@@ -389,10 +369,7 @@ export default function Historial({
       </div>
 
       {error ? (
-        <div className="hg-mensaje hg-error" role="alert">
-          <AlertCircle size={20} />
-          {error}
-        </div>
+        <Notificacion tipo="error">{error}</Notificacion>
       ) : cargando ? (
         <div className="hg-mensaje" role="status">
           Cargando movimientos...
@@ -413,9 +390,7 @@ export default function Historial({
                 key={clave}
                 registro={registro}
                 expandido={expandido}
-                onExpandir={() =>
-                  setRegistroExpandido(expandido ? null : clave)
-                }
+                onExpandir={() => setRegistroExpandido(expandido ? null : clave)}
                 onVerEquipo={onVerEquipo}
               />
             );
@@ -424,65 +399,18 @@ export default function Historial({
       )}
 
       {!cargando && !error && (
-        <div className="hg-paginacion">
-          <p>
-            {total === 0
-              ? 'Mostrando 0 movimientos'
-              : `Mostrando ${inicio + 1}–${fin} de ${total.toLocaleString(
-                  'es-CR'
-                )} movimientos`}
-          </p>
-
-          <nav
-            className="hg-controles-paginacion"
-            aria-label="Paginación del historial general"
-          >
-            <button
-              type="button"
-              disabled={pagina <= 1}
-              onClick={() => setPagina((actual) => actual - 1)}
-              aria-label="Página anterior"
-            >
-              <ChevronLeft size={15} />
-            </button>
-
-            {generarPaginas(pagina, totalPaginas).map(
-              (numero, indice) =>
-                numero === '...' ? (
-                  <span
-                    className="hg-puntos"
-                    key={`puntos-${indice}`}
-                  >
-                    ...
-                  </span>
-                ) : (
-                  <button
-                    type="button"
-                    key={numero}
-                    className={
-                      pagina === numero ? 'hg-pagina-activa' : ''
-                    }
-                    aria-label={`Ir a la página ${numero}`}
-                    aria-current={
-                      pagina === numero ? 'page' : undefined
-                    }
-                    onClick={() => setPagina(numero)}
-                  >
-                    {numero}
-                  </button>
-                )
-            )}
-
-            <button
-              type="button"
-              disabled={pagina >= totalPaginas}
-              onClick={() => setPagina((actual) => actual + 1)}
-              aria-label="Página siguiente"
-            >
-              <ChevronRight size={15} />
-            </button>
-          </nav>
-        </div>
+        <Paginacion
+          pagina={pagina}
+          total={total}
+          limite={limite}
+          singular="movimiento"
+          plural="movimientos"
+          onCambiar={setPagina}
+          onCambiarLimite={(valor) => {
+            setLimite(valor);
+            setPagina(1);
+          }}
+        />
       )}
     </section>
   );

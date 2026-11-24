@@ -1,3 +1,4 @@
+import FiltrosUbicacion from '../components/comunes/FiltrosUbicacion';
 import { useCallback, useRef, useState } from 'react';
 import { FileSpreadsheet } from 'lucide-react';
 import { EncabezadoModulo, Aviso, Indicador, PaginacionModulo } from '../components/comunes/Modulo';
@@ -10,8 +11,9 @@ export default function Reportes({ token }) {
   const { datos, cargando, error, recargar } = useListadoModulo(cargar);
   const [descargando, setDescargando] = useState(false),
     [errorDescarga, setErrorDescarga] = useState(''),
-    [laboratorio, setLaboratorio] = useState(''),
     [pagina, setPagina] = useState(1);
+  const [limite, setLimite] = useState(10);
+  const [ubicacion, setUbicacion] = useState({ sede: '', laboratorio: '' });
   const ocupado = useRef(false);
   async function descargar() {
     if (ocupado.current) return;
@@ -32,9 +34,11 @@ export default function Reportes({ token }) {
     mantenimiento = datos?.mantenimientos || {},
     laboratorios = datos?.equipos_por_laboratorio || [];
   const filtrados = laboratorios.filter(
-      (l) => !laboratorio || String(l.id_laboratorio) === laboratorio
+      (l) =>
+        (!ubicacion.sede || String(l.id_sede) === ubicacion.sede) &&
+        (!ubicacion.laboratorio || String(l.id_laboratorio) === ubicacion.laboratorio)
     ),
-    actual = Math.min(pagina, Math.max(1, Math.ceil(filtrados.length / 10)));
+    actual = Math.min(pagina, Math.max(1, Math.ceil(filtrados.length / limite)));
   return (
     <div className="inv-pagina mod-pagina">
       <EncabezadoModulo
@@ -112,25 +116,16 @@ export default function Reportes({ token }) {
             <section className="inv-contenedor" aria-label="Distribución por laboratorio">
               <div className="inv-barra-filtros">
                 <h2 className="mod-titulo-tabla">Equipos por laboratorio</h2>
-                <div className="mod-selectores">
-                  <label>
-                    Laboratorio
-                    <select
-                      name="laboratorio"
-                      value={laboratorio}
-                      onChange={(e) => {
-                        setLaboratorio(e.target.value);
-                        setPagina(1);
-                      }}
-                    >
-                      <option value="">Todos los laboratorios</option>
-                      {laboratorios.map((l) => (
-                        <option key={l.id_laboratorio} value={l.id_laboratorio}>
-                          {l.codigo} · {l.nombre}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                <div className="inv-selectores">
+                  <FiltrosUbicacion
+                    compacto
+                    token={token}
+                    valor={ubicacion}
+                    onChange={(valor) => {
+                      setUbicacion(valor);
+                      setPagina(1);
+                    }}
+                  />
                 </div>
               </div>
               <div
@@ -151,7 +146,7 @@ export default function Reportes({ token }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {filtrados.slice((actual - 1) * 10, actual * 10).map((l) => {
+                    {filtrados.slice((actual - 1) * limite, actual * limite).map((l) => {
                       const porcentaje = calcularPorcentajeSeguro(l.cantidad_equipos, total);
                       return (
                         <tr key={l.id_laboratorio}>
@@ -177,7 +172,18 @@ export default function Reportes({ token }) {
                   <p className="mod-vacio">No hay laboratorios para mostrar.</p>
                 )}
               </div>
-              <PaginacionModulo pagina={actual} total={filtrados.length} alCambiar={setPagina} />
+              <PaginacionModulo
+                limite={limite}
+                singular="laboratorio"
+                plural="laboratorios"
+                alCambiarLimite={(valor) => {
+                  setLimite(valor);
+                  setPagina(1);
+                }}
+                pagina={actual}
+                total={filtrados.length}
+                alCambiar={setPagina}
+              />
             </section>
           </>
         )

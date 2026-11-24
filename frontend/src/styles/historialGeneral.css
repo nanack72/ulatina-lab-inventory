@@ -1,6 +1,6 @@
-/* ======================================
+/* 
    HISTORIAL GENERAL
-====================================== */
+ */
 
 .hg-pagina {
   width: 100%;
@@ -152,7 +152,9 @@
   border-radius: var(--radio-md);
   padding: 20px;
   min-width: 0;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 }
 
 .hg-registro:hover {

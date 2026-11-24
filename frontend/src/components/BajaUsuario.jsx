@@ -1,3 +1,4 @@
+import Notificacion from './comunes/Notificacion';
 import { useEffect, useRef, useState } from 'react';
 import { darBajaUsuario } from '../services/usuariosService';
 
@@ -39,7 +40,9 @@ export default function BajaUsuario({ usuario, usuarios = [], token, onCerrar, o
   useEffect(() => {
     const dialogo = dialogoRef.current;
     if (!dialogo.open) dialogo.showModal();
-    return () => { if (dialogo.open) dialogo.close(); };
+    return () => {
+      if (dialogo.open) dialogo.close();
+    };
   }, []);
 
   async function confirmar(evento) {
@@ -71,22 +74,36 @@ export default function BajaUsuario({ usuario, usuarios = [], token, onCerrar, o
   }
 
   return (
-    <dialog ref={dialogoRef} className="cfg-dialogo usu-baja" aria-labelledby="usu-baja-titulo"
+    <dialog
+      ref={dialogoRef}
+      className="cfg-dialogo usu-baja"
+      aria-labelledby="usu-baja-titulo"
       aria-describedby="usu-baja-descripcion"
-      onClose={evento => {
+      onClose={(evento) => {
         // close se entrega de forma asíncrona. StrictMode puede haber reabierto
         // el diálogo tras la limpieza del efecto; ese cierre anterior se ignora.
         if (!evento.currentTarget.open) onCerrar();
       }}
-      onCancel={evento => { if (enviandoRef.current) evento.preventDefault(); }}>
+      onCancel={(evento) => {
+        if (enviandoRef.current) evento.preventDefault();
+      }}
+    >
       <h2 id="usu-baja-titulo">¿Dar de baja a este usuario?</h2>
-      <p><strong>{usuario.nombre_completo}</strong><br />{usuario.correo_institucional}</p>
-      <p id="usu-baja-descripcion">
-        Si no tiene actividad registrada, la cuenta se eliminará permanentemente.
-        Si tiene actividad, se desactivará y se conservarán sus historiales.
-        Una cuenta desactivada no puede iniciar sesión.
+      <p>
+        <strong>{usuario.nombre_completo}</strong>
+        <br />
+        {usuario.correo_institucional}
       </p>
-      {error && <p className="cfg-mensaje cfg-error" role="alert">{error}</p>}
+      <p id="usu-baja-descripcion">
+        Si no tiene actividad registrada, la cuenta se eliminará permanentemente. Si tiene
+        actividad, se desactivará y se conservarán sus historiales. Una cuenta desactivada no puede
+        iniciar sesión.
+      </p>
+      {error && (
+        <Notificacion tipo="error" alCerrar={() => setError('')}>
+          {error}
+        </Notificacion>
+      )}
       {procesando && <p role="status">Procesando la baja. Espere a que termine.</p>}
       <form onSubmit={confirmar}>
         {requiereReasignacion && (
@@ -114,13 +131,27 @@ export default function BajaUsuario({ usuario, usuarios = [], token, onCerrar, o
           </label>
         )}
         <label className="cfg-confirmar-check">
-          <input type="checkbox" checked={confirmado} disabled={procesando}
-            onChange={evento => setConfirmado(evento.target.checked)} />
-          <span>Entiendo que la cuenta se eliminará si no tiene actividad o se desactivará para conservar sus historiales.</span>
+          <input
+            type="checkbox"
+            checked={confirmado}
+            disabled={procesando}
+            onChange={(evento) => setConfirmado(evento.target.checked)}
+          />
+          <span>
+            Entiendo que la cuenta se eliminará si no tiene actividad o se desactivará para
+            conservar sus historiales.
+          </span>
         </label>
         <div className="cfg-modal-acciones">
-          <button type="button" className="btn btn-secundario" autoFocus disabled={procesando}
-            onClick={() => dialogoRef.current.close()}>Cancelar</button>
+          <button
+            type="button"
+            className="btn btn-secundario"
+            autoFocus
+            disabled={procesando}
+            onClick={() => dialogoRef.current.close()}
+          >
+            Cancelar
+          </button>
           <button
             type="submit"
             className="btn usu-boton-baja"

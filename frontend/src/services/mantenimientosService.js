@@ -10,6 +10,7 @@ export async function consultarMantenimientos(params = {}, token, signal) {
   if (params.limite) query.set('limite', params.limite);
   if (params.tipo_mantenimiento) query.set('tipo_mantenimiento', params.tipo_mantenimiento);
   if (params.estado_mantenimiento) query.set('estado_mantenimiento', params.estado_mantenimiento);
+  if (params.id_sede) query.set('id_sede', params.id_sede);
   if (params.id_laboratorio) query.set('id_laboratorio', params.id_laboratorio);
   if (params.busqueda) query.set('busqueda', params.busqueda);
 
@@ -19,16 +20,14 @@ export async function consultarMantenimientos(params = {}, token, signal) {
     signal,
     headers: {
       Authorization: `Bearer ${token}`,
-      Accept: 'application/json'
-    }
+      Accept: 'application/json',
+    },
   });
 
   const resultado = await respuesta.json().catch(() => null);
 
   if (!respuesta.ok || resultado?.success !== true) {
-    const error = new Error(
-      resultado?.message || 'Error al obtener la lista de mantenimientos'
-    );
+    const error = new Error(resultado?.message || 'Error al obtener la lista de mantenimientos');
     error.status = respuesta.status;
     throw error;
   }
@@ -44,16 +43,14 @@ export async function consultarMantenimientoPorId(id, token, signal) {
     signal,
     headers: {
       Authorization: `Bearer ${token}`,
-      Accept: 'application/json'
-    }
+      Accept: 'application/json',
+    },
   });
 
   const resultado = await respuesta.json().catch(() => null);
 
   if (!respuesta.ok || resultado?.success !== true) {
-    const error = new Error(
-      resultado?.message || 'Error al obtener el detalle del mantenimiento'
-    );
+    const error = new Error(resultado?.message || 'Error al obtener el detalle del mantenimiento');
     error.status = respuesta.status;
     throw error;
   }
@@ -70,17 +67,15 @@ export async function registrarMantenimiento(datos, token) {
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
-      Accept: 'application/json'
+      Accept: 'application/json',
     },
-    body: JSON.stringify(datos)
+    body: JSON.stringify(datos),
   });
 
   const resultado = await respuesta.json().catch(() => null);
 
   if (!respuesta.ok || resultado?.success !== true) {
-    const error = new Error(
-      resultado?.message || 'No fue posible registrar el mantenimiento'
-    );
+    const error = new Error(resultado?.message || 'No fue posible registrar el mantenimiento');
     error.status = respuesta.status;
     throw error;
   }
@@ -97,9 +92,9 @@ export async function actualizarEstadoMantenimiento(id, datos, token) {
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
-      Accept: 'application/json'
+      Accept: 'application/json',
     },
-    body: JSON.stringify(datos)
+    body: JSON.stringify(datos),
   });
 
   const resultado = await respuesta.json().catch(() => null);

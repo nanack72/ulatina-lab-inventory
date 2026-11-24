@@ -16,17 +16,13 @@ export async function iniciarSesion(correo, contrasena) {
       }),
     });
   } catch {
-    throw new Error(
-      'No se pudo conectar con el servidor. Verificá que esté encendido.'
-    );
+    throw new Error('No se pudo conectar con el servidor. Verifique que esté encendido.');
   }
 
   const resultado = await respuesta.json().catch(() => null);
 
   if (!respuesta.ok) {
-    throw new Error(
-      resultado?.message || 'No fue posible iniciar sesión.'
-    );
+    throw new Error(resultado?.message || 'No fue posible iniciar sesión.');
   }
 
   if (!resultado?.success || !resultado?.token || !resultado?.usuario) {
@@ -51,31 +47,25 @@ export async function cerrarSesion(token) {
     respuesta = await fetch(`${API_URL}/logout`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
     });
   } catch {
-    throw new Error(
-      'No se pudo conectar con el servidor para cerrar la sesión.'
-    );
+    throw new Error('No se pudo conectar con el servidor para cerrar la sesión.');
   }
 
   const resultado = await respuesta.json().catch(() => null);
 
   if (!respuesta.ok) {
-    const error = new Error(
-      resultado?.message || 'No fue posible cerrar la sesión.'
-    );
+    const error = new Error(resultado?.message || 'No fue posible cerrar la sesión.');
 
     error.status = respuesta.status;
     throw error;
   }
 
   if (resultado?.success !== true) {
-    throw new Error(
-      'El servidor no confirmó el cierre de sesión.'
-    );
+    throw new Error('El servidor no confirmó el cierre de sesión.');
   }
 
   return resultado;

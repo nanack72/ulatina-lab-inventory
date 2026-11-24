@@ -38,7 +38,8 @@ test('eliminados y restauración contra PostgreSQL temporal', async (t) => {
   `);
   // Los permisos SQL dependen de los roles de despliegue, no del comportamiento que se prueba.
   function migracion(nombre) {
-    return fs.readFileSync(path.join(__dirname, '../..', 'database/migrations', nombre), 'utf8')
+    return fs
+      .readFileSync(path.join(__dirname, '../..', 'database/migrations', nombre), 'utf8')
       .replace(/SET LOCAL ROLE pes_owner;/g, '')
       .replace(/GRANT[^;]+;/g, '');
   }
@@ -46,25 +47,40 @@ test('eliminados y restauración contra PostgreSQL temporal', async (t) => {
   await db.exec(`UPDATE usuario SET puede_eliminar_equipos = true WHERE id_usuario IN (10,20,30);
     UPDATE equipo SET eliminado_en = CURRENT_TIMESTAMP, eliminado_por = 99, motivo_eliminacion = 'Registro anterior' WHERE id_equipo = 3;`);
   await db.exec(migracion('007_historial_eliminacion_equipos.sql'));
-  const pool = { connect: async () => ({ query: (sql, valores) => db.query(sql, valores), release() {} }) };
+  const pool = {
+    connect: async () => ({ query: (sql, valores) => db.query(sql, valores), release() {} }),
+  };
   const admin = { idUsuario: 99, rol: 'Superadministrador' };
   const a = { idUsuario: 10, rol: 'Tecnico', puede_eliminar_equipos: true };
   const b = { idUsuario: 20, rol: 'Tecnico', puede_eliminar_equipos: true };
   const sin = { idUsuario: 11, rol: 'Tecnico' };
-  const eventos = async (id) => (await db.query('SELECT accion, motivo FROM historial_eliminacion_equipo WHERE id_equipo=$1 ORDER BY id_evento', [id])).rows;
+  const eventos = async (id) =>
+    (
+      await db.query(
+        'SELECT accion, motivo FROM historial_eliminacion_equipo WHERE id_equipo=$1 ORDER BY id_evento',
+        [id]
+      )
+    ).rows;
 
   await t.test('conserva las eliminaciones anteriores a la migración', async () => {
     assert.deepEqual(await eventos(3), [{ accion: 'eliminar', motivo: 'Registro anterior' }]);
   });
   await t.test('la vista predeterminada excluye eliminados', async () => {
     const r = await consultarPaginaInventario(db, {}, a);
-    assert.deepEqual(r.data.map(e => e.id_equipo), [1]);
+    assert.deepEqual(
+      r.data.map((e) => e.id_equipo),
+      [1]
+    );
     assert.equal(r.total, 1);
   });
   await t.test('rechaza vistas inválidas y acceso a eliminados sin permiso', async () => {
     await assert.rejects(consultarPaginaInventario(db, { vista: 'todos' }, admin), { status: 400 });
-    await assert.rejects(consultarPaginaInventario(db, { vista: ['eliminados'] }, admin), { status: 400 });
-    await assert.rejects(consultarPaginaInventario(db, { vista: 'eliminados' }, sin), { status: 403 });
+    await assert.rejects(consultarPaginaInventario(db, { vista: ['eliminados'] }, admin), {
+      status: 400,
+    });
+    await assert.rejects(consultarPaginaInventario(db, { vista: 'eliminados' }, sin), {
+      status: 403,
+    });
   });
   await t.test('filtra eliminados por laboratorio y devuelve su auditoría', async () => {
     assert.equal((await consultarPaginaInventario(db, { vista: 'eliminados' }, b)).total, 0);
@@ -72,7 +88,10 @@ test('eliminados y restauración contra PostgreSQL temporal', async (t) => {
     assert.equal(r.total, 1);
     assert.equal(r.data[0].eliminado_por_nombre, 'Administradora');
     assert.equal(r.data[0].motivo_eliminacion, 'Registro anterior');
-    assert.equal((await consultarPaginaInventario(db, { vista: 'eliminados', busqueda: 'P3' }, admin)).total, 1);
+    assert.equal(
+      (await consultarPaginaInventario(db, { vista: 'eliminados', busqueda: 'P3' }, admin)).total,
+      1
+    );
   });
   await t.test('restaurar valida permiso actual y laboratorio en el servidor', async () => {
     await assert.rejects(restaurarEquipo(pool, 3, sin), { status: 403 });
@@ -83,10 +102,17 @@ test('eliminados y restauración contra PostgreSQL temporal', async (t) => {
   await t.test('restaura con datos y fotos intactos y conserva ambos eventos', async () => {
     await restaurarEquipo(pool, 3, admin);
     const e = (await db.query('SELECT * FROM equipo WHERE id_equipo=3')).rows[0];
-    assert.equal(e.eliminado_en, null); assert.equal(e.eliminado_por, null); assert.equal(e.motivo_eliminacion, null);
-    assert.equal(e.numero_serie, 'S3'); assert.equal(e.id_laboratorio, 1); assert.equal(e.id_estado, 1);
+    assert.equal(e.eliminado_en, null);
+    assert.equal(e.eliminado_por, null);
+    assert.equal(e.motivo_eliminacion, null);
+    assert.equal(e.numero_serie, 'S3');
+    assert.equal(e.id_laboratorio, 1);
+    assert.equal(e.id_estado, 1);
     assert.equal((await db.query('SELECT * FROM foto_equipo WHERE id_equipo=3')).rows.length, 1);
-    assert.deepEqual((await eventos(3)).map(e => e.accion), ['eliminar', 'restaurar']);
+    assert.deepEqual(
+      (await eventos(3)).map((e) => e.accion),
+      ['eliminar', 'restaurar']
+    );
     assert.equal((await consultarPaginaInventario(db, { vista: 'eliminados' }, a)).total, 0);
     assert.equal((await consultarPaginaInventario(db, {}, a)).total, 2);
     await assert.rejects(restaurarEquipo(pool, 3, admin), { status: 409 });
@@ -94,24 +120,36 @@ test('eliminados y restauración contra PostgreSQL temporal', async (t) => {
   await t.test('registra cada nuevo ciclo de eliminación y restauración', async () => {
     await eliminarEquipo(pool, 1, a, 'Registro duplicado');
     await restaurarEquipo(pool, 1, a);
-    assert.deepEqual((await eventos(1)).map(e => e.accion), ['eliminar', 'restaurar']);
+    assert.deepEqual(
+      (await eventos(1)).map((e) => e.accion),
+      ['eliminar', 'restaurar']
+    );
   });
-  await t.test('revoca restauración cuando se retira el permiso aunque el navegador lo conserve', async () => {
-    await eliminarEquipo(pool, 1, a, 'Registro duplicado');
-    await db.query('UPDATE usuario SET puede_eliminar_equipos=false WHERE id_usuario=10');
-    await assert.rejects(restaurarEquipo(pool, 1, a), { status: 403 });
-    await db.query('UPDATE usuario SET puede_eliminar_equipos=true WHERE id_usuario=10');
-  });
+  await t.test(
+    'revoca restauración cuando se retira el permiso aunque el navegador lo conserve',
+    async () => {
+      await eliminarEquipo(pool, 1, a, 'Registro duplicado');
+      await db.query('UPDATE usuario SET puede_eliminar_equipos=false WHERE id_usuario=10');
+      await assert.rejects(restaurarEquipo(pool, 1, a), { status: 403 });
+      await db.query('UPDATE usuario SET puede_eliminar_equipos=true WHERE id_usuario=10');
+    }
+  );
   await t.test('revierte también el evento si falla la actualización', async () => {
     const antes = await eventos(1);
-    const falla = { connect: async () => ({
-      async query(sql, valores) {
-        if (sql.startsWith('UPDATE public.equipo')) throw new Error('Fallo simulado');
-        return db.query(sql, valores);
-      }, release() {},
-    }) };
+    const falla = {
+      connect: async () => ({
+        async query(sql, valores) {
+          if (sql.startsWith('UPDATE public.equipo')) throw new Error('Fallo simulado');
+          return db.query(sql, valores);
+        },
+        release() {},
+      }),
+    };
     await assert.rejects(restaurarEquipo(falla, 1, a), /Fallo simulado/);
     assert.deepEqual(await eventos(1), antes);
-    assert.notEqual((await db.query('SELECT eliminado_en FROM equipo WHERE id_equipo=1')).rows[0].eliminado_en, null);
+    assert.notEqual(
+      (await db.query('SELECT eliminado_en FROM equipo WHERE id_equipo=1')).rows[0].eliminado_en,
+      null
+    );
   });
 });

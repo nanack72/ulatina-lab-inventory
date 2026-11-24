@@ -1,6 +1,10 @@
+import Notificacion from '../components/comunes/Notificacion';
 import { useState } from 'react';
 
 import Sidebar from '../components/Sidebar';
+import NavegacionMovil from '../components/NavegacionMovil';
+import '../styles/navegacionMovil.css';
+import { useTablasEnTarjetas } from '../hooks/useTablasEnTarjetas';
 import Inicio from '../pages/Inicio';
 import Inventario from '../pages/Inventario';
 import EquipoDetalle from '../pages/EquipoDetalle';
@@ -16,9 +20,11 @@ import Reportes from '../pages/Reportes';
 import Mantenimiento from '../pages/Mantenimiento';
 import Incidencias from '../pages/Incidencias';
 
-// ==========================================
+// Van al final para que las reglas de teléfono pesen más que las de cada página.
+import '../styles/tablasMovil.css';
+import '../styles/paginasMovil.css';
+
 // NOMBRES DE LAS PÁGINAS
-// ==========================================
 
 const nombresPaginas = {
   inicio: 'Inicio',
@@ -32,15 +38,11 @@ const nombresPaginas = {
   perfil: 'Mi perfil',
 };
 
-// ==========================================
 // FUNCIONES AUXILIARES
-// ==========================================
 
 function normalizarRol(rol) {
   const nombre =
-    typeof rol === 'object' && rol !== null
-      ? rol.nombre ?? rol.nombre_rol ?? ''
-      : rol ?? '';
+    typeof rol === 'object' && rol !== null ? (rol.nombre ?? rol.nombre_rol ?? '') : (rol ?? '');
 
   return String(nombre)
     .normalize('NFD')
@@ -50,70 +52,46 @@ function normalizarRol(rol) {
 }
 
 function obtenerIdEquipo(equipo) {
-  const id = Number(
-    equipo?.id_equipo ?? equipo?.id
-  );
+  const id = Number(equipo?.id_equipo ?? equipo?.id);
 
   if (!Number.isSafeInteger(id) || id <= 0) {
-    console.error(
-      'El equipo no tiene un identificador válido.'
-    );
+    console.error('El equipo no tiene un identificador válido.');
     return null;
   }
 
   return id;
 }
 
-// ==========================================
 // COMPONENTE PRINCIPAL
-// ==========================================
 
-export default function MainLayout({
-  usuario,
-  token,
-  cerrarSesion,
-}) {
+export default function MainLayout({ usuario, token, cerrarSesion }) {
   const [paginaActual, cambiarPagina] = useState('inicio');
+  useTablasEnTarjetas();
 
-  const [equipoSeleccionado, setEquipoSeleccionado] =
-    useState(null);
+  const [equipoSeleccionado, setEquipoSeleccionado] = useState(null);
 
-  const [registrandoEquipo, setRegistrandoEquipo] =
-    useState(false);
+  const [registrandoEquipo, setRegistrandoEquipo] = useState(false);
 
-  const [editandoEquipo, setEditandoEquipo] =
-    useState(false);
+  const [editandoEquipo, setEditandoEquipo] = useState(false);
 
-  const [trasladandoEquipo, setTrasladandoEquipo] =
-    useState(false);
+  const [trasladandoEquipo, setTrasladandoEquipo] = useState(false);
 
-  const [cambiandoEstado, setCambiandoEstado] =
-    useState(false);
+  const [cambiandoEstado, setCambiandoEstado] = useState(false);
 
-  // ========================================
   // PERMISOS
-  // ========================================
 
   const rol = normalizarRol(usuario?.rol);
   const esSuperadministrador = rol === 'superadministrador';
 
   // El backend valida los permisos actuales en cada operación.
   const usuarioPuedeRegistrar =
-    esSuperadministrador ||
-    ['registro', 'edicion'].includes(
-      usuario?.permiso_inventario
-    );
+    esSuperadministrador || ['registro', 'edicion'].includes(usuario?.permiso_inventario);
 
-  const usuarioPuedeModificar =
-    esSuperadministrador ||
-    usuario?.permiso_inventario === 'edicion';
+  const usuarioPuedeModificar = esSuperadministrador || usuario?.permiso_inventario === 'edicion';
 
-  const nombrePagina =
-    nombresPaginas[paginaActual] || 'Inicio';
+  const nombrePagina = nombresPaginas[paginaActual] || 'Inicio';
 
-  // ========================================
   // CERRAR PANTALLAS DEL INVENTARIO
-  // ========================================
 
   function cerrarPantallasInventario() {
     setEquipoSeleccionado(null);
@@ -123,9 +101,7 @@ export default function MainLayout({
     setCambiandoEstado(false);
   }
 
-  // ========================================
   // VER DETALLE
-  // ========================================
 
   function verEquipo(equipo) {
     const id = obtenerIdEquipo(equipo);
@@ -136,9 +112,7 @@ export default function MainLayout({
     setEquipoSeleccionado(id);
   }
 
-  // ========================================
   // REGISTRAR
-  // ========================================
 
   function abrirRegistro() {
     if (!usuarioPuedeRegistrar) return;
@@ -147,9 +121,7 @@ export default function MainLayout({
     setRegistrandoEquipo(true);
   }
 
-  // ========================================
   // EDITAR
-  // ========================================
 
   function editarEquipo(equipo) {
     if (!usuarioPuedeModificar) return;
@@ -163,9 +135,7 @@ export default function MainLayout({
     setEditandoEquipo(true);
   }
 
-  // ========================================
   // TRASLADAR
-  // ========================================
 
   function abrirTraslado(equipo) {
     if (!usuarioPuedeModificar) return;
@@ -179,9 +149,7 @@ export default function MainLayout({
     setTrasladandoEquipo(true);
   }
 
-  // ========================================
   // CAMBIAR ESTADO
-  // ========================================
 
   function abrirCambioEstado(equipo) {
     if (!usuarioPuedeModificar) return;
@@ -195,9 +163,7 @@ export default function MainLayout({
     setCambiandoEstado(true);
   }
 
-  // ========================================
   // ACCESOS DESDE INICIO
-  // ========================================
 
   function registrarDesdeInicio() {
     if (!usuarioPuedeRegistrar) return;
@@ -216,9 +182,7 @@ export default function MainLayout({
     setEquipoSeleccionado(id);
   }
 
-  // ========================================
   // VOLVER AL INVENTARIO
-  // ========================================
 
   function volverAlInventario() {
     cerrarPantallasInventario();
@@ -229,18 +193,14 @@ export default function MainLayout({
     volverAlInventario();
   }
 
-  // ========================================
   // NAVEGACIÓN DEL SIDEBAR
-  // ========================================
 
   function navegarA(pagina) {
     cerrarPantallasInventario();
     cambiarPagina(pagina);
   }
 
-  // ========================================
   // TÍTULO DE LA PANTALLA
-  // ========================================
 
   function obtenerTitulo() {
     if (paginaActual === 'inventario') {
@@ -268,9 +228,7 @@ export default function MainLayout({
     return nombrePagina;
   }
 
-  // ========================================
   // MOSTRAR CONTENIDO
-  // ========================================
 
   function renderizarContenido() {
     if (paginaActual === 'inventario') {
@@ -286,11 +244,7 @@ export default function MainLayout({
       }
 
       // CAMBIO DE ESTADO
-      if (
-        cambiandoEstado &&
-        usuarioPuedeModificar &&
-        equipoSeleccionado !== null
-      ) {
+      if (cambiandoEstado && usuarioPuedeModificar && equipoSeleccionado !== null) {
         return (
           <CambiarEstadoEquipo
             key={equipoSeleccionado}
@@ -303,11 +257,7 @@ export default function MainLayout({
       }
 
       // TRASLADO
-      if (
-        trasladandoEquipo &&
-        usuarioPuedeModificar &&
-        equipoSeleccionado !== null
-      ) {
+      if (trasladandoEquipo && usuarioPuedeModificar && equipoSeleccionado !== null) {
         return (
           <TrasladarEquipo
             key={equipoSeleccionado}
@@ -320,11 +270,7 @@ export default function MainLayout({
       }
 
       // EDICIÓN
-      if (
-        editandoEquipo &&
-        usuarioPuedeModificar &&
-        equipoSeleccionado !== null
-      ) {
+      if (editandoEquipo && usuarioPuedeModificar && equipoSeleccionado !== null) {
         return (
           <EditarEquipo
             key={equipoSeleccionado}
@@ -340,28 +286,19 @@ export default function MainLayout({
       if (equipoSeleccionado !== null) {
         return (
           <EquipoDetalle
-          puedeEliminar={normalizarRol(usuario?.rol) === 'superadministrador' || usuario?.puede_eliminar_equipos === true}
+            puedeEliminar={
+              normalizarRol(usuario?.rol) === 'superadministrador' ||
+              usuario?.puede_eliminar_equipos === true
+            }
             puedeAgregarFotos={usuarioPuedeRegistrar}
             puedeEliminarFotos={usuarioPuedeModificar}
             key={equipoSeleccionado}
             idEquipo={equipoSeleccionado}
             token={token}
             onVolver={volverAlInventario}
-            onEditar={
-              usuarioPuedeModificar
-                ? editarEquipo
-                : undefined
-            }
-            onTrasladar={
-              usuarioPuedeModificar
-                ? abrirTraslado
-                : undefined
-            }
-            onCambiarEstado={
-              usuarioPuedeModificar
-                ? abrirCambioEstado
-                : undefined
-            }
+            onEditar={usuarioPuedeModificar ? editarEquipo : undefined}
+            onTrasladar={usuarioPuedeModificar ? abrirTraslado : undefined}
+            onCambiarEstado={usuarioPuedeModificar ? abrirCambioEstado : undefined}
           />
         );
       }
@@ -370,25 +307,16 @@ export default function MainLayout({
       return (
         <Inventario
           token={token}
-          puedeGestionarEliminados={normalizarRol(usuario?.rol) === 'superadministrador' || usuario?.puede_eliminar_equipos === true}
+          puedeGestionarEliminados={
+            normalizarRol(usuario?.rol) === 'superadministrador' ||
+            usuario?.puede_eliminar_equipos === true
+          }
           onVerEquipo={verEquipo}
           puedeRegistrar={usuarioPuedeRegistrar}
           onRegistrarEquipo={abrirRegistro}
-          onEditarEquipo={
-            usuarioPuedeModificar
-              ? editarEquipo
-              : undefined
-          }
-          onTrasladarEquipo={
-            usuarioPuedeModificar
-              ? abrirTraslado
-              : undefined
-          }
-          onCambiarEstadoEquipo={
-            usuarioPuedeModificar
-              ? abrirCambioEstado
-              : undefined
-          }
+          onEditarEquipo={usuarioPuedeModificar ? editarEquipo : undefined}
+          onTrasladarEquipo={usuarioPuedeModificar ? abrirTraslado : undefined}
+          onCambiarEstadoEquipo={usuarioPuedeModificar ? abrirCambioEstado : undefined}
         />
       );
     }
@@ -421,39 +349,25 @@ export default function MainLayout({
 
     // MI PERFIL
     if (paginaActual === 'perfil') {
-      return (
-        <MiPerfil
-          usuario={usuario}
-          token={token}
-        />
-      );
+      return <MiPerfil usuario={usuario} token={token} />;
     }
 
     // ADMINISTRACIÓN DE USUARIOS
     if (paginaActual === 'usuarios') {
       if (!esSuperadministrador) {
         return (
-          <div role="alert">
-            No tiene permisos para administrar usuarios.
-          </div>
+          <Notificacion tipo="error">No tiene permisos para administrar usuarios.</Notificacion>
         );
       }
 
-      return (
-        <Usuarios
-          token={token}
-          usuarioActual={usuario}
-        />
-      );
+      return <Usuarios token={token} usuarioActual={usuario} />;
     }
 
     // CONFIGURACIÓN
     if (paginaActual === 'configuracion') {
       if (!esSuperadministrador) {
         return (
-          <div role="alert">
-            No tiene permisos para acceder a Configuración.
-          </div>
+          <Notificacion tipo="error">No tiene permisos para acceder a Configuración.</Notificacion>
         );
       }
 
@@ -479,17 +393,12 @@ export default function MainLayout({
     return (
       <>
         <h1>{nombrePagina}</h1>
-        <p>
-          Estamos preparando la sección de{' '}
-          {nombrePagina.toLowerCase()}.
-        </p>
+        <p>Estamos preparando la sección de {nombrePagina.toLowerCase()}.</p>
       </>
     );
   }
 
-  // ========================================
   // ESTRUCTURA GENERAL
-  // ========================================
 
   return (
     <div className="main-layout">
@@ -502,20 +411,20 @@ export default function MainLayout({
 
       <main className="main-content">
         <header className="main-header">
+          <NavegacionMovil
+            paginaActual={paginaActual}
+            cambiarPagina={navegarA}
+            usuario={usuario}
+            cerrarSesion={cerrarSesion}
+          />
           <div>
-            <span className="main-breadcrumb">
-              Sistema /{' '}
-            </span>
+            <span className="main-breadcrumb">Sistema / </span>
 
             <strong>{obtenerTitulo()}</strong>
           </div>
-
-
         </header>
 
-        <section className="main-page">
-          {renderizarContenido()}
-        </section>
+        <section className="main-page">{renderizarContenido()}</section>
       </main>
     </div>
   );

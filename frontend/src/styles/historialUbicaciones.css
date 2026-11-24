@@ -1,9 +1,8 @@
-/* ==========================================
+/* 
    HISTORIAL DE UBICACIONES
-   ========================================== */
+    */
 
 .hist-ubicacion {
-
   width: 100%;
   min-width: 0;
   overflow: hidden;
@@ -306,9 +305,9 @@
   }
 }
 
-/* ==========================================
+/* 
    TIPOS DE MOVIMIENTOS 
-   ========================================== */
+    */
 
 .hist-tipo-encabezado {
   display: flex;
@@ -347,8 +346,7 @@
   color: var(--verde);
 }
 
-.hist-movimiento--traslado_laboratorio
-.hist-contenido {
+.hist-movimiento--traslado_laboratorio .hist-contenido {
   border-left: 3px solid var(--verde);
 }
 

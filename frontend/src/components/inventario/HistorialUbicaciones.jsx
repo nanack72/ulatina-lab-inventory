@@ -1,24 +1,13 @@
+import Notificacion from '../comunes/Notificacion';
 import { useEffect, useMemo, useState } from 'react';
 
-import {
-  History,
-  MapPin,
-  ArrowRight,
-  ArrowLeftRight,
-  RefreshCw,
-  AlertCircle,
-  PackagePlus,
-} from 'lucide-react';
+import { History, MapPin, ArrowRight, ArrowLeftRight, RefreshCw, PackagePlus } from 'lucide-react';
 
-import {
-  obtenerHistorialUbicacion,
-} from '../../services/equiposService';
+import { obtenerHistorialUbicacion } from '../../services/equiposService';
 
 import '../../styles/historialUbicaciones.css';
 
-// ==========================================
 // FUNCIONES AUXILIARES
-// ==========================================
 
 function texto(valor) {
   if (valor === null || valor === undefined) {
@@ -49,34 +38,24 @@ function nombreSede(valor) {
 
   if (!nombre) return '';
 
-  return /^sede\s/i.test(nombre)
-    ? nombre
-    : `Sede ${nombre}`;
+  return /^sede\s/i.test(nombre) ? nombre : `Sede ${nombre}`;
 }
 
 function obtenerTipoMovimiento(movimiento) {
   if (
-    [
-      'asignacion_inicial',
-      'traslado_laboratorio',
-      'cambio_ubicacion',
-    ].includes(movimiento.tipo_movimiento)
+    ['asignacion_inicial', 'traslado_laboratorio', 'cambio_ubicacion'].includes(
+      movimiento.tipo_movimiento
+    )
   ) {
     return movimiento.tipo_movimiento;
   }
 
   // Compatibilidad con respuestas antiguas de la API.
-  if (
-    movimiento.id_laboratorio_origen == null &&
-    movimiento.ubicacion_detalle_anterior == null
-  ) {
+  if (movimiento.id_laboratorio_origen == null && movimiento.ubicacion_detalle_anterior == null) {
     return 'asignacion_inicial';
   }
 
-  if (
-    String(movimiento.id_laboratorio_origen) !==
-    String(movimiento.id_laboratorio_destino)
-  ) {
+  if (String(movimiento.id_laboratorio_origen) !== String(movimiento.id_laboratorio_destino)) {
     return 'traslado_laboratorio';
   }
 
@@ -108,19 +87,11 @@ function IconoMovimiento({ tipo, size = 16 }) {
   return <MapPin size={size} />;
 }
 
-function obtenerLaboratorio(
-  movimiento,
-  origen,
-  nombresLaboratorios
-) {
-  const id = origen
-    ? movimiento.id_laboratorio_origen
-    : movimiento.id_laboratorio_destino;
+function obtenerLaboratorio(movimiento, origen, nombresLaboratorios) {
+  const id = origen ? movimiento.id_laboratorio_origen : movimiento.id_laboratorio_destino;
 
   const nombre = texto(
-    origen
-      ? movimiento.nombre_laboratorio_origen
-      : movimiento.nombre_laboratorio_destino
+    origen ? movimiento.nombre_laboratorio_origen : movimiento.nombre_laboratorio_destino
   );
 
   if (nombre) return nombre;
@@ -129,29 +100,18 @@ function obtenerLaboratorio(
     return 'Sin laboratorio anterior';
   }
 
-  return (
-    nombresLaboratorios?.[id] ||
-    `Laboratorio ${id}`
-  );
+  return nombresLaboratorios?.[id] || 'Laboratorio no disponible';
 }
 
-// ==========================================
 // COMPONENTE PRINCIPAL
-// ==========================================
 
-export default function HistorialUbicaciones({
-  idEquipo,
-  token,
-  nombresLaboratorios = {},
-}) {
+export default function HistorialUbicaciones({ idEquipo, token, nombresLaboratorios = {} }) {
   const [movimientos, setMovimientos] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
   const [recarga, setRecarga] = useState(0);
 
-  // ========================================
   // CONSULTAR HISTORIAL
-  // ========================================
 
   useEffect(() => {
     const controlador = new AbortController();
@@ -161,11 +121,7 @@ export default function HistorialUbicaciones({
       setError('');
 
       try {
-        const datos = await obtenerHistorialUbicacion(
-          idEquipo,
-          token,
-          controlador.signal
-        );
+        const datos = await obtenerHistorialUbicacion(idEquipo, token, controlador.signal);
 
         if (controlador.signal.aborted) return;
 
@@ -173,10 +129,7 @@ export default function HistorialUbicaciones({
       } catch (err) {
         if (controlador.signal.aborted) return;
 
-        setError(
-          err.message ||
-          'No se pudo consultar el historial de ubicaciones.'
-        );
+        setError(err.message || 'No se pudo consultar el historial de ubicaciones.');
       } finally {
         if (!controlador.signal.aborted) {
           setCargando(false);
@@ -189,9 +142,7 @@ export default function HistorialUbicaciones({
     return () => controlador.abort();
   }, [idEquipo, token, recarga]);
 
-  // ========================================
   // ORDENAR POR FECHA
-  // ========================================
 
   const movimientosOrdenados = useMemo(() => {
     return [...movimientos].sort((a, b) => {
@@ -199,17 +150,13 @@ export default function HistorialUbicaciones({
       const fechaB = new Date(b.fecha).getTime();
 
       const diferencia =
-        (Number.isFinite(fechaB) ? fechaB : 0) -
-        (Number.isFinite(fechaA) ? fechaA : 0);
+        (Number.isFinite(fechaB) ? fechaB : 0) - (Number.isFinite(fechaA) ? fechaA : 0);
 
       if (diferencia !== 0) {
         return diferencia;
       }
 
-      return (
-        Number(b.id_historial_ubicacion || 0) -
-        Number(a.id_historial_ubicacion || 0)
-      );
+      return Number(b.id_historial_ubicacion || 0) - Number(a.id_historial_ubicacion || 0);
     });
   }, [movimientos]);
 
@@ -217,13 +164,10 @@ export default function HistorialUbicaciones({
     setRecarga((anterior) => anterior + 1);
   }
 
-  // ========================================
   // INTERFAZ
-  // ========================================
 
   return (
     <section className="hist-ubicacion">
-
       {/* ENCABEZADO */}
       <div className="hist-encabezado">
         <div className="hist-titulo">
@@ -233,10 +177,7 @@ export default function HistorialUbicaciones({
 
           <div>
             <h2>Historial de ubicaciones</h2>
-            <p>
-              Consulte los movimientos registrados
-              de este equipo tecnológico.
-            </p>
+            <p>Consulte los movimientos registrados de este equipo tecnológico.</p>
           </div>
         </div>
 
@@ -261,199 +202,126 @@ export default function HistorialUbicaciones({
 
       {/* ERROR */}
       {!cargando && error && (
-        <div className="hist-error" role="alert">
-          <AlertCircle size={18} />
-
+        <Notificacion tipo="error">
           <span>{error}</span>
 
-          <button
-            type="button"
-            onClick={actualizarHistorial}
-          >
+          <button type="button" onClick={actualizarHistorial}>
             Reintentar
           </button>
-        </div>
+        </Notificacion>
       )}
 
       {/* SIN MOVIMIENTOS */}
-      {!cargando &&
-        !error &&
-        movimientosOrdenados.length === 0 && (
-          <div className="hist-vacio">
-            <MapPin size={25} />
+      {!cargando && !error && movimientosOrdenados.length === 0 && (
+        <div className="hist-vacio">
+          <MapPin size={25} />
 
-            <strong>
-              Sin movimientos registrados
-            </strong>
+          <strong>Sin movimientos registrados</strong>
 
-            <p>
-              Este equipo todavía no tiene registros
-              de cambios de ubicación.
-            </p>
-          </div>
-        )}
+          <p>Este equipo todavía no tiene registros de cambios de ubicación.</p>
+        </div>
+      )}
 
       {/* LÍNEA DE TIEMPO */}
-      {!cargando &&
-        !error &&
-        movimientosOrdenados.length > 0 && (
-          <>
-            <div className="hist-contador">
-              {movimientosOrdenados.length}{' '}
-              {movimientosOrdenados.length === 1
-                ? 'registro encontrado'
-                : 'registros encontrados'}
-            </div>
+      {!cargando && !error && movimientosOrdenados.length > 0 && (
+        <>
+          <div className="hist-contador">
+            {movimientosOrdenados.length}{' '}
+            {movimientosOrdenados.length === 1 ? 'registro encontrado' : 'registros encontrados'}
+          </div>
 
-            <div className="hist-linea-tiempo">
-              {movimientosOrdenados.map((movimiento) => {
-                const tipo = obtenerTipoMovimiento(
-                  movimiento
-                );
+          <div className="hist-linea-tiempo">
+            {movimientosOrdenados.map((movimiento) => {
+              const tipo = obtenerTipoMovimiento(movimiento);
 
-                const esInicial =
-                  tipo === 'asignacion_inicial';
+              const esInicial = tipo === 'asignacion_inicial';
 
-                const laboratorioOrigen =
-                  obtenerLaboratorio(
-                    movimiento,
-                    true,
-                    nombresLaboratorios
-                  );
+              const laboratorioOrigen = obtenerLaboratorio(movimiento, true, nombresLaboratorios);
 
-                const laboratorioDestino =
-                  obtenerLaboratorio(
-                    movimiento,
-                    false,
-                    nombresLaboratorios
-                  );
+              const laboratorioDestino = obtenerLaboratorio(movimiento, false, nombresLaboratorios);
 
-                const ubicacionAnterior = texto(
-                  movimiento.ubicacion_detalle_anterior
-                );
+              const ubicacionAnterior = texto(movimiento.ubicacion_detalle_anterior);
 
-                const ubicacionNueva = texto(
-                  movimiento.ubicacion_detalle_nueva
-                );
+              const ubicacionNueva = texto(movimiento.ubicacion_detalle_nueva);
 
-                const sedeOrigen = nombreSede(
-                  movimiento.nombre_sede_origen
-                );
+              const sedeOrigen = nombreSede(movimiento.nombre_sede_origen);
 
-                const sedeDestino = nombreSede(
-                  movimiento.nombre_sede_destino
-                );
+              const sedeDestino = nombreSede(movimiento.nombre_sede_destino);
 
-                const responsable =
-                  texto(movimiento.nombre_usuario) ||
-                  (
-                    movimiento.id_usuario != null
-                      ? `Usuario ${movimiento.id_usuario}`
-                      : 'No disponible'
-                  );
+              const responsable = texto(movimiento.nombre_usuario) || 'Responsable no disponible';
 
-                return (
-                  <article
-                    key={movimiento.id_historial_ubicacion}
-                    className={`hist-movimiento hist-movimiento--${tipo}`}
-                  >
-                    {/* ÍCONO DE LA LÍNEA DE TIEMPO */}
-                    <div className="hist-marcador">
-                      <IconoMovimiento tipo={tipo} />
-                    </div>
+              return (
+                <article
+                  key={movimiento.id_historial_ubicacion}
+                  className={`hist-movimiento hist-movimiento--${tipo}`}
+                >
+                  {/* ÍCONO DE LA LÍNEA DE TIEMPO */}
+                  <div className="hist-marcador">
+                    <IconoMovimiento tipo={tipo} />
+                  </div>
 
-                    {/* CONTENIDO */}
-                    <div className="hist-contenido">
-                      <div className="hist-movimiento-cabecera">
-                        <div className="hist-tipo-encabezado">
-                          <h3>
-                            {obtenerTitulo(tipo)}
-                          </h3>
+                  {/* CONTENIDO */}
+                  <div className="hist-contenido">
+                    <div className="hist-movimiento-cabecera">
+                      <div className="hist-tipo-encabezado">
+                        <h3>{obtenerTitulo(tipo)}</h3>
 
-                          <span
-                            className={`hist-tipo-etiqueta hist-tipo-etiqueta--${tipo}`}
-                          >
-                            {esInicial
-                              ? 'Inicial'
-                              : tipo === 'traslado_laboratorio'
-                                ? 'Traslado'
-                                : 'Interno'}
-                          </span>
-                        </div>
-
-                        <time
-                          dateTime={movimiento.fecha || undefined}
-                        >
-                          {formatearFecha(movimiento.fecha)}
-                        </time>
-                      </div>
-
-                      <div className="hist-cambio">
-                        {/* ORIGEN */}
-                        <div className="hist-ubicacion-origen">
-                          <span>
-                            {esInicial
-                              ? 'Ubicación anterior'
-                              : 'Origen'}
-                          </span>
-
-                          <strong>
-                            {esInicial
-                              ? 'Sin ubicación anterior'
-                              : laboratorioOrigen}
-                          </strong>
-
-                          {!esInicial && sedeOrigen && (
-                            <small>{sedeOrigen}</small>
-                          )}
-
-                          <small>
-                            {ubicacionAnterior || 'Sin detalle'}
-                          </small>
-                        </div>
-
-                        {/* FLECHA */}
-                        <div className="hist-flecha">
-                          <ArrowRight size={19} />
-                        </div>
-
-                        {/* DESTINO */}
-                        <div className="hist-ubicacion-destino">
-                          <span>Destino</span>
-
-                          <strong>
-                            {laboratorioDestino}
-                          </strong>
-
-                          {sedeDestino && (
-                            <small>{sedeDestino}</small>
-                          )}
-
-                          <small>
-                            {ubicacionNueva || 'Sin detalle'}
-                          </small>
-                        </div>
-                      </div>
-
-                      {/* RESPONSABLE Y MOVIMIENTO */}
-                      <div className="hist-movimiento-pie">
-                        <span>
-                          Responsable:{' '}
-                          <strong>{responsable}</strong>
-                        </span>
-
-                        <span>
-                          Movimiento #
-                          {movimiento.id_historial_ubicacion}
+                        <span className={`hist-tipo-etiqueta hist-tipo-etiqueta--${tipo}`}>
+                          {esInicial
+                            ? 'Inicial'
+                            : tipo === 'traslado_laboratorio'
+                              ? 'Traslado'
+                              : 'Interno'}
                         </span>
                       </div>
+
+                      <time dateTime={movimiento.fecha || undefined}>
+                        {formatearFecha(movimiento.fecha)}
+                      </time>
                     </div>
-                  </article>
-                );
-              })}
-            </div>
-          </>
-        )}
+
+                    <div className="hist-cambio">
+                      {/* ORIGEN */}
+                      <div className="hist-ubicacion-origen">
+                        <span>{esInicial ? 'Ubicación anterior' : 'Origen'}</span>
+
+                        <strong>{esInicial ? 'Sin ubicación anterior' : laboratorioOrigen}</strong>
+
+                        {!esInicial && sedeOrigen && <small>{sedeOrigen}</small>}
+
+                        <small>{ubicacionAnterior || 'Sin detalle'}</small>
+                      </div>
+
+                      {/* FLECHA */}
+                      <div className="hist-flecha">
+                        <ArrowRight size={19} />
+                      </div>
+
+                      {/* DESTINO */}
+                      <div className="hist-ubicacion-destino">
+                        <span>Destino</span>
+
+                        <strong>{laboratorioDestino}</strong>
+
+                        {sedeDestino && <small>{sedeDestino}</small>}
+
+                        <small>{ubicacionNueva || 'Sin detalle'}</small>
+                      </div>
+                    </div>
+
+                    {/* RESPONSABLE Y MOVIMIENTO */}
+                    <div className="hist-movimiento-pie">
+                      <span>
+                        Responsable: <strong>{responsable}</strong>
+                      </span>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </>
+      )}
     </section>
   );
 }

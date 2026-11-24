@@ -4,7 +4,7 @@ const router = express.Router();
 const {
   obtenerArchivoEvidencia,
   subirEvidencia,
-  obtenerEvidenciasPorBitacora
+  obtenerEvidenciasPorBitacora,
 } = require('../controllers/evidenciasController');
 
 const { verificarToken } = require('../middlewares/authMiddleware');
@@ -24,23 +24,17 @@ const ROLES_OPERATIVOS = [
   'Coordinador',
   'Director',
   'Tecnico',
-  'Técnico'
+  'Técnico',
 ];
 
 router.use(verificarToken);
 
 // POST /api/evidencias
 // El JWT y el rol se validan ANTES de que multer escriba nada en disco.
-router.post(
-  '/',
-  permitirRoles(...ROLES_OPERATIVOS),
-  subirFoto,
-  subirEvidencia
-);
+router.post('/', permitirRoles(...ROLES_OPERATIVOS), subirFoto, subirEvidencia);
 
 // GET /api/evidencias/bitacora/:id_bitacora
 router.get('/bitacora/:id_bitacora', obtenerEvidenciasPorBitacora);
 router.get('/:id/archivo', obtenerArchivoEvidencia);
 
 module.exports = router;
-

@@ -4,14 +4,14 @@ export const COLORES_ESTADOS = {
   operativo: '#10b981',
   en_mantenimiento: '#f59e0b',
   danado: '#ef4444',
-  otro: '#6b7280'
+  otro: '#6b7280',
 };
 
 export const ETIQUETAS_ESTADOS = {
   operativo: 'Operativo',
   en_mantenimiento: 'En Mantenimiento',
   danado: 'Dañado',
-  otro: 'Otros estados'
+  otro: 'Otros estados',
 };
 
 export function formatearNumero(valor) {
@@ -20,15 +20,15 @@ export function formatearNumero(valor) {
 }
 
 export function formatearFechaReporte(fechaIso) {
-  if (!fechaIso) return 'N/D';
+  if (!fechaIso) return 'No disponible';
   const fecha = new Date(fechaIso);
-  if (isNaN(fecha.getTime())) return 'N/D';
+  if (isNaN(fecha.getTime())) return 'No disponible';
 
   return new Intl.DateTimeFormat('es-CR', {
     timeZone: 'America/Costa_Rica',
     day: '2-digit',
     month: '2-digit',
-    year: 'numeric'
+    year: 'numeric',
   }).format(fecha);
 }
 

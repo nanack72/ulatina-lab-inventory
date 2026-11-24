@@ -1,3 +1,4 @@
+import Notificacion from '../components/comunes/Notificacion';
 import { useEffect, useRef, useState } from 'react';
 
 import {
@@ -7,7 +8,6 @@ import {
   Cpu,
   Tag,
   Hash,
-  AlertCircle,
   RefreshCw,
   History,
   ClipboardList,
@@ -31,9 +31,7 @@ import EliminarEquipo from '../components/inventario/EliminarEquipo';
 
 import '../styles/equipoDetalle.css';
 
-// ==========================================
 // FUNCIONES AUXILIARES
-// ==========================================
 
 function texto(valor) {
   if (valor === null || valor === undefined) {
@@ -43,12 +41,12 @@ function texto(valor) {
   if (typeof valor === 'object') {
     return String(
       valor.nombre ??
-      valor.descripcion ??
-      valor.nombre_estado ??
-      valor.nombre_categoria ??
-      valor.nombre_laboratorio ??
-      valor.nombre_sede ??
-      ''
+        valor.descripcion ??
+        valor.nombre_estado ??
+        valor.nombre_categoria ??
+        valor.nombre_laboratorio ??
+        valor.nombre_sede ??
+        ''
     ).trim();
   }
 
@@ -68,38 +66,26 @@ function obtenerValor(...valores) {
 function nombreSede(valor) {
   const nombre = texto(valor);
 
-  if (!nombre) return 'No registrada';
+  if (!nombre) return 'Sin registrar';
 
-  return /^sede\s/i.test(nombre)
-    ? nombre
-    : `Sede ${nombre}`;
+  return /^sede\s/i.test(nombre) ? nombre : `Sede ${nombre}`;
 }
 
-// ==========================================
 // CAMPO DE INFORMACIÓN
-// ==========================================
 
 function Campo({ etiqueta, valor, texto = false }) {
   return (
     <div className="detalle-campo">
-      <span className="detalle-campo-etiqueta">
-        {etiqueta}
-      </span>
+      <span className="detalle-campo-etiqueta">{etiqueta}</span>
 
-      <span
-        className={`detalle-campo-valor ${
-          texto ? 'detalle-campo-valor--texto' : ''
-        }`}
-      >
-        {valor || 'No registrado'}
+      <span className={`detalle-campo-valor ${texto ? 'detalle-campo-valor--texto' : ''}`}>
+        {valor || 'Sin registrar'}
       </span>
     </div>
   );
 }
 
-// ==========================================
 // TARJETA
-// ==========================================
 
 function Tarjeta({ titulo, icono: Icono, children }) {
   return (
@@ -112,16 +98,12 @@ function Tarjeta({ titulo, icono: Icono, children }) {
         <h2>{titulo}</h2>
       </div>
 
-      <div className="detalle-tarjeta-contenido">
-        {children}
-      </div>
+      <div className="detalle-tarjeta-contenido">{children}</div>
     </section>
   );
 }
 
-// ==========================================
 // COMPONENTE PRINCIPAL
-// ==========================================
 
 export default function EquipoDetalle({
   idEquipo,
@@ -135,54 +117,31 @@ export default function EquipoDetalle({
   puedeEliminarFotos = false,
   puedeEliminar = false,
 }) {
-
-  // ========================================
   // CONSULTAR EQUIPO CON EL HOOK
-  // ========================================
 
-  const {
-    equipo,
-    cargando,
-    error,
-    recargar,
-  } = useEquipo(
-    idEquipo,
-    token,
-    onSesionExpirada
-  );
+  const { equipo, cargando, error, recargar } = useEquipo(idEquipo, token, onSesionExpirada);
 
-  // ========================================
   // NAVEGACIÓN ENTRE PESTAÑAS
-  // ========================================
 
-  const [seccionActiva, setSeccionActiva] =
-    useState('detalles');
+  const [seccionActiva, setSeccionActiva] = useState('detalles');
 
-  const [historialActivo, setHistorialActivo] =
-    useState('ubicaciones');
+  const [historialActivo, setHistorialActivo] = useState('ubicaciones');
 
-  // ========================================
   // MENÚ MÁS ACCIONES
-  // ========================================
 
-  const [menuAccionesAbierto, setMenuAccionesAbierto] =
-    useState(false);
+  const [menuAccionesAbierto, setMenuAccionesAbierto] = useState(false);
 
   const menuAccionesRef = useRef(null);
   const [mostrarEliminar, setMostrarEliminar] = useState(false);
 
   const mostrarMenuAcciones =
-    typeof onTrasladar === 'function' ||
-    typeof onCambiarEstado === 'function' || puedeEliminar;
+    typeof onTrasladar === 'function' || typeof onCambiarEstado === 'function' || puedeEliminar;
 
   useEffect(() => {
     if (!menuAccionesAbierto) return undefined;
 
     function cerrarAlHacerClicFuera(evento) {
-      if (
-        menuAccionesRef.current &&
-        !menuAccionesRef.current.contains(evento.target)
-      ) {
+      if (menuAccionesRef.current && !menuAccionesRef.current.contains(evento.target)) {
         setMenuAccionesAbierto(false);
       }
     }
@@ -193,47 +152,24 @@ export default function EquipoDetalle({
       }
     }
 
-    document.addEventListener(
-      'pointerdown',
-      cerrarAlHacerClicFuera
-    );
+    document.addEventListener('pointerdown', cerrarAlHacerClicFuera);
 
-    document.addEventListener(
-      'keydown',
-      cerrarConEscape
-    );
+    document.addEventListener('keydown', cerrarConEscape);
 
     return () => {
-      document.removeEventListener(
-        'pointerdown',
-        cerrarAlHacerClicFuera
-      );
+      document.removeEventListener('pointerdown', cerrarAlHacerClicFuera);
 
-      document.removeEventListener(
-        'keydown',
-        cerrarConEscape
-      );
+      document.removeEventListener('keydown', cerrarConEscape);
     };
   }, [menuAccionesAbierto]);
 
-  // ========================================
   // DATOS DEL EQUIPO
-  // ========================================
 
-  const nombre = obtenerValor(
-    equipo?.nombre,
-    equipo?.nombre_equipo
-  );
+  const nombre = obtenerValor(equipo?.nombre, equipo?.nombre_equipo);
 
-  const placa = obtenerValor(
-    equipo?.placa_institucional,
-    equipo?.placa
-  );
+  const placa = obtenerValor(equipo?.placa_institucional, equipo?.placa);
 
-  const serie = obtenerValor(
-    equipo?.numero_serie,
-    equipo?.serie
-  );
+  const serie = obtenerValor(equipo?.numero_serie, equipo?.serie);
 
   const categoria = obtenerValor(
     equipo?.categoria,
@@ -241,17 +177,9 @@ export default function EquipoDetalle({
     equipo?.categoria_nombre
   );
 
-  const estado = obtenerValor(
-    equipo?.estado,
-    equipo?.nombre_estado,
-    equipo?.estado_nombre
-  );
+  const estado = obtenerValor(equipo?.estado, equipo?.nombre_estado, equipo?.estado_nombre);
 
-  const sede = obtenerValor(
-    equipo?.sede,
-    equipo?.nombre_sede,
-    equipo?.sede_nombre
-  );
+  const sede = obtenerValor(equipo?.sede, equipo?.nombre_sede, equipo?.sede_nombre);
 
   const laboratorio = obtenerValor(
     equipo?.laboratorio,
@@ -259,10 +187,7 @@ export default function EquipoDetalle({
     equipo?.laboratorio_nombre
   );
 
-  const ubicacion = obtenerValor(
-    equipo?.ubicacion_detalle,
-    equipo?.ubicacionDetalle
-  );
+  const ubicacion = obtenerValor(equipo?.ubicacion_detalle, equipo?.ubicacionDetalle);
 
   const marca = texto(equipo?.marca);
   const modelo = texto(equipo?.modelo);
@@ -271,17 +196,12 @@ export default function EquipoDetalle({
   const comentarios = texto(equipo?.comentarios);
 
   const nombresLaboratorios =
-    equipo?.id_laboratorio != null && laboratorio
-      ? { [equipo.id_laboratorio]: laboratorio }
-      : {};
+    equipo?.id_laboratorio != null && laboratorio ? { [equipo.id_laboratorio]: laboratorio } : {};
 
-  // ========================================
   // INTERFAZ
-  // ========================================
 
   return (
     <div className="detalle-pagina detalle-redisenado detalle-distribucion">
-
       {mostrarEliminar && puedeEliminar && equipo && (
         <EliminarEquipo
           equipo={equipo}
@@ -294,11 +214,7 @@ export default function EquipoDetalle({
 
       {/* VOLVER AL INVENTARIO */}
       <div className="detalle-navegacion">
-        <button
-          type="button"
-          className="detalle-volver"
-          onClick={onVolver}
-        >
+        <button type="button" className="detalle-volver" onClick={onVolver}>
           <ArrowLeft size={17} />
           Volver al inventario
         </button>
@@ -306,117 +222,84 @@ export default function EquipoDetalle({
 
       {/* CARGANDO */}
       {cargando && (
-        <div
-          className="detalle-mensaje"
-          role="status"
-        >
+        <div className="detalle-mensaje" role="status">
           Consultando información del equipo...
         </div>
       )}
 
       {/* ERROR */}
       {!cargando && error && (
-        <div
-          className="detalle-mensaje detalle-mensaje--error"
-          role="alert"
-        >
-          <AlertCircle size={21} />
-
+        <Notificacion tipo="error">
           <span>{error}</span>
 
-          <button
-            type="button"
-            onClick={recargar}
-          >
+          <button type="button" onClick={recargar}>
             <RefreshCw size={15} />
             Reintentar
           </button>
-        </div>
+        </Notificacion>
       )}
 
       {/* CONTENIDO */}
       {!cargando && !error && equipo && (
         <>
-          {/* ==================================
+          {/* 
               ENCABEZADO PRINCIPAL
-              ================================== */}
+               */}
 
           <header className="detalle-principal">
-
             <div className="detalle-principal-icono">
               <Monitor size={27} />
             </div>
 
             <div className="detalle-principal-info">
+              <span className="detalle-categoria-superior">{categoria || 'Sin categoría'}</span>
 
-              <span className="detalle-categoria-superior">
-                {categoria || 'Sin categoría'}
-              </span>
-
-              <h1>
-                {nombre || 'Equipo sin nombre'}
-              </h1>
+              <h1>{nombre || 'Equipo sin nombre'}</h1>
 
               <div className="detalle-identificadores">
                 <span>
                   <Tag size={14} />
-                  Placa: {placa || 'No registrada'}
+                  Placa: {placa || 'Sin registrar'}
                 </span>
 
                 <span>
                   <Hash size={14} />
-                  Serie: {serie || 'No registrada'}
+                  Serie: {serie || 'Sin registrar'}
                 </span>
               </div>
-
             </div>
 
-            {/* ==================================
+            {/* 
                 ESTADO Y ACCIONES
-                ================================== */}
+                 */}
 
             <div className="detalle-acciones-encabezado">
-
               {/* ESTADO ACTUAL */}
-              <span
-                className={`detalle-estado detalle-estado--${tipoEstado(estado)}`}
-              >
+              <span className={`detalle-estado detalle-estado--${tipoEstado(estado)}`}>
                 <span className="detalle-estado-punto" />
                 {estado || 'Sin estado'}
               </span>
 
               {/* EDITAR EQUIPO */}
               {typeof onEditar === 'function' && (
-                <button
-                  type="button"
-                  className="btn btn-primario"
-                  onClick={() => onEditar(equipo)}
-                >
+                <button type="button" className="btn btn-primario" onClick={() => onEditar(equipo)}>
                   <Pencil size={15} />
                   Editar equipo
                 </button>
               )}
 
-              {/* ==================================
+              {/* 
                   MENÚ MÁS ACCIONES
-                  ================================== */}
+                   */}
 
               {mostrarMenuAcciones && (
-                <div
-                  className="detalle-menu-acciones"
-                  ref={menuAccionesRef}
-                >
-
+                <div className="detalle-menu-acciones" ref={menuAccionesRef}>
                   <button
                     type="button"
                     className="detalle-boton-mas"
                     aria-expanded={menuAccionesAbierto}
                     aria-haspopup="true"
-                    onClick={() =>
-                      setMenuAccionesAbierto(
-                        (abierto) => !abierto
-                      )
-                    }
+                    onClick={() => setMenuAccionesAbierto((abierto) => !abierto)}
                   >
                     <MoreHorizontal size={17} />
                     Más acciones
@@ -425,7 +308,6 @@ export default function EquipoDetalle({
 
                   {menuAccionesAbierto && (
                     <div className="detalle-menu-opciones">
-
                       {/* TRASLADAR EQUIPO */}
                       {typeof onTrasladar === 'function' && (
                         <button
@@ -467,41 +349,25 @@ export default function EquipoDetalle({
                           Eliminar equipo
                         </button>
                       )}
-
                     </div>
                   )}
-
                 </div>
               )}
-
             </div>
-
           </header>
 
-          {/* ==================================
+          {/* 
               PESTAÑAS
-              ================================== */}
+               */}
 
-          <nav
-            className="detalle-pestanas"
-            aria-label="Secciones del equipo"
-          >
-
+          <nav className="detalle-pestanas" aria-label="Secciones del equipo">
             <button
               type="button"
               className={`detalle-pestana ${
-                seccionActiva === 'detalles'
-                  ? 'detalle-pestana--activa'
-                  : ''
+                seccionActiva === 'detalles' ? 'detalle-pestana--activa' : ''
               }`}
-              aria-current={
-                seccionActiva === 'detalles'
-                  ? 'page'
-                  : undefined
-              }
-              onClick={() =>
-                setSeccionActiva('detalles')
-              }
+              aria-current={seccionActiva === 'detalles' ? 'page' : undefined}
+              onClick={() => setSeccionActiva('detalles')}
             >
               <ClipboardList size={17} />
               Detalles del equipo
@@ -510,149 +376,85 @@ export default function EquipoDetalle({
             <button
               type="button"
               className={`detalle-pestana ${
-                seccionActiva === 'historiales'
-                  ? 'detalle-pestana--activa'
-                  : ''
+                seccionActiva === 'historiales' ? 'detalle-pestana--activa' : ''
               }`}
-              aria-current={
-                seccionActiva === 'historiales'
-                  ? 'page'
-                  : undefined
-              }
-              onClick={() =>
-                setSeccionActiva('historiales')
-              }
+              aria-current={seccionActiva === 'historiales' ? 'page' : undefined}
+              onClick={() => setSeccionActiva('historiales')}
             >
               <History size={17} />
               Historiales
             </button>
-
           </nav>
 
-          {/* ==================================
+          {/* 
               DETALLES DEL EQUIPO
-              ================================== */}
+               */}
 
           {seccionActiva === 'detalles' && (
             <div className="detalle-columnas">
-
               {/* COLUMNA IZQUIERDA */}
               <div className="detalle-columna-izquierda">
-
-                <Tarjeta
-                  titulo="Datos técnicos"
-                  icono={Cpu}
-                >
+                <Tarjeta titulo="Datos técnicos" icono={Cpu}>
                   <div className="detalle-datos-tecnicos">
+                    <Campo etiqueta="Marca" valor={marca} />
 
-                    <Campo
-                      etiqueta="Marca"
-                      valor={marca}
-                    />
+                    <Campo etiqueta="Modelo" valor={modelo} />
 
-                    <Campo
-                      etiqueta="Modelo"
-                      valor={modelo}
-                    />
-
-                    <Campo
-                      etiqueta="Año"
-                      valor={anio}
-                    />
-
+                    <Campo etiqueta="Año" valor={anio} />
                   </div>
 
                   <div className="detalle-caracteristicas">
-                    <Campo
-                      etiqueta="Características"
-                      valor={caracteristicas}
-                      texto
-                    />
+                    <Campo etiqueta="Características" valor={caracteristicas} texto />
                   </div>
-
                 </Tarjeta>
 
-                <Tarjeta
-                  titulo="Ubicación"
-                  icono={MapPin}
-                >
-                  <Campo
-                    etiqueta="Sede"
-                    valor={nombreSede(sede)}
-                  />
+                <Tarjeta titulo="Ubicación" icono={MapPin}>
+                  <Campo etiqueta="Sede" valor={nombreSede(sede)} />
 
-                  <Campo
-                    etiqueta="Laboratorio"
-                    valor={laboratorio}
-                  />
+                  <Campo etiqueta="Laboratorio" valor={laboratorio} />
 
-                  <Campo
-                    etiqueta="Ubicación detallada"
-                    valor={ubicacion}
-                  />
+                  <Campo etiqueta="Ubicación detallada" valor={ubicacion} />
                 </Tarjeta>
 
-                <Tarjeta
-                  titulo="Observaciones"
-                  icono={MessageSquare}
-                >
-                  <Campo
-                    etiqueta="Comentarios"
-                    valor={comentarios}
-                    texto
-                  />
+                <Tarjeta titulo="Observaciones" icono={MessageSquare}>
+                  <Campo etiqueta="Comentarios" valor={comentarios} texto />
                 </Tarjeta>
-
               </div>
 
               {/* COLUMNA DERECHA */}
               <div className="detalle-columna-derecha">
-                <FotosEquipo idEquipo={idEquipo} token={token} puedeAgregar={puedeAgregarFotos} puedeEliminar={puedeEliminarFotos} />
-
-
-
+                <FotosEquipo
+                  idEquipo={idEquipo}
+                  token={token}
+                  puedeAgregar={puedeAgregarFotos}
+                  puedeEliminar={puedeEliminarFotos}
+                />
               </div>
-
             </div>
           )}
 
-          {/* ==================================
+          {/* 
               HISTORIALES
-              ================================== */}
+               */}
 
           {seccionActiva === 'historiales' && (
             <div className="detalle-historiales">
-
               <div className="detalle-historial-selector">
-
                 <div className="detalle-historial-selector-texto">
                   <h2>Historiales del equipo</h2>
 
-                  <p>
-                    Seleccione el tipo de historial
-                    que desea consultar.
-                  </p>
+                  <p>Seleccione el tipo de historial que desea consultar.</p>
                 </div>
 
-                <div
-                  className="detalle-historial-opciones"
-                  aria-label="Tipo de historial"
-                >
-
+                <div className="detalle-historial-opciones" aria-label="Tipo de historial">
                   {/* UBICACIONES */}
                   <button
                     type="button"
                     className={`detalle-historial-opcion ${
-                      historialActivo === 'ubicaciones'
-                        ? 'detalle-historial-opcion--activa'
-                        : ''
+                      historialActivo === 'ubicaciones' ? 'detalle-historial-opcion--activa' : ''
                     }`}
-                    aria-pressed={
-                      historialActivo === 'ubicaciones'
-                    }
-                    onClick={() =>
-                      setHistorialActivo('ubicaciones')
-                    }
+                    aria-pressed={historialActivo === 'ubicaciones'}
+                    onClick={() => setHistorialActivo('ubicaciones')}
                   >
                     <MapPin size={16} />
                     Ubicaciones
@@ -662,16 +464,10 @@ export default function EquipoDetalle({
                   <button
                     type="button"
                     className={`detalle-historial-opcion ${
-                      historialActivo === 'estados'
-                        ? 'detalle-historial-opcion--activa'
-                        : ''
+                      historialActivo === 'estados' ? 'detalle-historial-opcion--activa' : ''
                     }`}
-                    aria-pressed={
-                      historialActivo === 'estados'
-                    }
-                    onClick={() =>
-                      setHistorialActivo('estados')
-                    }
+                    aria-pressed={historialActivo === 'estados'}
+                    onClick={() => setHistorialActivo('estados')}
                   >
                     <ArrowLeftRight size={16} />
                     Estados
@@ -681,21 +477,14 @@ export default function EquipoDetalle({
                   <button
                     type="button"
                     className={`detalle-historial-opcion ${
-                      historialActivo === 'cambios'
-                        ? 'detalle-historial-opcion--activa'
-                        : ''
+                      historialActivo === 'cambios' ? 'detalle-historial-opcion--activa' : ''
                     }`}
-                    aria-pressed={
-                      historialActivo === 'cambios'
-                    }
-                    onClick={() =>
-                      setHistorialActivo('cambios')
-                    }
+                    aria-pressed={historialActivo === 'cambios'}
+                    onClick={() => setHistorialActivo('cambios')}
                   >
                     <FileClock size={16} />
                     Modificaciones generales
                   </button>
-
                 </div>
               </div>
 
@@ -704,32 +493,22 @@ export default function EquipoDetalle({
                 <HistorialUbicaciones
                   idEquipo={idEquipo}
                   token={token}
-                  nombresLaboratorios={
-                    nombresLaboratorios
-                  }
+                  nombresLaboratorios={nombresLaboratorios}
                 />
               )}
 
               {/* HISTORIAL DE ESTADOS */}
               {historialActivo === 'estados' && (
-                <HistorialEstados
-                  idEquipo={idEquipo}
-                  token={token}
-                />
+                <HistorialEstados idEquipo={idEquipo} token={token} />
               )}
 
               {/* HISTORIAL DE MODIFICACIONES */}
 
               {historialActivo === 'cambios' && (
-                <HistorialCambios
-                  idEquipo={idEquipo}
-                  token={token}
-                />
+                <HistorialCambios idEquipo={idEquipo} token={token} />
               )}
-              
             </div>
           )}
-
         </>
       )}
     </div>

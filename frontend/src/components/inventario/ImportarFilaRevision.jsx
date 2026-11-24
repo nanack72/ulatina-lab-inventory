@@ -1,19 +1,8 @@
 import { useState } from 'react';
-import {
-  AlertTriangle,
-  Camera,
-  CheckCircle2,
-  Pencil,
-  RefreshCw,
-  X,
-} from 'lucide-react';
+import { AlertTriangle, Camera, CheckCircle2, Pencil, RefreshCw, X } from 'lucide-react';
 
 import AdjuntarFotos from './AdjuntarFotos';
-import {
-  camposConError,
-  estadoFila,
-  pistaOriginal,
-} from '../../utils/importacion';
+import { camposConError, estadoFila, pistaOriginal } from '../../utils/importacion';
 
 const ESTADOS = {
   listo: { texto: 'Listo para importar', Icono: CheckCircle2 },
@@ -64,8 +53,7 @@ export default function ImportarFilaRevision({
     ([campo, valor]) => Boolean(valor) && campo === 'anio_modelo'
   );
 
-  const alternar = (nombre) =>
-    setPanel((actual) => (actual === nombre ? null : nombre));
+  const alternar = (nombre) => setPanel((actual) => (actual === nombre ? null : nombre));
 
   // Selectores principales: siempre visibles porque son lo que más se corrige
   const selectores = [
@@ -161,10 +149,7 @@ export default function ImportarFilaRevision({
                 value={fila[campo] ?? ''}
                 aria-invalid={conError.has(campo) || undefined}
                 onChange={(e) =>
-                  onCambiarCampo(
-                    campo,
-                    e.target.value ? Number(e.target.value) : null
-                  )
+                  onCambiarCampo(campo, e.target.value ? Number(e.target.value) : null)
                 }
               >
                 <option value="">{vacio}</option>
@@ -208,11 +193,7 @@ export default function ImportarFilaRevision({
         {imagenes.length > 0 && (
           <span className="imp-miniaturas" aria-hidden="true">
             {imagenes.slice(0, 4).map((imagen, i) => (
-              <img
-                key={i}
-                src={`data:${imagen.mime};base64,${imagen.base64}`}
-                alt=""
-              />
+              <img key={i} src={`data:${imagen.mime};base64,${imagen.base64}`} alt="" />
             ))}
           </span>
         )}

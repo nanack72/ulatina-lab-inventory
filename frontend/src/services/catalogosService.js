@@ -2,9 +2,7 @@ const API_URL = '/api';
 
 async function consultarCatalogo(ruta, token, signal) {
   if (!token) {
-    throw new Error(
-      'Debés iniciar sesión para consultar los catálogos.'
-    );
+    throw new Error('Debe iniciar sesión para consultar los catálogos.');
   }
 
   let respuesta;
@@ -23,28 +21,20 @@ async function consultarCatalogo(ruta, token, signal) {
       throw error;
     }
 
-    throw new Error(
-      'No se pudo conectar con el servidor.',
-      { cause: error }
-    );
+    throw new Error('No se pudo conectar con el servidor.', { cause: error });
   }
 
   const resultado = await respuesta.json().catch(() => null);
 
   if (!respuesta.ok) {
-    const error = new Error(
-      resultado?.message ||
-      `No se pudo consultar el catálogo de ${ruta}.`
-    );
+    const error = new Error(resultado?.message || `No se pudo consultar el catálogo de ${ruta}.`);
 
     error.status = respuesta.status;
     throw error;
   }
 
   if (resultado?.success !== true || !Array.isArray(resultado.data)) {
-    throw new Error(
-      `El servidor devolvió datos inválidos para ${ruta}.`
-    );
+    throw new Error(`El servidor devolvió datos inválidos para ${ruta}.`);
   }
 
   return resultado.data;

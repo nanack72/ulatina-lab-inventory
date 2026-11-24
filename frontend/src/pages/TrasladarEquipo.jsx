@@ -1,22 +1,15 @@
+import ConfirmacionEquipo from '../components/comunes/ConfirmacionEquipo';
+import { notificar } from '../utils/notificaciones';
+import Notificacion from '../components/comunes/Notificacion';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import {
-  ArrowLeft,
-  ArrowLeftRight,
-  MapPin,
-  AlertCircle,
-  CheckCircle2,
-  Building2,
-} from 'lucide-react';
+import { ArrowLeft, ArrowLeftRight, MapPin, Building2 } from 'lucide-react';
 
 import { obtenerEquipoPorId } from '../services/equiposService';
 
 import { trasladarEquipo } from '../services/equiposService';
 
-import {
-  obtenerSedes,
-  obtenerLaboratorios,
-} from '../services/catalogosService';
+import { obtenerSedes, obtenerLaboratorios } from '../services/catalogosService';
 
 import '../styles/registrarEquipo.css';
 import '../styles/trasladarEquipo.css';
@@ -42,19 +35,10 @@ function nombreRelacion(valor) {
     return texto(valor);
   }
 
-  return texto(
-    valor.nombre ??
-    valor.nombre_laboratorio ??
-    valor.nombre_sede
-  );
+  return texto(valor.nombre ?? valor.nombre_laboratorio ?? valor.nombre_sede);
 }
 
-export default function TrasladarEquipo({
-  idEquipo,
-  token,
-  onCancelar,
-  onTrasladado,
-}) {
+export default function TrasladarEquipo({ idEquipo, token, onCancelar, onTrasladado }) {
   const [equipo, setEquipo] = useState(null);
 
   const [sedes, setSedes] = useState([]);
@@ -70,7 +54,6 @@ export default function TrasladarEquipo({
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
   const [confirmar, setConfirmar] = useState(false);
-  const [exito, setExito] = useState('');
 
   const enviandoRef = useRef(false);
 
@@ -81,19 +64,10 @@ export default function TrasladarEquipo({
     async function cargarDatos() {
       setCargando(true);
       setError('');
-      setExito('');
 
       try {
-        const [
-          datosEquipo,
-          datosSedes,
-          datosLaboratorios,
-        ] = await Promise.all([
-          obtenerEquipoPorId(
-            idEquipo,
-            token,
-            controlador.signal
-          ),
+        const [datosEquipo, datosSedes, datosLaboratorios] = await Promise.all([
+          obtenerEquipoPorId(idEquipo, token, controlador.signal),
           obtenerSedes(token, controlador.signal),
           obtenerLaboratorios(token, controlador.signal),
         ]);
@@ -108,31 +82,18 @@ export default function TrasladarEquipo({
         const laboratorioActual = datosEquipo.id_laboratorio;
 
         const laboratorioEncontrado = datosLaboratorios.find(
-          (laboratorio) =>
-            String(laboratorio.id_laboratorio) ===
-            String(laboratorioActual)
+          (laboratorio) => String(laboratorio.id_laboratorio) === String(laboratorioActual)
         );
 
         setFormulario({
-          id_sede: laboratorioEncontrado
-            ? String(laboratorioEncontrado.id_sede)
-            : '',
-          id_laboratorio:
-            laboratorioEncontrado
-              ? String(laboratorioEncontrado.id_laboratorio)
-              : '',
-          ubicacion_detalle: texto(
-            datosEquipo.ubicacion_detalle ??
-            datosEquipo.ubicacionDetalle
-          ),
+          id_sede: laboratorioEncontrado ? String(laboratorioEncontrado.id_sede) : '',
+          id_laboratorio: laboratorioEncontrado ? String(laboratorioEncontrado.id_laboratorio) : '',
+          ubicacion_detalle: texto(datosEquipo.ubicacion_detalle ?? datosEquipo.ubicacionDetalle),
         });
       } catch (err) {
         if (controlador.signal.aborted) return;
 
-        setError(
-          err.message ||
-          'No fue posible cargar los datos del traslado.'
-        );
+        setError(err.message || 'No fue posible cargar los datos del traslado.');
       } finally {
         if (!controlador.signal.aborted) {
           setCargando(false);
@@ -150,48 +111,33 @@ export default function TrasladarEquipo({
     if (!formulario.id_sede) return [];
 
     return laboratorios.filter(
-      (laboratorio) =>
-        String(laboratorio.id_sede) ===
-        String(formulario.id_sede)
+      (laboratorio) => String(laboratorio.id_sede) === String(formulario.id_sede)
     );
   }, [laboratorios, formulario.id_sede]);
 
   // Mostrar únicamente sedes con laboratorios autorizados.
   const sedesDisponibles = useMemo(() => {
     return sedes.filter((sede) =>
-      laboratorios.some(
-        (laboratorio) =>
-          String(laboratorio.id_sede) ===
-          String(sede.id_sede)
-      )
+      laboratorios.some((laboratorio) => String(laboratorio.id_sede) === String(sede.id_sede))
     );
   }, [sedes, laboratorios]);
 
   const laboratorioActual = laboratorios.find(
-    (laboratorio) =>
-      String(laboratorio.id_laboratorio) ===
-      String(equipo?.id_laboratorio)
+    (laboratorio) => String(laboratorio.id_laboratorio) === String(equipo?.id_laboratorio)
   );
 
   const laboratorioDestino = laboratorios.find(
-    (laboratorio) =>
-      String(laboratorio.id_laboratorio) ===
-      String(formulario.id_laboratorio)
+    (laboratorio) => String(laboratorio.id_laboratorio) === String(formulario.id_laboratorio)
   );
 
-  const ubicacionActual = texto(
-    equipo?.ubicacion_detalle ??
-    equipo?.ubicacionDetalle
-  );
+  const ubicacionActual = texto(equipo?.ubicacion_detalle ?? equipo?.ubicacionDetalle);
 
   const idLaboratorioActual = Number(equipo?.id_laboratorio);
 
   const hayCambios =
     equipo &&
-    (
-      Number(formulario.id_laboratorio) !== idLaboratorioActual ||
-      formulario.ubicacion_detalle.trim() !== ubicacionActual
-    );
+    (Number(formulario.id_laboratorio) !== idLaboratorioActual ||
+      formulario.ubicacion_detalle.trim() !== ubicacionActual);
 
   function actualizarCampo(evento) {
     const { name, value } = evento.target;
@@ -217,21 +163,19 @@ export default function TrasladarEquipo({
 
   function validarTraslado() {
     if (!idValido(formulario.id_sede)) {
-      return 'Debés seleccionar una sede.';
+      return 'Debe seleccionar una sede.';
     }
 
     if (!idValido(formulario.id_laboratorio)) {
-      return 'Debés seleccionar un laboratorio.';
+      return 'Debe seleccionar un laboratorio.';
     }
 
     const laboratorioAutorizado = laboratoriosFiltrados.some(
-      (laboratorio) =>
-        String(laboratorio.id_laboratorio) ===
-        String(formulario.id_laboratorio)
+      (laboratorio) => String(laboratorio.id_laboratorio) === String(formulario.id_laboratorio)
     );
 
     if (!laboratorioAutorizado) {
-      return 'No tenés disponible ese laboratorio para el traslado.';
+      return 'No tiene disponible ese laboratorio para el traslado.';
     }
 
     if (!hayCambios) {
@@ -281,23 +225,19 @@ export default function TrasladarEquipo({
         idEquipo,
         {
           id_laboratorio: Number(formulario.id_laboratorio),
-          ubicacion_detalle:
-            formulario.ubicacion_detalle.trim(),
+          ubicacion_detalle: formulario.ubicacion_detalle.trim(),
         },
         token
       );
 
-      setExito('El equipo fue trasladado correctamente.');
+      notificar({ tipo: 'exito', mensaje: 'El equipo fue trasladado correctamente.' });
       setConfirmar(false);
 
       if (typeof onTrasladado === 'function') {
         onTrasladado();
       }
     } catch (err) {
-      setError(
-        err.message ||
-        'No fue posible realizar el traslado.'
-      );
+      setError(err.message || 'No fue posible realizar el traslado.');
       setConfirmar(false);
     } finally {
       enviandoRef.current = false;
@@ -317,14 +257,8 @@ export default function TrasladarEquipo({
 
   return (
     <div className="registro-pagina traslado-pagina">
-
       {/* VOLVER */}
-      <button
-        type="button"
-        className="registro-volver"
-        onClick={onCancelar}
-        disabled={guardando}
-      >
+      <button type="button" className="registro-volver" onClick={onCancelar} disabled={guardando}>
         <ArrowLeft size={17} />
         Volver al inventario
       </button>
@@ -333,34 +267,18 @@ export default function TrasladarEquipo({
       <div className="registro-encabezado">
         <h1>Trasladar equipo</h1>
         <p>
-          Modifique la ubicación de un equipo tecnológico
-          conservando su historial de movimientos.
+          Modifique la ubicación de un equipo tecnológico conservando su historial de movimientos.
         </p>
       </div>
 
       {error && (
-        <div
-          className="registro-alerta registro-alerta-error"
-          role="alert"
-        >
-          <AlertCircle size={19} />
+        <Notificacion tipo="error">
           <span>{error}</span>
-        </div>
-      )}
-
-      {exito && (
-        <div
-          className="registro-alerta registro-alerta-exito"
-          role="status"
-        >
-          <CheckCircle2 size={19} />
-          <span>{exito}</span>
-        </div>
+        </Notificacion>
       )}
 
       {equipo && (
         <form onSubmit={solicitarConfirmacion}>
-
           {/* IDENTIFICACIÓN DEL EQUIPO */}
           <section className="registro-tarjeta">
             <div className="registro-tarjeta-titulo">
@@ -374,23 +292,17 @@ export default function TrasladarEquipo({
               <div className="traslado-equipo-info">
                 <div>
                   <span>Equipo</span>
-                  <strong>
-                    {equipo.nombre || 'Sin nombre'}
-                  </strong>
+                  <strong>{equipo.nombre || 'Sin nombre'}</strong>
                 </div>
 
                 <div>
                   <span>Placa institucional</span>
-                  <strong>
-                    {equipo.placa_institucional || '—'}
-                  </strong>
+                  <strong>{equipo.placa_institucional || '—'}</strong>
                 </div>
 
                 <div>
                   <span>Número de serie</span>
-                  <strong>
-                    {equipo.numero_serie || '—'}
-                  </strong>
+                  <strong>{equipo.numero_serie || '—'}</strong>
                 </div>
               </div>
             </div>
@@ -398,7 +310,6 @@ export default function TrasladarEquipo({
 
           {/* UBICACIONES */}
           <div className="traslado-grid">
-
             {/* UBICACIÓN ACTUAL */}
             <section className="registro-tarjeta">
               <div className="registro-tarjeta-titulo">
@@ -414,18 +325,15 @@ export default function TrasladarEquipo({
                     <span>Laboratorio</span>
                     <strong>
                       {nombreRelacion(laboratorioActual) ||
-                       nombreRelacion(equipo.laboratorio) ||
-                       equipo.nombre_laboratorio ||
-                       `Laboratorio ${equipo.id_laboratorio}`}
+                        nombreRelacion(equipo.laboratorio) ||
+                        equipo.nombre_laboratorio ||
+                        'Laboratorio no disponible'}
                     </strong>
                   </div>
 
                   <div>
                     <span>Ubicación detallada</span>
-                    <strong>
-                      {ubicacionActual ||
-                       'Sin ubicación detallada'}
-                    </strong>
+                    <strong>{ubicacionActual || 'Sin ubicación detallada'}</strong>
                   </div>
                 </div>
               </div>
@@ -442,7 +350,6 @@ export default function TrasladarEquipo({
 
               <div className="registro-tarjeta-contenido">
                 <div className="traslado-campos">
-
                   <label className="registro-campo">
                     <span className="registro-etiqueta">
                       Sede
@@ -456,15 +363,10 @@ export default function TrasladarEquipo({
                       required
                       disabled={guardando}
                     >
-                      <option value="">
-                        Seleccionar sede
-                      </option>
+                      <option value="">Seleccionar sede</option>
 
                       {sedesDisponibles.map((sede) => (
-                        <option
-                          key={sede.id_sede}
-                          value={sede.id_sede}
-                        >
+                        <option key={sede.id_sede} value={sede.id_sede}>
                           {sede.nombre}
                         </option>
                       ))}
@@ -481,32 +383,21 @@ export default function TrasladarEquipo({
                       name="id_laboratorio"
                       value={formulario.id_laboratorio}
                       onChange={actualizarCampo}
-                      disabled={
-                        !formulario.id_sede || guardando
-                      }
+                      disabled={!formulario.id_sede || guardando}
                       required
                     >
-                      <option value="">
-                        Seleccionar laboratorio
-                      </option>
+                      <option value="">Seleccionar laboratorio</option>
 
-                      {laboratoriosFiltrados.map(
-                        (laboratorio) => (
-                          <option
-                            key={laboratorio.id_laboratorio}
-                            value={laboratorio.id_laboratorio}
-                          >
-                            {laboratorio.nombre}
-                          </option>
-                        )
-                      )}
+                      {laboratoriosFiltrados.map((laboratorio) => (
+                        <option key={laboratorio.id_laboratorio} value={laboratorio.id_laboratorio}>
+                          {laboratorio.nombre}
+                        </option>
+                      ))}
                     </select>
                   </label>
 
                   <label className="registro-campo">
-                    <span className="registro-etiqueta">
-                      Ubicación detallada
-                    </span>
+                    <span className="registro-etiqueta">Ubicación detallada</span>
 
                     <input
                       type="text"
@@ -518,7 +409,6 @@ export default function TrasladarEquipo({
                       disabled={guardando}
                     />
                   </label>
-
                 </div>
               </div>
             </section>
@@ -526,10 +416,7 @@ export default function TrasladarEquipo({
 
           {/* BOTONES */}
           <div className="registro-acciones">
-            <span>
-              Los cambios de ubicación quedarán registrados
-              en el historial del equipo.
-            </span>
+            <span>Los cambios de ubicación quedarán registrados en el historial del equipo.</span>
 
             <div className="registro-botones">
               <button
@@ -544,11 +431,7 @@ export default function TrasladarEquipo({
               <button
                 type="submit"
                 className="btn btn-lg btn-primario"
-                disabled={
-                  guardando ||
-                  !hayCambios ||
-                  !laboratorioDestino
-                }
+                disabled={guardando || !hayCambios || !laboratorioDestino}
               >
                 <ArrowLeftRight size={17} />
                 Revisar traslado
@@ -560,24 +443,21 @@ export default function TrasladarEquipo({
 
       {/* CONFIRMACIÓN DEL TRASLADO */}
       {confirmar && (
-        <div className="traslado-confirmacion-fondo">
-          <div
-            className="traslado-confirmacion"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="traslado-confirmacion-titulo"
-          >
+        <ConfirmacionEquipo
+          tituloId="traslado-confirmacion-titulo"
+          ocupado={guardando}
+          onCerrar={() => setConfirmar(false)}
+        >
+          <div className="traslado-confirmacion">
             <div className="traslado-confirmacion-icono">
               <ArrowLeftRight size={23} />
             </div>
 
-            <h2 id="traslado-confirmacion-titulo">
-              ¿Confirmar traslado?
-            </h2>
+            <h2 id="traslado-confirmacion-titulo">¿Confirmar traslado?</h2>
 
             <p>
-              Se actualizará la ubicación de este equipo
-              y se conservará el movimiento en su historial.
+              Se actualizará la ubicación de este equipo y se conservará el movimiento en su
+              historial.
             </p>
 
             <div className="traslado-resumen">
@@ -585,28 +465,18 @@ export default function TrasladarEquipo({
                 <span>Ubicación anterior</span>
                 <strong>
                   {nombreRelacion(laboratorioActual) ||
-                   equipo?.nombre_laboratorio ||
-                   `Laboratorio ${equipo?.id_laboratorio}`}
+                    equipo?.nombre_laboratorio ||
+                    'Laboratorio no disponible'}
                 </strong>
-                <small>
-                  {ubicacionActual || 'Sin detalle'}
-                </small>
+                <small>{ubicacionActual || 'Sin detalle'}</small>
               </div>
 
-              <ArrowLeftRight
-                size={20}
-                className="traslado-resumen-flecha"
-              />
+              <ArrowLeftRight size={20} className="traslado-resumen-flecha" />
 
               <div>
                 <span>Nueva ubicación</span>
-                <strong>
-                  {laboratorioDestino?.nombre}
-                </strong>
-                <small>
-                  {formulario.ubicacion_detalle.trim() ||
-                   'Sin detalle'}
-                </small>
+                <strong>{laboratorioDestino?.nombre}</strong>
+                <small>{formulario.ubicacion_detalle.trim() || 'Sin detalle'}</small>
               </div>
             </div>
 
@@ -614,6 +484,7 @@ export default function TrasladarEquipo({
               <button
                 type="button"
                 className="btn btn-lg btn-secundario"
+                autoFocus
                 disabled={guardando}
                 onClick={() => setConfirmar(false)}
               >
@@ -626,13 +497,11 @@ export default function TrasladarEquipo({
                 disabled={guardando}
                 onClick={confirmarTraslado}
               >
-                {guardando
-                  ? 'Trasladando...'
-                  : 'Confirmar traslado'}
+                {guardando ? 'Trasladando...' : 'Confirmar traslado'}
               </button>
             </div>
           </div>
-        </div>
+        </ConfirmacionEquipo>
       )}
     </div>
   );

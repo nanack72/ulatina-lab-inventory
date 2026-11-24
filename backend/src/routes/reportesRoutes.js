@@ -4,14 +4,11 @@ const router = express.Router();
 const {
   obtenerResumenGeneral,
   obtenerMantenimientosPorLaboratorio,
-  exportarExcel
+  exportarExcel,
 } = require('../controllers/reportesController');
 
 const { verificarToken } = require('../middlewares/authMiddleware');
-const {
-  permitirRoles,
-  validarLaboratorioAsignado
-} = require('../middlewares/permisosMiddleware');
+const { permitirRoles, validarLaboratorioAsignado } = require('../middlewares/permisosMiddleware');
 
 /**
  * Módulo de reportería analítica (Semana 9)
@@ -22,15 +19,7 @@ const {
  */
 
 router.use(verificarToken);
-router.use(
-  permitirRoles(
-    'Superadministrador',
-    'Coordinador',
-    'Director',
-    'Tecnico',
-    'Técnico'
-  )
-);
+router.use(permitirRoles('Superadministrador', 'Coordinador', 'Director', 'Tecnico', 'Técnico'));
 
 // validarLaboratorioAsignado solo se exige a los técnicos. El middleware
 // existente deja pasar únicamente a Administrador/Superadministrador, por lo
@@ -59,4 +48,3 @@ router.get(
 router.get('/exportar-excel', exportarExcel);
 
 module.exports = router;
-

@@ -1,3 +1,4 @@
+import FiltrosUbicacion from '../comunes/FiltrosUbicacion';
 import { useRef, useState } from 'react';
 import { DialogoModulo, Aviso } from '../comunes/Modulo';
 import { crearIncidencia } from '../../services/incidenciasService';
@@ -11,6 +12,12 @@ export default function ModalReportarIncidencia({
   cargandoEquipos,
   token,
 }) {
+  const [ubicacion, setUbicacion] = useState({ sede: '', laboratorio: '' });
+  const equiposFiltrados = equiposDisponibles.filter(
+    (eq) =>
+      (!ubicacion.sede || String(eq.id_sede) === ubicacion.sede) &&
+      (!ubicacion.laboratorio || String(eq.id_laboratorio) === ubicacion.laboratorio)
+  );
   const [equipo, setEquipo] = useState(''),
     [titulo, setTitulo] = useState(''),
     [descripcion, setDescripcion] = useState(''),
@@ -52,6 +59,17 @@ export default function ModalReportarIncidencia({
     >
       <form className="mod-formulario" onSubmit={guardar}>
         <Aviso error>{error || errorEquipos}</Aviso>
+        <div className="mod-campos">
+          <FiltrosUbicacion
+            token={token}
+            valor={ubicacion}
+            disabled={guardando}
+            onChange={(valor) => {
+              setUbicacion(valor);
+              setEquipo('');
+            }}
+          />
+        </div>
         <label className="mod-campo" htmlFor="inc-equipo">
           Equipo *
           <select
@@ -65,7 +83,7 @@ export default function ModalReportarIncidencia({
             <option value="">
               {cargandoEquipos ? 'Cargando equipos…' : 'Seleccione un equipo'}
             </option>
-            {equiposDisponibles.map((eq) => (
+            {equiposFiltrados.map((eq) => (
               <option key={eq.id_equipo} value={eq.id_equipo}>
                 {eq.placa_institucional || eq.numero_serie || 'Sin placa'} · {eq.nombre}
               </option>

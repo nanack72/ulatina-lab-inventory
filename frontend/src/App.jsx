@@ -1,3 +1,4 @@
+import Notificacion from './components/comunes/Notificacion';
 import { useRef, useState } from 'react';
 
 import Login from './pages/Login';
@@ -34,7 +35,6 @@ export default function App() {
       // Limpiar la sesión solamente después de
       // recibir la confirmación del servidor
       setSesion(null);
-
     } catch (error) {
       // Si el servidor responde 401, el token
       // ya no es válido para usar rutas protegidas
@@ -47,11 +47,7 @@ export default function App() {
 
       // Si falla la conexión o el servidor,
       // conservamos la sesión actual
-      setErrorLogout(
-        error.message ||
-        'No fue posible cerrar la sesión. Intentá nuevamente.'
-      );
-
+      setErrorLogout(error.message || 'No fue posible cerrar la sesión. Intentá nuevamente.');
     } finally {
       cerrandoSesionRef.current = false;
     }
@@ -65,25 +61,9 @@ export default function App() {
   // Mostrar el sistema cuando el usuario inicia sesión
   return (
     <>
-      {errorLogout && (
-        <div
-          role="alert"
-          style={{
-            padding: '12px 16px',
-            backgroundColor: '#fee2e2',
-            color: '#991b1b',
-            textAlign: 'center',
-          }}
-        >
-          {errorLogout}
-        </div>
-      )}
+      {errorLogout && <Notificacion tipo="error">{errorLogout}</Notificacion>}
 
-      <MainLayout
-        usuario={sesion.usuario}
-        token={sesion.token}
-        cerrarSesion={cerrarSesion}
-      />
+      <MainLayout usuario={sesion.usuario} token={sesion.token} cerrarSesion={cerrarSesion} />
     </>
   );
 }

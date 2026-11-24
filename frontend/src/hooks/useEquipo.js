@@ -27,11 +27,7 @@ export function useEquipo(idEquipo, token, onSesionExpirada) {
       setEquipo(null);
 
       try {
-        const resultado = await obtenerEquipoPorId(
-          idEquipo,
-          token,
-          controlador.signal
-        );
+        const resultado = await obtenerEquipoPorId(idEquipo, token, controlador.signal);
 
         if (!controlador.signal.aborted) {
           setEquipo(resultado);
@@ -40,7 +36,7 @@ export function useEquipo(idEquipo, token, onSesionExpirada) {
         if (controlador.signal.aborted) return;
 
         if (err.status === 401) {
-          setError('Tu sesión expiró o ya no es válida. Iniciá sesión nuevamente.');
+          setError('Su sesión expiró o ya no es válida. Inicie sesión nuevamente.');
           alExpirarSesion.current?.();
         } else {
           setError(err.message || 'No se pudo consultar el equipo.');

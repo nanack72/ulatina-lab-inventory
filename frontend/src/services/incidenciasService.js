@@ -8,6 +8,7 @@ export async function consultarIncidencias(params = {}, token, signal) {
 
   if (params.estado) query.set('estado', params.estado);
   if (params.prioridad) query.set('prioridad', params.prioridad);
+  if (params.id_sede) query.set('id_sede', params.id_sede);
   if (params.id_laboratorio) query.set('id_laboratorio', params.id_laboratorio);
   if (params.busqueda) query.set('busqueda', params.busqueda);
 
@@ -17,16 +18,14 @@ export async function consultarIncidencias(params = {}, token, signal) {
     signal,
     headers: {
       Authorization: `Bearer ${token}`,
-      Accept: 'application/json'
-    }
+      Accept: 'application/json',
+    },
   });
 
   const resultado = await respuesta.json().catch(() => null);
 
   if (!respuesta.ok || resultado?.success !== true) {
-    const error = new Error(
-      resultado?.message || 'Error al obtener la lista de incidencias'
-    );
+    const error = new Error(resultado?.message || 'Error al obtener la lista de incidencias');
     error.status = respuesta.status;
     throw error;
   }
@@ -43,17 +42,15 @@ export async function crearIncidencia(datos, token) {
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
-      Accept: 'application/json'
+      Accept: 'application/json',
     },
-    body: JSON.stringify(datos)
+    body: JSON.stringify(datos),
   });
 
   const resultado = await respuesta.json().catch(() => null);
 
   if (!respuesta.ok || resultado?.success !== true) {
-    const error = new Error(
-      resultado?.message || 'No fue posible registrar la incidencia técnica'
-    );
+    const error = new Error(resultado?.message || 'No fue posible registrar la incidencia técnica');
     error.status = respuesta.status;
     throw error;
   }
@@ -70,9 +67,9 @@ export async function actualizarEstadoIncidencia(id, nuevoEstado, token) {
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
-      Accept: 'application/json'
+      Accept: 'application/json',
     },
-    body: JSON.stringify({ nuevo_estado: nuevoEstado })
+    body: JSON.stringify({ nuevo_estado: nuevoEstado }),
   });
 
   const resultado = await respuesta.json().catch(() => null);

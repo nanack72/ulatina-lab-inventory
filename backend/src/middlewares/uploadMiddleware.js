@@ -4,10 +4,7 @@ const fs = require('fs');
 const { detectarMimePorFirma } = require('../utils/compresionImagen');
 
 // Carpeta física conservada únicamente como respaldo para evidencias históricas previas a la migración 010
-const DIRECTORIO_EVIDENCIAS = path.resolve(
-  __dirname,
-  '../../uploads/evidencias'
-);
+const DIRECTORIO_EVIDENCIAS = path.resolve(__dirname, '../../uploads/evidencias');
 
 const TAMANO_MAXIMO = 5 * 1024 * 1024; // 5 MB de entrada (se comprime antes de guardar en BD)
 
@@ -15,7 +12,7 @@ const TAMANO_MAXIMO = 5 * 1024 * 1024; // 5 MB de entrada (se comprime antes de 
 const EXTENSION_POR_MIME = {
   'image/jpeg': '.jpg',
   'image/png': '.png',
-  'image/webp': '.webp'
+  'image/webp': '.webp',
 };
 
 // Se recibe la imagen en memoria para validarla y comprimirla antes de persistirla en PostgreSQL
@@ -23,9 +20,7 @@ const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
   if (!EXTENSION_POR_MIME[file.mimetype]) {
-    const error = new Error(
-      'Formato no permitido. Solo se aceptan imágenes JPG, PNG o WEBP'
-    );
+    const error = new Error('Formato no permitido. Solo se aceptan imágenes JPG, PNG o WEBP');
     error.code = 'FORMATO_NO_PERMITIDO';
     return cb(error);
   }
@@ -36,7 +31,7 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: TAMANO_MAXIMO, files: 1 }
+  limits: { fileSize: TAMANO_MAXIMO, files: 1 },
 });
 
 // Revisa los primeros bytes (Buffer o ruta en disco) para confirmar que sea una imagen real
@@ -76,25 +71,25 @@ const subirFoto = (req, res, next) => {
       const mensaje =
         error.code === 'LIMIT_FILE_SIZE'
           ? 'La imagen supera el tamaño máximo de 5 MB'
-          : 'No se pudo procesar la imagen enviada (use el campo "foto")';
+          : 'No se pudo procesar la imagen. Seleccione una sola fotografía.';
 
       return res.status(error.code === 'LIMIT_FILE_SIZE' ? 413 : 400).json({
         success: false,
-        message: mensaje
+        message: mensaje,
       });
     }
 
     if (error.code === 'FORMATO_NO_PERMITIDO') {
       return res.status(400).json({
         success: false,
-        message: error.message
+        message: error.message,
       });
     }
 
     console.error('Error al subir imagen:', error.message);
     return res.status(500).json({
       success: false,
-      message: 'Error interno al guardar la imagen'
+      message: 'Error interno al guardar la imagen',
     });
   });
 };
@@ -103,5 +98,5 @@ module.exports = {
   subirFoto,
   eliminarArchivo,
   tieneFirmaDeImagen,
-  DIRECTORIO_EVIDENCIAS
+  DIRECTORIO_EVIDENCIAS,
 };

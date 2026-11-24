@@ -1,3 +1,5 @@
+import FiltroSelect from '../components/inventario/FiltroSelect';
+import FiltrosUbicacion from '../components/comunes/FiltrosUbicacion';
 import { useCallback, useState } from 'react';
 import { Plus } from 'lucide-react';
 import {
@@ -19,6 +21,8 @@ export default function Incidencias({ token }) {
   const [busqueda, setBusqueda] = useState(''),
     [prioridad, setPrioridad] = useState(''),
     [estado, setEstado] = useState('');
+  const [limite, setLimite] = useState(10);
+  const [ubicacion, setUbicacion] = useState({ sede: '', laboratorio: '' });
   const [pagina, setPagina] = useState(1),
     [abierto, setAbierto] = useState(false),
     [actualizando, setActualizando] = useState(null);
@@ -27,8 +31,18 @@ export default function Incidencias({ token }) {
   const busquedaDiferida = useBusquedaDiferida(busqueda);
   const cargar = useCallback(
     (signal) =>
-      consultarIncidencias({ busqueda: busquedaDiferida, prioridad, estado }, token, signal),
-    [busquedaDiferida, prioridad, estado, token]
+      consultarIncidencias(
+        {
+          busqueda: busquedaDiferida,
+          prioridad,
+          estado,
+          id_sede: ubicacion.sede,
+          id_laboratorio: ubicacion.laboratorio,
+        },
+        token,
+        signal
+      ),
+    [ubicacion.sede, ubicacion.laboratorio, busquedaDiferida, prioridad, estado, token]
   );
   const { datos, cargando, error, recargar } = useListadoModulo(cargar);
   const cargarEquipos = useCallback(
@@ -37,7 +51,7 @@ export default function Incidencias({ token }) {
   );
   const equipos = useListadoModulo(cargarEquipos);
   const lista = datos?.data || [],
-    actual = Math.min(pagina, Math.max(1, Math.ceil(lista.length / 10)));
+    actual = Math.min(pagina, Math.max(1, Math.ceil(lista.length / limite)));
   async function cambiarEstado(id, valor) {
     if (actualizando !== null) return;
     setActualizando(id);
@@ -109,37 +123,32 @@ export default function Incidencias({ token }) {
             valor={busqueda}
             onChange={(v) => filtro(setBusqueda, v)}
           />
-          <div className="mod-selectores">
-            <label>
-              Prioridad
-              <select
-                name="prioridad"
-                value={prioridad}
-                onChange={(e) => filtro(setPrioridad, e.target.value)}
-              >
-                <option value="">Todas</option>
-                {PRIORIDADES_INCIDENCIA.map((p) => (
-                  <option key={p}>{p}</option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Estado
-              <select
-                name="estado"
-                value={estado}
-                onChange={(e) => filtro(setEstado, e.target.value)}
-              >
-                <option value="">Todos</option>
-                {ESTADOS_INCIDENCIA.map((p) => (
-                  <option key={p}>{p}</option>
-                ))}
-              </select>
-            </label>
+          <div className="inv-selectores">
+            <FiltrosUbicacion
+              compacto
+              token={token}
+              valor={ubicacion}
+              onChange={(valor) => {
+                setUbicacion(valor);
+                setPagina(1);
+              }}
+            />
+            <FiltroSelect
+              etiqueta="Prioridad"
+              valor={prioridad}
+              opciones={PRIORIDADES_INCIDENCIA}
+              onChange={(valor) => filtro(setPrioridad, valor)}
+            />
+            <FiltroSelect
+              etiqueta="Estado"
+              valor={estado}
+              opciones={ESTADOS_INCIDENCIA}
+              onChange={(valor) => filtro(setEstado, valor)}
+            />
           </div>
         </div>
         <TablaIncidencias
-          incidencias={lista.slice((actual - 1) * 10, actual * 10)}
+          incidencias={lista.slice((actual - 1) * limite, actual * limite)}
           cargando={cargando}
           alCambiarEstado={cambiarEstado}
           actualizandoId={actualizando}
@@ -147,6 +156,13 @@ export default function Incidencias({ token }) {
         <PaginacionModulo
           pagina={actual}
           total={lista.length}
+          limite={limite}
+          singular="incidencia"
+          plural="incidencias"
+          alCambiarLimite={(valor) => {
+            setLimite(valor);
+            setPagina(1);
+          }}
           alCambiar={setPagina}
           cargando={cargando}
         />

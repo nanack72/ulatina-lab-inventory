@@ -9,24 +9,16 @@ const router = express.Router();
 const { darBajaUsuario } = require('../services/bajaUsuario');
 const { validarYReasignarOrdenesAbiertas } = require('../services/reasignacionMantenimientos');
 
-router.use(
-  verificarToken,
-  permitirRoles('Superadministrador')
-);
+router.use(verificarToken, permitirRoles('Superadministrador'));
 
-const PERMISOS_INVENTARIO = [
-  'consulta',
-  'registro',
-  'edicion',
-];
+const PERMISOS_INVENTARIO = ['consulta', 'registro', 'edicion'];
 
-const esId = (valor) =>
-  Number.isSafeInteger(valor) &&
-  valor > 0 &&
-  valor <= 2147483647;
+const esId = (valor) => Number.isSafeInteger(valor) && valor > 0 && valor <= 2147483647;
 
 const esSuperadministrador = (rol) =>
-  String(rol || '').trim().toLowerCase() === 'superadministrador';
+  String(rol || '')
+    .trim()
+    .toLowerCase() === 'superadministrador';
 
 function errorSolicitud(message, status = 400) {
   const error = new Error(message);
@@ -61,8 +53,7 @@ function responderError(res, error) {
   if (error.code === '23503') {
     return res.status(409).json({
       success: false,
-      message:
-        'Uno de los roles, sedes o laboratorios seleccionados ya no está disponible.',
+      message: 'Uno de los roles, sedes o laboratorios seleccionados ya no está disponible.',
     });
   }
 
@@ -80,10 +71,7 @@ async function revertirTransaccion(cliente, transaccion) {
   try {
     await cliente.query('ROLLBACK');
   } catch (error) {
-    console.error(
-      'Error al revertir la transacción de usuarios:',
-      error
-    );
+    console.error('Error al revertir la transacción de usuarios:', error);
   }
 }
 
@@ -97,9 +85,7 @@ function validarDatos(body, creando) {
     !body.nombre_completo.trim() ||
     Array.from(body.nombre_completo.trim()).length > 150
   ) {
-    throw errorSolicitud(
-      'El nombre es obligatorio y admite hasta 150 caracteres.'
-    );
+    throw errorSolicitud('El nombre es obligatorio y admite hasta 150 caracteres.');
   }
 
   if (typeof body.correo_institucional !== 'string') {
@@ -108,13 +94,8 @@ function validarDatos(body, creando) {
 
   const correo = body.correo_institucional.trim().toLowerCase();
 
-  if (
-    correo.length > 150 ||
-    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)
-  ) {
-    throw errorSolicitud(
-      'Ingrese un correo válido de hasta 150 caracteres.'
-    );
+  if (correo.length > 150 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
+    throw errorSolicitud('Ingrese un correo válido de hasta 150 caracteres.');
   }
 
   if (!esId(body.id_rol)) {
@@ -126,24 +107,14 @@ function validarDatos(body, creando) {
   }
 
   if (!PERMISOS_INVENTARIO.includes(body.permiso_inventario)) {
-    throw errorSolicitud(
-      'Seleccione un permiso de inventario válido.'
-    );
+    throw errorSolicitud('Seleccione un permiso de inventario válido.');
   }
 
-  if (
-    !Array.isArray(body.sedes) ||
-    !Array.isArray(body.laboratorios)
-  ) {
-    throw errorSolicitud(
-      'Debe enviar las sedes y laboratorios seleccionados.'
-    );
+  if (!Array.isArray(body.sedes) || !Array.isArray(body.laboratorios)) {
+    throw errorSolicitud('Debe enviar las sedes y laboratorios seleccionados.');
   }
 
-  if (
-    body.sedes.some((id) => !esId(id)) ||
-    body.laboratorios.some((id) => !esId(id))
-  ) {
+  if (body.sedes.some((id) => !esId(id)) || body.laboratorios.some((id) => !esId(id))) {
     throw errorSolicitud('Hay sedes o laboratorios no válidos.');
   }
 
@@ -181,10 +152,9 @@ function validarDatos(body, creando) {
 
 // Comprobar que el rol y las asignaciones existan.
 async function validarReferencias(cliente, datos) {
-  const rol = await cliente.query(
-    'SELECT id_rol, nombre FROM public.rol WHERE id_rol = $1',
-    [datos.idRol]
-  );
+  const rol = await cliente.query('SELECT id_rol, nombre FROM public.rol WHERE id_rol = $1', [
+    datos.idRol,
+  ]);
 
   if (rol.rowCount === 0) {
     throw errorSolicitud('El rol seleccionado no existe.');
@@ -200,9 +170,7 @@ async function validarReferencias(cliente, datos) {
   );
 
   if (sedes.rowCount !== datos.sedes.length) {
-    throw errorSolicitud(
-      'Una de las sedes seleccionadas no existe.'
-    );
+    throw errorSolicitud('Una de las sedes seleccionadas no existe.');
   }
 
   const laboratorios = await cliente.query(
@@ -215,16 +183,12 @@ async function validarReferencias(cliente, datos) {
   );
 
   if (laboratorios.rowCount !== datos.laboratorios.length) {
-    throw errorSolicitud(
-      'Uno de los laboratorios seleccionados no existe.'
-    );
+    throw errorSolicitud('Uno de los laboratorios seleccionados no existe.');
   }
 
   for (const laboratorio of laboratorios.rows) {
     if (!datos.sedes.includes(laboratorio.id_sede)) {
-      throw errorSolicitud(
-        'Cada laboratorio debe pertenecer a una sede asignada al usuario.'
-      );
+      throw errorSolicitud('Cada laboratorio debe pertenecer a una sede asignada al usuario.');
     }
   }
 
@@ -235,12 +199,7 @@ async function validarReferencias(cliente, datos) {
 }
 
 // Conservar las asignaciones existentes que no cambiaron.
-async function guardarAsignaciones(
-  cliente,
-  idUsuario,
-  datos,
-  laboratorios
-) {
+async function guardarAsignaciones(cliente, idUsuario, datos, laboratorios) {
   // Primero retirar los laboratorios desmarcados.
   await cliente.query(
     `
@@ -290,10 +249,7 @@ async function guardarAsignaciones(
   );
 
   const sedePorId = new Map(
-    asignaciones.rows.map((registro) => [
-      registro.id_sede,
-      registro.id_usuario_sede,
-    ])
+    asignaciones.rows.map((registro) => [registro.id_sede, registro.id_usuario_sede])
   );
 
   for (const laboratorio of laboratorios) {
@@ -308,11 +264,7 @@ async function guardarAsignaciones(
         ON CONFLICT (id_usuario_sede, id_laboratorio)
         DO NOTHING
       `,
-      [
-        sedePorId.get(laboratorio.id_sede),
-        laboratorio.id_laboratorio,
-        laboratorio.id_sede,
-      ]
+      [sedePorId.get(laboratorio.id_sede), laboratorio.id_laboratorio, laboratorio.id_sede]
     );
   }
 }
@@ -423,9 +375,7 @@ router.post('/', async (req, res) => {
     transaccion = true;
 
     // Serializar las modificaciones administrativas.
-    await cliente.query(
-      'SELECT pg_advisory_xact_lock(2026, 1101)'
-    );
+    await cliente.query('SELECT pg_advisory_xact_lock(2026, 1101)');
 
     const referencias = await validarReferencias(cliente, datos);
 
@@ -439,16 +389,12 @@ router.post('/', async (req, res) => {
     );
 
     if (duplicado.rowCount > 0) {
-      throw errorSolicitud(
-        'Ya existe un usuario con ese correo.',
-        409
-      );
+      throw errorSolicitud('Ya existe un usuario con ese correo.', 409);
     }
 
-    const permisoInventario =
-      esSuperadministrador(referencias.rol.nombre)
-        ? 'edicion'
-        : datos.permisoInventario;
+    const permisoInventario = esSuperadministrador(referencias.rol.nombre)
+      ? 'edicion'
+      : datos.permisoInventario;
 
     const resultado = await cliente.query(
       `
@@ -477,12 +423,7 @@ router.post('/', async (req, res) => {
 
     const idUsuario = resultado.rows[0].id_usuario;
 
-    await guardarAsignaciones(
-      cliente,
-      idUsuario,
-      datos,
-      referencias.laboratorios
-    );
+    await guardarAsignaciones(cliente, idUsuario, datos, referencias.laboratorios);
 
     await cliente.query('COMMIT');
     transaccion = false;
@@ -513,9 +454,7 @@ router.put('/:id', async (req, res) => {
     const idUsuario = Number(req.params.id);
 
     if (!esId(idUsuario)) {
-      throw errorSolicitud(
-        'Identificador de usuario no válido.'
-      );
+      throw errorSolicitud('Seleccione un usuario válido.');
     }
 
     const datos = validarDatos(req.body, false);
@@ -525,9 +464,7 @@ router.put('/:id', async (req, res) => {
     await cliente.query('BEGIN');
     transaccion = true;
 
-    await cliente.query(
-      'SELECT pg_advisory_xact_lock(2026, 1101)'
-    );
+    await cliente.query('SELECT pg_advisory_xact_lock(2026, 1101)');
 
     const actual = await cliente.query(
       `
@@ -549,14 +486,10 @@ router.put('/:id', async (req, res) => {
     }
 
     const referencias = await validarReferencias(cliente, datos);
-    const nuevoEsSuper =
-      esSuperadministrador(referencias.rol.nombre);
+    const nuevoEsSuper = esSuperadministrador(referencias.rol.nombre);
 
     // Impedir que el administrador se quite su propio acceso.
-    if (
-      idUsuario === Number(req.usuario.idUsuario) &&
-      (!datos.activo || !nuevoEsSuper)
-    ) {
+    if (idUsuario === Number(req.usuario.idUsuario) && (!datos.activo || !nuevoEsSuper)) {
       throw errorSolicitud(
         'No puede desactivar su propia cuenta ni quitarse el rol de Superadministrador.',
         409
@@ -586,10 +519,7 @@ router.put('/:id', async (req, res) => {
       );
 
       if (otros.rowCount === 0) {
-        throw errorSolicitud(
-          'Debe conservar al menos un Superadministrador activo.',
-          409
-        );
+        throw errorSolicitud('Debe conservar al menos un Superadministrador activo.', 409);
       }
     }
 
@@ -604,10 +534,7 @@ router.put('/:id', async (req, res) => {
     );
 
     if (duplicado.rowCount > 0) {
-      throw errorSolicitud(
-        'Ya existe un usuario con ese correo.',
-        409
-      );
+      throw errorSolicitud('Ya existe un usuario con ese correo.', 409);
     }
 
     let reasignadas = 0;
@@ -643,12 +570,7 @@ router.put('/:id', async (req, res) => {
       ]
     );
 
-    await guardarAsignaciones(
-      cliente,
-      idUsuario,
-      datos,
-      referencias.laboratorios
-    );
+    await guardarAsignaciones(cliente, idUsuario, datos, referencias.laboratorios);
 
     await cliente.query('COMMIT');
     transaccion = false;

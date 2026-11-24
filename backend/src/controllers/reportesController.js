@@ -3,9 +3,7 @@ const pool = require('../config/database');
 
 // Los técnicos solo ven sus laboratorios; la dirección y coordinación ven todo
 const esTecnico = (usuario) =>
-  ['tecnico', 'técnico'].includes(
-    (usuario?.rol || '').toLowerCase().trim()
-  );
+  ['tecnico', 'técnico'].includes((usuario?.rol || '').toLowerCase().trim());
 
 // Filtro SQL para limitar la consulta a los laboratorios asignados al técnico
 const FILTRO_TECNICO = `
@@ -26,7 +24,7 @@ const alcanceUsuario = (usuario) => {
   if (esTecnico(usuario)) {
     return {
       condicion: FILTRO_TECNICO,
-      params: [Number(usuario.idUsuario)]
+      params: [Number(usuario.idUsuario)],
     };
   }
 
@@ -105,10 +103,8 @@ const consultarMantenimientos = async (usuario, idLaboratorio = null) => {
   return resultado.rows;
 };
 
-// =====================================================
 // 1. RESUMEN GENERAL
 // GET /api/reportes/resumen-general
-// =====================================================
 
 const obtenerResumenGeneral = async (req, res) => {
   try {
@@ -144,16 +140,17 @@ const obtenerResumenGeneral = async (req, res) => {
       pool.query(
         `SELECT
            l.id_laboratorio,
+           l.id_sede,
            l.codigo,
            l.nombre,
            COUNT(e.id_equipo)::int AS cantidad_equipos
          FROM public.laboratorio l
          LEFT JOIN public.equipo e ON e.id_laboratorio = l.id_laboratorio AND e.eliminado_en IS NULL
          WHERE ${condicion}
-         GROUP BY l.id_laboratorio, l.codigo, l.nombre
+         GROUP BY l.id_laboratorio, l.id_sede, l.codigo, l.nombre
          ORDER BY cantidad_equipos DESC, l.codigo`,
         params
-      )
+      ),
     ]);
 
     const porEstado = estadosRes.rows;
@@ -165,9 +162,7 @@ const obtenerResumenGeneral = async (req, res) => {
         .reduce((acc, f) => acc + f.cantidad, 0);
 
     const contarTipo = (tipo) =>
-      tiposRes.rows.find(
-        (f) => (f.tipo || '').toLowerCase() === tipo
-      )?.cantidad || 0;
+      tiposRes.rows.find((f) => (f.tipo || '').toLowerCase() === tipo)?.cantidad || 0;
 
     const preventivos = contarTipo('preventivo');
     const correctivos = contarTipo('correctivo');
@@ -180,30 +175,28 @@ const obtenerResumenGeneral = async (req, res) => {
           operativo: sumarEstado(/operativ/),
           en_mantenimiento: sumarEstado(/mantenimiento/),
           danado: sumarEstado(/da[ñn]ad/),
-          detalle: porEstado
+          detalle: porEstado,
         },
         mantenimientos: {
           preventivos,
           correctivos,
-          total: preventivos + correctivos
+          total: preventivos + correctivos,
         },
-        equipos_por_laboratorio: labsRes.rows
-      }
+        equipos_por_laboratorio: labsRes.rows,
+      },
     });
   } catch (error) {
     console.error('Error en resumen general:', error.message);
 
     return res.status(500).json({
       success: false,
-      message: 'Error al generar el resumen general'
+      message: 'Error al generar el resumen general',
     });
   }
 };
 
-// =====================================================
 // 2. MANTENIMIENTOS POR LABORATORIO
 // GET /api/reportes/mantenimientos-laboratorio/:id_laboratorio
-// =====================================================
 
 const obtenerMantenimientosPorLaboratorio = async (req, res) => {
   try {
@@ -212,7 +205,7 @@ const obtenerMantenimientosPorLaboratorio = async (req, res) => {
     if (!/^[1-9]\d*$/.test(id_laboratorio)) {
       return res.status(400).json({
         success: false,
-        message: 'El identificador del laboratorio no es válido'
+        message: 'El identificador del laboratorio no es válido',
       });
     }
 
@@ -228,14 +221,11 @@ const obtenerMantenimientosPorLaboratorio = async (req, res) => {
     if (laboratorio.rowCount === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Laboratorio no encontrado'
+        message: 'Laboratorio no encontrado',
       });
     }
 
-    const filas = await consultarMantenimientos(
-      req.usuario,
-      idLaboratorio
-    );
+    const filas = await consultarMantenimientos(req.usuario, idLaboratorio);
 
     return res.status(200).json({
       success: true,
@@ -248,36 +238,31 @@ const obtenerMantenimientosPorLaboratorio = async (req, res) => {
         equipo: {
           id_equipo: f.id_equipo,
           placa_institucional: f.placa_institucional,
-          nombre: f.nombre_equipo
+          nombre: f.nombre_equipo,
         },
         tipo_mantenimiento: f.tipo_mantenimiento,
         estado_mantenimiento: f.estado_mantenimiento,
-        horas_invertidas: f.horas_invertidas
-      }))
+        horas_invertidas: f.horas_invertidas,
+      })),
     });
   } catch (error) {
-    console.error(
-      'Error en mantenimientos por laboratorio:',
-      error.message
-    );
+    console.error('Error en mantenimientos por laboratorio:', error.message);
 
     return res.status(500).json({
       success: false,
-      message: 'Error al consultar los mantenimientos del laboratorio'
+      message: 'Error al consultar los mantenimientos del laboratorio',
     });
   }
 };
 
-// =====================================================
 // 3. EXPORTAR A EXCEL
 // GET /api/reportes/exportar-excel
-// =====================================================
 
 const exportarExcel = async (req, res) => {
   try {
     const [inventario, mantenimientos] = await Promise.all([
       consultarInventario(req.usuario),
-      consultarMantenimientos(req.usuario)
+      consultarMantenimientos(req.usuario),
     ]);
 
     const libro = new ExcelJS.Workbook();
@@ -290,12 +275,12 @@ const exportarExcel = async (req, res) => {
       fila.fill = {
         type: 'pattern',
         pattern: 'solid',
-        fgColor: { argb: 'FF1F3864' }
+        fgColor: { argb: 'FF1F3864' },
       };
       hoja.views = [{ state: 'frozen', ySplit: 1 }];
       hoja.autoFilter = {
         from: { row: 1, column: 1 },
-        to: { row: 1, column: hoja.columns.length }
+        to: { row: 1, column: hoja.columns.length },
       };
     };
 
@@ -312,7 +297,7 @@ const exportarExcel = async (req, res) => {
       { header: 'Estado', key: 'estado', width: 16 },
       { header: 'Laboratorio', key: 'codigo_laboratorio', width: 18 },
       { header: 'Sede', key: 'sede', width: 14 },
-      { header: 'Ubicación', key: 'ubicacion_detalle', width: 36 }
+      { header: 'Ubicación', key: 'ubicacion_detalle', width: 36 },
     ];
     hojaInv.addRows(inventario);
     estilarEncabezado(hojaInv);
@@ -329,7 +314,7 @@ const exportarExcel = async (req, res) => {
       { header: 'Técnico', key: 'tecnico', width: 28 },
       { header: 'Horas', key: 'horas_invertidas', width: 10 },
       { header: 'Motivo de falla', key: 'motivo_falla', width: 36 },
-      { header: 'Trabajo realizado', key: 'descripcion_trabajo', width: 60 }
+      { header: 'Trabajo realizado', key: 'descripcion_trabajo', width: 60 },
     ];
     hojaMant.addRows(mantenimientos);
     hojaMant.getColumn('fecha_mantenimiento').numFmt = 'yyyy-mm-dd hh:mm';
@@ -355,7 +340,7 @@ const exportarExcel = async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      message: 'Error al generar el archivo Excel'
+      message: 'Error al generar el archivo Excel',
     });
   }
 };
@@ -363,6 +348,5 @@ const exportarExcel = async (req, res) => {
 module.exports = {
   obtenerResumenGeneral,
   obtenerMantenimientosPorLaboratorio,
-  exportarExcel
+  exportarExcel,
 };
-

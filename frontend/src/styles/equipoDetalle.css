@@ -1,11 +1,10 @@
-/* ==========================================
+/* 
    DETALLE DEL EQUIPO
-   ========================================== */
+    */
 
 /* 1. VARIABLES Y CONTENEDOR */
 
 .detalle-pagina {
-
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -348,9 +347,7 @@
   cursor: pointer;
 }
 
-.detalle-historial-opcion:hover:not(
-  .detalle-historial-opcion--activa
-) {
+.detalle-historial-opcion:hover:not(.detalle-historial-opcion--activa) {
   background: var(--verde-suave);
 }
 
@@ -504,9 +501,9 @@
   }
 }
 
-/* ==========================================
+/* 
    MENÚ MÁS ACCIONES
-   ========================================== */
+    */
 
 .detalle-menu-acciones {
   position: relative;
@@ -574,7 +571,6 @@
   outline-offset: 2px;
 }
 
-
 .detalle-menu-opciones button.detalle-accion-eliminar {
   color: #b42318;
   border-top: 1px solid #e2e8e5;
@@ -583,4 +579,19 @@
 .detalle-menu-opciones button.detalle-accion-eliminar:hover {
   background: #fff1f0;
   color: #b42318;
+}
+
+/* Giro de la flecha según la apertura del menú de acciones. */
+.detalle-boton-mas > svg:last-child {
+  color: inherit;
+  rotate: 0deg;
+  transition: rotate 180ms ease;
+}
+.detalle-boton-mas[aria-expanded='true'] > svg:last-child {
+  rotate: 90deg;
+}
+@media (prefers-reduced-motion: reduce) {
+  .detalle-boton-mas > svg:last-child {
+    transition: none;
+  }
 }

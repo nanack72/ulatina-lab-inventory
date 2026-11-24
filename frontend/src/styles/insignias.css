@@ -1,0 +1,90 @@
+/* Apariencia compartida de estados, tipos y prioridades. */
+.main-layout
+  .main-page
+  :is(.ini-pill, .inv-estado, .usu-estado, .mod-insignia, select.mod-select-estado) {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 88px;
+  max-width: 100%;
+  min-height: 30px;
+  padding: 5px 12px;
+  border: 1px solid var(--insignia-borde, #83978b);
+  border-radius: 999px;
+  background-color: var(--insignia-fondo, #eef2f0);
+  color: var(--insignia-texto, #405b4c);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.main-layout
+  .main-page
+  :is(
+    .inv-estado--operativo,
+    .usu-estado-activo,
+    .mod-insignia-verde,
+    .ini-pill--verde,
+    .ini-pill--completado
+  ) {
+  --insignia-fondo: #e9f5e4;
+  --insignia-texto: #286433;
+  --insignia-borde: #78946c;
+}
+
+.main-layout
+  .main-page
+  :is(.inv-estado--mantenimiento, .mod-insignia-ambar, .ini-pill--ambar, .ini-pill--proceso) {
+  --insignia-fondo: #fff6e6;
+  --insignia-texto: #845212;
+  --insignia-borde: #a38a60;
+}
+
+.main-layout
+  .main-page
+  :is(.inv-estado--baja, .usu-estado-inactivo, .mod-insignia-rojo, .ini-pill--repuesto) {
+  --insignia-fondo: #fff0ed;
+  --insignia-texto: #a12d25;
+  --insignia-borde: #b17c76;
+}
+
+.main-layout .main-page select.mod-select-estado {
+  /* Conserva la flecha y el funcionamiento del selector del navegador. */
+  padding-inline-end: 28px;
+  cursor: pointer;
+}
+
+.main-layout .main-page select.mod-select-estado option,
+.main-layout .main-page select.mod-select-estado option:checked {
+  font-weight: 400;
+}
+
+.main-layout .main-page select.mod-select-estado:disabled {
+  cursor: not-allowed;
+}
+
+@media (max-width: 800px) {
+  .main-layout
+    .main-page
+    :is(.ini-pill, .inv-estado, .usu-estado, .mod-insignia, select.mod-select-estado) {
+    min-height: 44px;
+    font-size: 16px;
+    line-height: 22px;
+  }
+}
+
+@media (forced-colors: active) {
+  .main-layout
+    .main-page
+    :is(.ini-pill, .inv-estado, .usu-estado, .mod-insignia, select.mod-select-estado) {
+    border-color: CanvasText;
+    background-color: Canvas;
+    color: CanvasText;
+  }
+}

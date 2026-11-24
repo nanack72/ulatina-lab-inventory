@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import Notificacion from '../components/comunes/Notificacion';
+import { useEffect, useState } from 'react';
 import { ClipboardList, Monitor, Wrench } from 'lucide-react';
 import { iniciarSesion } from '../services/authService';
 
@@ -20,22 +21,28 @@ export default function Login({ onLogin }) {
   const [error, setError] = useState('');
   const [mostrarModalRecuperacion, setMostrarModalRecuperacion] = useState(false);
 
+  useEffect(() => {
+    const tema = document.querySelector('meta[name="theme-color"]');
+    const anterior = tema?.getAttribute('content');
+    tema?.setAttribute('content', '#075640');
+    return () => {
+      if (tema) tema.setAttribute('content', anterior || '#f5f6f7');
+    };
+  }, []);
+
   const manejarLogin = async (event) => {
     event.preventDefault();
     setError('');
 
     if (!correo.trim() || !contrasena) {
-      setError('Ingresá tu correo y contraseña.');
+      setError('Ingrese su correo y contraseña.');
       return;
     }
 
     try {
       setCargando(true);
 
-      const sesion = await iniciarSesion(
-        correo.trim(),
-        contrasena
-      );
+      const sesion = await iniciarSesion(correo.trim(), contrasena);
 
       if (recordarme) {
         localStorage.setItem('ulatina_correo_recordado', correo.trim());
@@ -43,7 +50,10 @@ export default function Login({ onLogin }) {
         localStorage.removeItem('ulatina_correo_recordado');
       }
 
+      // Cerrar el teclado antes de entrar y comenzar en el encabezado del sistema.
+      if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
       onLogin(sesion);
+      requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' }));
     } catch (err) {
       setError(err.message || 'Error al iniciar sesión.');
     } finally {
@@ -53,7 +63,6 @@ export default function Login({ onLogin }) {
 
   return (
     <div className="login-page">
-
       {/* PANEL INSTITUCIONAL: información e identidad visual. */}
       <section className="login-institutional" aria-label="Presentación del sistema">
         <div className="login-light-trail" aria-hidden="true">
@@ -104,30 +113,34 @@ export default function Login({ onLogin }) {
 
         <div className="login-institutional-content">
           <div className="login-brand">
-            <img
-              src={logoBlanco}
-              alt="Universidad Latina de Costa Rica"
-              className="login-logo"
-            />
+            <img src={logoBlanco} alt="Universidad Latina de Costa Rica" className="login-logo" />
           </div>
 
           <div className="login-presentation">
             <span className="login-accent-line" aria-hidden="true" />
             <h1>
-              Sistema de Gestión de<br className="login-desktop-break" />
-              {' '}Inventario Tecnológico
+              Sistema de Gestión de
+              <br className="login-desktop-break" /> Inventario Tecnológico
             </h1>
             <h2>Facultad de Ingenierías y TICs</h2>
             <p>
-              Plataforma para la gestión y seguimiento de equipos
-              tecnológicos, mantenimientos e incidencias de los
-              laboratorios universitarios.
+              Plataforma para la gestión y seguimiento de equipos tecnológicos, mantenimientos e
+              incidencias de los laboratorios universitarios.
             </p>
 
             <ul className="login-features" aria-label="Áreas de gestión">
-              <li><Monitor aria-hidden="true" /><span>Control de equipos</span></li>
-              <li><Wrench aria-hidden="true" /><span>Gestión de mantenimientos</span></li>
-              <li><ClipboardList aria-hidden="true" /><span>Registro de incidencias</span></li>
+              <li>
+                <Monitor aria-hidden="true" />
+                <span>Control de equipos</span>
+              </li>
+              <li>
+                <Wrench aria-hidden="true" />
+                <span>Gestión de mantenimientos</span>
+              </li>
+              <li>
+                <ClipboardList aria-hidden="true" />
+                <span>Registro de incidencias</span>
+              </li>
             </ul>
           </div>
         </div>
@@ -136,7 +149,6 @@ export default function Login({ onLogin }) {
       {/* PANEL DEL LOGIN */}
       <section className="login-form-section">
         <div className="login-form-container">
-
           <div className="login-mobile-brand">
             <img
               src={logoGris}
@@ -147,22 +159,13 @@ export default function Login({ onLogin }) {
 
           <div className="login-heading">
             <h1>Bienvenido</h1>
-            <p>
-              Iniciá sesión con tu cuenta institucional
-              para continuar.
-            </p>
+            <p>Inicie sesión con su cuenta institucional para continuar.</p>
           </div>
 
-          <form
-            className="login-form"
-            onSubmit={manejarLogin}
-          >
-
+          <form className="login-form" onSubmit={manejarLogin}>
             {/* CORREO */}
             <div className="login-field">
-              <label htmlFor="correo">
-                Correo institucional
-              </label>
+              <label htmlFor="correo">Correo institucional</label>
 
               <div className="login-input-wrapper">
                 <svg
@@ -172,13 +175,7 @@ export default function Login({ onLogin }) {
                   strokeWidth="1.8"
                   aria-hidden="true"
                 >
-                  <rect
-                    x="3"
-                    y="5"
-                    width="18"
-                    height="14"
-                    rx="2"
-                  />
+                  <rect x="3" y="5" width="18" height="14" rx="2" />
                   <path d="m3 7 9 6 9-6" />
                 </svg>
 
@@ -187,9 +184,7 @@ export default function Login({ onLogin }) {
                   name="correo"
                   type="email"
                   value={correo}
-                  onChange={(event) =>
-                    setCorreo(event.target.value)
-                  }
+                  onChange={(event) => setCorreo(event.target.value)}
                   placeholder="correo@ulatina.net"
                   autoComplete="username"
                   required
@@ -200,9 +195,7 @@ export default function Login({ onLogin }) {
 
             {/* CONTRASEÑA */}
             <div className="login-field">
-              <label htmlFor="contrasena">
-                Contraseña
-              </label>
+              <label htmlFor="contrasena">Contraseña</label>
 
               <div className="login-input-wrapper">
                 <svg
@@ -212,29 +205,17 @@ export default function Login({ onLogin }) {
                   strokeWidth="1.8"
                   aria-hidden="true"
                 >
-                  <rect
-                    x="5"
-                    y="10"
-                    width="14"
-                    height="11"
-                    rx="2"
-                  />
+                  <rect x="5" y="10" width="14" height="11" rx="2" />
                   <path d="M8 10V7a4 4 0 0 1 8 0v3" />
                 </svg>
 
                 <input
                   id="contrasena"
                   name="contrasena"
-                  type={
-                    mostrarContrasena
-                      ? 'text'
-                      : 'password'
-                  }
+                  type={mostrarContrasena ? 'text' : 'password'}
                   value={contrasena}
-                  onChange={(event) =>
-                    setContrasena(event.target.value)
-                  }
-                  placeholder="Ingresá tu contraseña"
+                  onChange={(event) => setContrasena(event.target.value)}
+                  placeholder="Ingrese su contraseña"
                   autoComplete="current-password"
                   required
                   disabled={cargando}
@@ -244,15 +225,9 @@ export default function Login({ onLogin }) {
                 <button
                   type="button"
                   className="login-password-toggle"
-                  onClick={() =>
-                    setMostrarContrasena((anterior) => !anterior)
-                  }
+                  onClick={() => setMostrarContrasena((anterior) => !anterior)}
                   disabled={cargando}
-                  aria-label={
-                    mostrarContrasena
-                      ? 'Ocultar contraseña'
-                      : 'Mostrar contraseña'
-                  }
+                  aria-label={mostrarContrasena ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                   aria-pressed={mostrarContrasena}
                 >
                   {mostrarContrasena ? (
@@ -294,9 +269,7 @@ export default function Login({ onLogin }) {
                 <input
                   type="checkbox"
                   checked={recordarme}
-                  onChange={(event) =>
-                    setRecordarme(event.target.checked)
-                  }
+                  onChange={(event) => setRecordarme(event.target.checked)}
                   disabled={cargando}
                 />
                 <span>Recordarme</span>
@@ -307,33 +280,22 @@ export default function Login({ onLogin }) {
                 className="login-forgot"
                 onClick={() => setMostrarModalRecuperacion(true)}
               >
-                ¿Olvidaste tu contraseña?
+                ¿Olvidó su contraseña?
               </button>
             </div>
 
             {/* MENSAJE DE ERROR */}
             {error && (
-              <div
-                className="login-error"
-                role="alert"
-              >
+              <Notificacion tipo="error" alCerrar={() => setError('')}>
                 {error}
-              </div>
+              </Notificacion>
             )}
 
             {/* BOTÓN */}
-            <button
-              type="submit"
-              className="login-submit"
-              disabled={cargando}
-            >
-              {cargando
-                ? 'Iniciando sesión...'
-                : 'Iniciar sesión'}
+            <button type="submit" className="login-submit" disabled={cargando}>
+              {cargando ? 'Iniciando sesión...' : 'Iniciar sesión'}
             </button>
-
           </form>
-
         </div>
       </section>
 
@@ -346,10 +308,7 @@ export default function Login({ onLogin }) {
           aria-labelledby="modal-recuperar-titulo"
           onClick={() => setMostrarModalRecuperacion(false)}
         >
-          <div
-            className="login-modal-card"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="login-modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="login-modal-header">
               <div className="login-modal-icon-badge" aria-hidden="true">
                 <svg
@@ -369,7 +328,9 @@ export default function Login({ onLogin }) {
 
             <div className="login-modal-body">
               <p>
-                Por normativas de seguridad institucional y control de auditoría de los laboratorios universitarios, el restablecimiento de contraseñas no se procesa mediante auto-servicio público para resguardar la integridad de los activos tecnológicos.
+                Por normativas de seguridad institucional y control de auditoría de los laboratorios
+                universitarios, el restablecimiento de contraseñas no se procesa mediante
+                auto-servicio público para resguardar la integridad de los activos tecnológicos.
               </p>
 
               <div className="login-modal-info-box">
@@ -382,16 +343,19 @@ export default function Login({ onLogin }) {
                     </a>
                   </li>
                   <li>
-                    <strong>Ubicación física:</strong> Sede Heredia, Edificio Central, Piso 2, Oficina de TICs.
+                    <strong>Ubicación física:</strong> Sede Heredia, Edificio Central, Piso 2,
+                    Oficina de TICs.
                   </li>
                   <li>
-                    <strong>Extensión telefónica:</strong> 4200 (Lunes a Viernes, 8:00 a. m. a 6:00 p. m.)
+                    <strong>Extensión telefónica:</strong> 4200 (Lunes a Viernes, 8:00 a. m. a 6:00
+                    p. m.)
                   </li>
                 </ul>
               </div>
 
               <p className="login-modal-nota">
-                Para validar su identidad, proporcione su nombre completo, correo institucional y rol asignado al comunicarse con el departamento técnico.
+                Para validar su identidad, proporcione su nombre completo, correo institucional y
+                rol asignado al comunicarse con el departamento técnico.
               </p>
             </div>
 

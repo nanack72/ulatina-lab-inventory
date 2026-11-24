@@ -1,9 +1,16 @@
 const { validarYReasignarOrdenesAbiertas } = require('./reasignacionMantenimientos');
 
-const esSuper = rol => String(rol || '').trim().toLowerCase() === 'superadministrador';
+const esSuper = (rol) =>
+  String(rol || '')
+    .trim()
+    .toLowerCase() === 'superadministrador';
 const fallo = (message, status = 409) => Object.assign(new Error(message), { status });
-const identificador = nombre => '"' + nombre.replace(/"/g, '""') + '"';
-const TECNICAS = new Set(['public.usuario_sede', 'public.usuario_laboratorio', 'public.token_revocado']);
+const identificador = (nombre) => '"' + nombre.replace(/"/g, '""') + '"';
+const TECNICAS = new Set([
+  'public.usuario_sede',
+  'public.usuario_laboratorio',
+  'public.token_revocado',
+]);
 
 async function tieneActividad(cliente, id) {
   // Incluye referencias con CASCADE o SET NULL: nunca permitir que borren autoría.
@@ -51,7 +58,9 @@ async function tieneActividad(cliente, id) {
     if (!referencia.protegida) return true;
     const tabla = `${identificador(referencia.esquema)}.${identificador(referencia.tabla)}`;
     const resultado = await cliente.query(
-      `SELECT 1 FROM ${tabla} WHERE ${identificador(referencia.columna)} = $1 LIMIT 1`, [id]);
+      `SELECT 1 FROM ${tabla} WHERE ${identificador(referencia.columna)} = $1 LIMIT 1`,
+      [id]
+    );
     if (resultado.rows.length) return true;
   }
   return false;
@@ -59,9 +68,13 @@ async function tieneActividad(cliente, id) {
 
 async function darBajaUsuario(pool, id, actor, opciones = {}) {
   const { idTecnicoSustituto = null } = opciones || {};
-  if (!/^[1-9]\d*$/.test(String(id)) || Number(id) > 2147483647 ||
-    !Number.isSafeInteger(Number(actor)) || Number(actor) <= 0) {
-    throw fallo('Identificador de usuario no válido.', 400);
+  if (
+    !/^[1-9]\d*$/.test(String(id)) ||
+    Number(id) > 2147483647 ||
+    !Number.isSafeInteger(Number(actor)) ||
+    Number(actor) <= 0
+  ) {
+    throw fallo('Seleccione un usuario válido.', 400);
   }
   id = Number(id);
   actor = Number(actor);
@@ -70,21 +83,27 @@ async function darBajaUsuario(pool, id, actor, opciones = {}) {
   try {
     await cliente.query('BEGIN');
     await cliente.query('SELECT pg_advisory_xact_lock(2026, 1101)');
-    const cuentas = await cliente.query(`
+    const cuentas = await cliente.query(
+      `
       SELECT u.id_usuario, u.activo, r.nombre AS rol FROM public.usuario u
       JOIN public.rol r ON r.id_rol = u.id_rol
       WHERE u.id_usuario = ANY($1::integer[]) ORDER BY u.id_usuario FOR UPDATE OF u
-    `, [[actor, id]]);
-    const administrador = cuentas.rows.find(u => u.id_usuario === actor);
+    `,
+      [[actor, id]]
+    );
+    const administrador = cuentas.rows.find((u) => u.id_usuario === actor);
     if (!administrador?.activo || !esSuper(administrador.rol)) {
       throw fallo('Su cuenta ya no tiene permisos para administrar usuarios.', 403);
     }
-    const usuario = cuentas.rows.find(u => u.id_usuario === id);
+    const usuario = cuentas.rows.find((u) => u.id_usuario === id);
     if (!usuario) throw fallo('El usuario no existe.', 404);
     if (usuario.activo && esSuper(usuario.rol)) {
-      const otros = await cliente.query(`SELECT 1 FROM public.usuario u
+      const otros = await cliente.query(
+        `SELECT 1 FROM public.usuario u
         JOIN public.rol r ON r.id_rol=u.id_rol WHERE u.activo = true
-        AND lower(trim(r.nombre))='superadministrador' AND u.id_usuario <> $1 LIMIT 1`, [id]);
+        AND lower(trim(r.nombre))='superadministrador' AND u.id_usuario <> $1 LIMIT 1`,
+        [id]
+      );
       if (!otros.rows.length) throw fallo('Debe conservar al menos un Superadministrador activo.');
     }
     const { reasignadas } = await validarYReasignarOrdenesAbiertas(
@@ -96,8 +115,11 @@ async function darBajaUsuario(pool, id, actor, opciones = {}) {
     if (!conservar) {
       await cliente.query('SAVEPOINT eliminar_cuenta');
       try {
-        await cliente.query(`DELETE FROM public.usuario_laboratorio ul USING public.usuario_sede us
-          WHERE ul.id_usuario_sede=us.id_usuario_sede AND us.id_usuario=$1`, [id]);
+        await cliente.query(
+          `DELETE FROM public.usuario_laboratorio ul USING public.usuario_sede us
+          WHERE ul.id_usuario_sede=us.id_usuario_sede AND us.id_usuario=$1`,
+          [id]
+        );
         await cliente.query('DELETE FROM public.usuario_sede WHERE id_usuario=$1', [id]);
         await cliente.query('DELETE FROM public.token_revocado WHERE id_usuario=$1', [id]);
         await cliente.query('DELETE FROM public.usuario WHERE id_usuario=$1', [id]);
@@ -115,16 +137,24 @@ async function darBajaUsuario(pool, id, actor, opciones = {}) {
       success: true,
       accion: conservar ? 'desactivado' : 'eliminado',
       ordenes_reasignadas: reasignadas,
-      message: reasignadas > 0
-        ? `Se reasignaron ${reasignadas} ${reasignadas === 1 ? 'orden abierta' : 'órdenes abiertas'} y la cuenta fue desactivada conservando sus historiales.`
-        : conservar
-          ? 'Cuenta desactivada. Se conservan sus registros y la autoría de sus actividades.'
-          : 'Usuario sin actividad eliminado correctamente.'
+      message:
+        reasignadas > 0
+          ? `Se reasignaron ${reasignadas} ${reasignadas === 1 ? 'orden abierta' : 'órdenes abiertas'} y la cuenta fue desactivada conservando sus historiales.`
+          : conservar
+            ? 'Cuenta desactivada. Se conservan sus registros y la autoría de sus actividades.'
+            : 'Usuario sin actividad eliminado correctamente.',
     };
   } catch (error) {
     await cliente.query('ROLLBACK').catch(() => {});
     if (error.code === '42501') {
-      throw fallo('Faltan permisos de base de datos para dar de baja o reasignar órdenes de usuarios. Aplique las migraciones 003 y 009.', 503);
+      console.error(
+        'Permisos insuficientes al dar de baja o reasignar usuarios; revisar migraciones 003 y 009:',
+        error
+      );
+      throw fallo(
+        'No fue posible dar de baja la cuenta o reasignar sus órdenes. Contacte al responsable del sistema.',
+        503
+      );
     }
     throw error;
   } finally {

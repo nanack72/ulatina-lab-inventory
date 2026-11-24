@@ -1,13 +1,7 @@
+import Notificacion from '../comunes/Notificacion';
 import { useEffect, useMemo, useState } from 'react';
 
-import {
-  History,
-  RefreshCw,
-  AlertCircle,
-  ArrowRight,
-  PackagePlus,
-  RefreshCcw,
-} from 'lucide-react';
+import { History, RefreshCw, ArrowRight, PackagePlus, RefreshCcw } from 'lucide-react';
 
 import { obtenerHistorialEstados } from '../../services/equiposService';
 
@@ -42,13 +36,10 @@ function nombreEstado(nombre, id) {
     return 'Sin estado anterior';
   }
 
-  return `Estado ${id}`;
+  return 'Estado no disponible';
 }
 
-export default function HistorialEstados({
-  idEquipo,
-  token,
-}) {
+export default function HistorialEstados({ idEquipo, token }) {
   const [movimientos, setMovimientos] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
@@ -62,11 +53,7 @@ export default function HistorialEstados({
       setError('');
 
       try {
-        const datos = await obtenerHistorialEstados(
-          idEquipo,
-          token,
-          controlador.signal
-        );
+        const datos = await obtenerHistorialEstados(idEquipo, token, controlador.signal);
 
         if (controlador.signal.aborted) return;
 
@@ -75,10 +62,7 @@ export default function HistorialEstados({
         if (controlador.signal.aborted) return;
 
         setMovimientos([]);
-        setError(
-          err.message ||
-          'No se pudo consultar el historial de estados.'
-        );
+        setError(err.message || 'No se pudo consultar el historial de estados.');
       } finally {
         if (!controlador.signal.aborted) {
           setCargando(false);
@@ -98,16 +82,12 @@ export default function HistorialEstados({
 
       if (fechaA !== fechaB) return fechaB - fechaA;
 
-      return (
-        Number(b.id_historial_estado) -
-        Number(a.id_historial_estado)
-      );
+      return Number(b.id_historial_estado) - Number(a.id_historial_estado);
     });
   }, [movimientos]);
 
   return (
     <section className="hist-ubicacion hist-estados">
-
       <div className="hist-encabezado">
         <div className="hist-titulo">
           <div className="hist-icono-principal">
@@ -116,10 +96,7 @@ export default function HistorialEstados({
 
           <div>
             <h2>Historial de estados</h2>
-            <p>
-              Consulte los cambios de estado registrados
-              para este equipo tecnológico.
-            </p>
+            <p>Consulte los cambios de estado registrados para este equipo tecnológico.</p>
           </div>
         </div>
 
@@ -129,9 +106,7 @@ export default function HistorialEstados({
           aria-label="Actualizar historial de estados"
           title="Actualizar historial"
           disabled={cargando}
-          onClick={() =>
-            setRecarga((valor) => valor + 1)
-          }
+          onClick={() => setRecarga((valor) => valor + 1)}
         >
           <RefreshCw size={17} />
         </button>
@@ -144,142 +119,105 @@ export default function HistorialEstados({
       )}
 
       {!cargando && error && (
-        <div className="hist-error" role="alert">
-          <AlertCircle size={18} />
+        <Notificacion tipo="error">
           <span>{error}</span>
 
-          <button
-            type="button"
-            onClick={() =>
-              setRecarga((valor) => valor + 1)
-            }
-          >
+          <button type="button" onClick={() => setRecarga((valor) => valor + 1)}>
             Reintentar
           </button>
+        </Notificacion>
+      )}
+
+      {!cargando && !error && movimientosOrdenados.length === 0 && (
+        <div className="hist-vacio">
+          <History size={25} />
+          <strong>Sin cambios de estado registrados</strong>
+          <p>Este equipo todavía no tiene historial de estados.</p>
         </div>
       )}
 
-      {!cargando &&
-        !error &&
-        movimientosOrdenados.length === 0 && (
-          <div className="hist-vacio">
-            <History size={25} />
-            <strong>Sin cambios de estado registrados</strong>
-            <p>
-              Este equipo todavía no tiene historial
-              de estados.
-            </p>
+      {!cargando && !error && movimientosOrdenados.length > 0 && (
+        <>
+          <div className="hist-contador">
+            {movimientosOrdenados.length}{' '}
+            {movimientosOrdenados.length === 1 ? 'registro encontrado' : 'registros encontrados'}
           </div>
-        )}
 
-      {!cargando &&
-        !error &&
-        movimientosOrdenados.length > 0 && (
-          <>
-            <div className="hist-contador">
-              {movimientosOrdenados.length}{' '}
-              {movimientosOrdenados.length === 1
-                ? 'registro encontrado'
-                : 'registros encontrados'}
-            </div>
+          <div className="hist-linea-tiempo">
+            {movimientosOrdenados.map((movimiento) => {
+              const inicial =
+                movimiento.tipo_movimiento === 'asignacion_inicial' ||
+                movimiento.id_estado_anterior == null;
 
-            <div className="hist-linea-tiempo">
-              {movimientosOrdenados.map((movimiento) => {
-                const inicial =
-                  movimiento.tipo_movimiento ===
-                    'asignacion_inicial' ||
-                  movimiento.id_estado_anterior == null;
+              const anterior = nombreEstado(
+                movimiento.nombre_estado_anterior,
+                movimiento.id_estado_anterior
+              );
 
-                const anterior = nombreEstado(
-                  movimiento.nombre_estado_anterior,
-                  movimiento.id_estado_anterior
-                );
+              const nuevo = nombreEstado(
+                movimiento.nombre_estado_nuevo,
+                movimiento.id_estado_nuevo
+              );
 
-                const nuevo = nombreEstado(
-                  movimiento.nombre_estado_nuevo,
-                  movimiento.id_estado_nuevo
-                );
+              const responsable = texto(movimiento.nombre_usuario) || 'Responsable no disponible';
 
-                const responsable =
-                  texto(movimiento.nombre_usuario) ||
-                  (movimiento.id_usuario != null
-                    ? `Usuario ${movimiento.id_usuario}`
-                    : 'No disponible');
+              return (
+                <article
+                  key={movimiento.id_historial_estado}
+                  className="hist-movimiento hist-estado-movimiento"
+                >
+                  <div className="hist-marcador">
+                    {inicial ? <PackagePlus size={16} /> : <RefreshCcw size={16} />}
+                  </div>
 
-                return (
-                  <article
-                    key={movimiento.id_historial_estado}
-                    className="hist-movimiento hist-estado-movimiento"
-                  >
-                    <div className="hist-marcador">
-                      {inicial ? (
-                        <PackagePlus size={16} />
-                      ) : (
-                        <RefreshCcw size={16} />
-                      )}
-                    </div>
+                  <div className="hist-contenido">
+                    <div className="hist-movimiento-cabecera">
+                      <div className="hist-tipo-encabezado">
+                        <h3>{inicial ? 'Asignación inicial de estado' : 'Cambio de estado'}</h3>
 
-                    <div className="hist-contenido">
-                      <div className="hist-movimiento-cabecera">
-                        <div className="hist-tipo-encabezado">
-                          <h3>
-                            {inicial
-                              ? 'Asignación inicial de estado'
-                              : 'Cambio de estado'}
-                          </h3>
-
-                          <span className="hist-estado-etiqueta">
-                            {inicial ? 'Inicial' : 'Cambio'}
-                          </span>
-                        </div>
-
-                        <time dateTime={movimiento.fecha || undefined}>
-                          {formatearFecha(movimiento.fecha)}
-                        </time>
-                      </div>
-
-                      <div className="hist-cambio">
-                        <div className="hist-ubicacion-origen">
-                          <span>Estado anterior</span>
-                          <strong>{anterior}</strong>
-                        </div>
-
-                        <div className="hist-flecha">
-                          <ArrowRight size={19} />
-                        </div>
-
-                        <div className="hist-ubicacion-destino">
-                          <span>Estado nuevo</span>
-                          <strong>{nuevo}</strong>
-                        </div>
-                      </div>
-
-                      <div className="hist-estado-motivo">
-                        <span>Motivo</span>
-                        <p>
-                          {texto(movimiento.motivo) ||
-                            'No registrado'}
-                        </p>
-                      </div>
-
-                      <div className="hist-movimiento-pie">
-                        <span>
-                          Responsable:{' '}
-                          <strong>{responsable}</strong>
-                        </span>
-
-                        <span>
-                          Movimiento #
-                          {movimiento.id_historial_estado}
+                        <span className="hist-estado-etiqueta">
+                          {inicial ? 'Inicial' : 'Cambio'}
                         </span>
                       </div>
+
+                      <time dateTime={movimiento.fecha || undefined}>
+                        {formatearFecha(movimiento.fecha)}
+                      </time>
                     </div>
-                  </article>
-                );
-              })}
-            </div>
-          </>
-        )}
+
+                    <div className="hist-cambio">
+                      <div className="hist-ubicacion-origen">
+                        <span>Estado anterior</span>
+                        <strong>{anterior}</strong>
+                      </div>
+
+                      <div className="hist-flecha">
+                        <ArrowRight size={19} />
+                      </div>
+
+                      <div className="hist-ubicacion-destino">
+                        <span>Estado nuevo</span>
+                        <strong>{nuevo}</strong>
+                      </div>
+                    </div>
+
+                    <div className="hist-estado-motivo">
+                      <span>Motivo</span>
+                      <p>{texto(movimiento.motivo) || 'Sin registrar'}</p>
+                    </div>
+
+                    <div className="hist-movimiento-pie">
+                      <span>
+                        Responsable: <strong>{responsable}</strong>
+                      </span>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </>
+      )}
     </section>
   );
 }

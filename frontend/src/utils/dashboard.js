@@ -18,7 +18,11 @@ export function saludo(fecha = new Date()) {
 
 // Primer nombre del usuario (el backend devuelve el nombre completo).
 export function primerNombre(nombreCompleto) {
-  return String(nombreCompleto ?? '').trim().split(/\s+/)[0] || '';
+  return (
+    String(nombreCompleto ?? '')
+      .trim()
+      .split(/\s+/)[0] || ''
+  );
 }
 
 // Día y mes en español: { dia: '9', mes: 'noviembre' }.
@@ -28,8 +32,7 @@ export function diaYMes(fecha = new Date()) {
     month: 'long',
   }).formatToParts(fecha);
 
-  const buscar = (tipo) =>
-    partes.find((parte) => parte.type === tipo)?.value ?? '';
+  const buscar = (tipo) => partes.find((parte) => parte.type === tipo)?.value ?? '';
 
   return { dia: buscar('day'), mes: buscar('month') };
 }
@@ -74,9 +77,7 @@ export function tipoMantenimiento(estado) {
 // Resumen de números para las tarjetas y las alertas.
 export function resumirInicio(equipos, mantenimientos) {
   const total = equipos.length;
-  const contar = (tipo) =>
-    equipos.filter((equipo) => tipoEstado(equipo.estado) === tipo)
-      .length;
+  const contar = (tipo) => equipos.filter((equipo) => tipoEstado(equipo.estado) === tipo).length;
 
   const operativos = contar('operativo');
 
@@ -98,13 +99,9 @@ export function resumirInicio(equipos, mantenimientos) {
 
   return {
     total,
-    laboratorios: new Set(
-      equipos.map((equipo) => equipo.laboratorio).filter(Boolean)
-    ).size,
+    laboratorios: new Set(equipos.map((equipo) => equipo.laboratorio).filter(Boolean)).size,
     operativos,
-    porcentajeOperativos: total
-      ? Math.round((operativos / total) * 1000) / 10
-      : 0,
+    porcentajeOperativos: total ? Math.round((operativos / total) * 1000) / 10 : 0,
     enMantenimiento: contar('mantenimiento'),
     fueraDeServicio: contar('baja'),
     abiertos: abiertos.length,
@@ -141,9 +138,7 @@ export function describirActividad(movimiento) {
 
       return {
         titulo:
-          tipo === 'repuesto'
-            ? 'Mantenimiento en espera de repuesto'
-            : 'Mantenimiento en proceso',
+          tipo === 'repuesto' ? 'Mantenimiento en espera de repuesto' : 'Mantenimiento en proceso',
         icono: 'mantenimiento',
       };
     }
