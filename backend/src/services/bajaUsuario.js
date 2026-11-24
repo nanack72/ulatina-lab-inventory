@@ -1,3 +1,5 @@
+const { validarYReasignarOrdenesAbiertas } = require('./reasignacionMantenimientos');
+
 const esSuper = rol => String(rol || '').trim().toLowerCase() === 'superadministrador';
 const fallo = (message, status = 409) => Object.assign(new Error(message), { status });
 const identificador = nombre => '"' + nombre.replace(/"/g, '""') + '"';
@@ -55,7 +57,8 @@ async function tieneActividad(cliente, id) {
   return false;
 }
 
-async function darBajaUsuario(pool, id, actor) {
+async function darBajaUsuario(pool, id, actor, opciones = {}) {
+  const { idTecnicoSustituto = null } = opciones || {};
   if (!/^[1-9]\d*$/.test(String(id)) || Number(id) > 2147483647 ||
     !Number.isSafeInteger(Number(actor)) || Number(actor) <= 0) {
     throw fallo('Identificador de usuario no válido.', 400);
@@ -84,7 +87,12 @@ async function darBajaUsuario(pool, id, actor) {
         AND lower(trim(r.nombre))='superadministrador' AND u.id_usuario <> $1 LIMIT 1`, [id]);
       if (!otros.rows.length) throw fallo('Debe conservar al menos un Superadministrador activo.');
     }
-    let conservar = await tieneActividad(cliente, id);
+    const { reasignadas } = await validarYReasignarOrdenesAbiertas(
+      cliente,
+      id,
+      idTecnicoSustituto
+    );
+    let conservar = reasignadas > 0 || (await tieneActividad(cliente, id));
     if (!conservar) {
       await cliente.query('SAVEPOINT eliminar_cuenta');
       try {
@@ -103,14 +111,20 @@ async function darBajaUsuario(pool, id, actor) {
       await cliente.query('UPDATE public.usuario SET activo=false WHERE id_usuario=$1', [id]);
     }
     await cliente.query('COMMIT');
-    return { success: true, accion: conservar ? 'desactivado' : 'eliminado',
-      message: conservar
-        ? 'Cuenta desactivada. Se conservan sus registros y la autoría de sus actividades.'
-        : 'Usuario sin actividad eliminado correctamente.' };
+    return {
+      success: true,
+      accion: conservar ? 'desactivado' : 'eliminado',
+      ordenes_reasignadas: reasignadas,
+      message: reasignadas > 0
+        ? `Se reasignaron ${reasignadas} ${reasignadas === 1 ? 'orden abierta' : 'órdenes abiertas'} y la cuenta fue desactivada conservando sus historiales.`
+        : conservar
+          ? 'Cuenta desactivada. Se conservan sus registros y la autoría de sus actividades.'
+          : 'Usuario sin actividad eliminado correctamente.'
+    };
   } catch (error) {
     await cliente.query('ROLLBACK').catch(() => {});
     if (error.code === '42501') {
-      throw fallo('Faltan permisos de base de datos para dar de baja usuarios. Aplique la migración 003.', 503);
+      throw fallo('Faltan permisos de base de datos para dar de baja o reasignar órdenes de usuarios. Aplique las migraciones 003 y 009.', 503);
     }
     throw error;
   } finally {

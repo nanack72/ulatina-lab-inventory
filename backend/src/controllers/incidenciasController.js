@@ -68,9 +68,9 @@ const crearIncidencia = async (req, res) => {
 
     const equipoId = Number(id_equipo);
 
-    // Verificar que el equipo exista y no esté dado de baja
+    // Verificar que el equipo exista y no esté eliminado ni dado de baja
     const equipoRes = await pool.query(
-      `SELECT e.id_equipo, e.id_laboratorio, e.nombre, es.nombre AS estado_equipo
+      `SELECT e.id_equipo, e.id_laboratorio, e.nombre, e.eliminado_en, es.nombre AS estado_equipo
        FROM public.equipo e
        LEFT JOIN public.estado es ON e.id_estado = es.id_estado
        WHERE e.id_equipo = $1`,
@@ -81,6 +81,13 @@ const crearIncidencia = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: 'El equipo seleccionado no existe en el inventario'
+      });
+    }
+
+    if (equipoRes.rows[0].eliminado_en !== null && equipoRes.rows[0].eliminado_en !== undefined) {
+      return res.status(409).json({
+        success: false,
+        message: 'No se pueden registrar incidencias sobre un equipo eliminado del inventario'
       });
     }
 

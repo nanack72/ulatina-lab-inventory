@@ -7,6 +7,7 @@ const { permitirRoles } = require('../middlewares/permisosMiddleware');
 
 const router = express.Router();
 const { darBajaUsuario } = require('../services/bajaUsuario');
+const { validarYReasignarOrdenesAbiertas } = require('../services/reasignacionMantenimientos');
 
 router.use(
   verificarToken,
@@ -38,6 +39,15 @@ function responderError(res, error) {
     return res.status(error.status).json({
       success: false,
       message: error.message,
+      ...(error.datos && typeof error.datos === 'object' ? error.datos : {}),
+    });
+  }
+
+  if (error.code === '42501') {
+    return res.status(503).json({
+      success: false,
+      message:
+        'Faltan permisos de base de datos para completar la operación. Verifique las migraciones 003 y 009.',
     });
   }
 
@@ -165,6 +175,7 @@ function validarDatos(body, creando) {
     permisoInventario: body.permiso_inventario,
     sedes,
     laboratorios,
+    idTecnicoSustituto: body.id_tecnico_sustituto ?? null,
   };
 }
 
@@ -375,7 +386,13 @@ router.get('/', async (req, res) => {
             ON us.id_usuario_sede = ul.id_usuario_sede
           WHERE us.id_usuario = u.id_usuario
           ORDER BY ul.id_laboratorio
-        ) AS laboratorios
+        ) AS laboratorios,
+        COALESCE((
+          SELECT COUNT(*)::int
+          FROM public.bitacora_mantenimiento bm
+          WHERE bm.id_usuario_tecnico = u.id_usuario
+            AND LOWER(TRIM(bm.estado_mantenimiento)) IN ('en proceso', 'pendiente repuesto')
+        ), 0) AS ordenes_abiertas
       FROM public.usuario u
       INNER JOIN public.rol r
         ON r.id_rol = u.id_rol
@@ -593,6 +610,16 @@ router.put('/:id', async (req, res) => {
       );
     }
 
+    let reasignadas = 0;
+    if (!datos.activo) {
+      const resultadoReasignacion = await validarYReasignarOrdenesAbiertas(
+        cliente,
+        idUsuario,
+        datos.idTecnicoSustituto
+      );
+      reasignadas = resultadoReasignacion.reasignadas;
+    }
+
     await cliente.query(
       `
         UPDATE public.usuario
@@ -628,7 +655,11 @@ router.put('/:id', async (req, res) => {
 
     return res.json({
       success: true,
-      message: 'Usuario actualizado correctamente.',
+      ordenes_reasignadas: reasignadas,
+      message:
+        reasignadas > 0
+          ? `Usuario actualizado correctamente. Se reasignaron ${reasignadas} ${reasignadas === 1 ? 'orden abierta' : 'órdenes abiertas'}.`
+          : 'Usuario actualizado correctamente.',
     });
   } catch (error) {
     await revertirTransaccion(cliente, transaccion);
@@ -641,7 +672,13 @@ router.put('/:id', async (req, res) => {
 // El middleware de esta sección ya exige un Superadministrador autenticado.
 router.delete('/:id', async (req, res) => {
   try {
-    return res.json(await darBajaUsuario(pool, req.params.id, req.usuario.idUsuario));
+    const idTecnicoSustituto =
+      req.body?.id_tecnico_sustituto ?? req.query?.id_tecnico_sustituto ?? null;
+    return res.json(
+      await darBajaUsuario(pool, req.params.id, req.usuario.idUsuario, {
+        idTecnicoSustituto,
+      })
+    );
   } catch (error) {
     return responderError(res, error);
   }

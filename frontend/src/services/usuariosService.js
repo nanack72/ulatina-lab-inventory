@@ -1,10 +1,20 @@
 const API_URL = '/api/admin/usuarios';
 
-export function darBajaUsuario(id, token) {
+export function darBajaUsuario(id, token, idTecnicoSustituto = null) {
   if (!Number.isSafeInteger(Number(id)) || Number(id) <= 0) {
     throw new Error('Identificador de usuario no válido.');
   }
-  return solicitar(`/${encodeURIComponent(id)}`, token, { method: 'DELETE' });
+  const opciones = { method: 'DELETE' };
+  if (
+    idTecnicoSustituto !== undefined &&
+    idTecnicoSustituto !== null &&
+    String(idTecnicoSustituto).trim() !== ''
+  ) {
+    opciones.body = JSON.stringify({
+      id_tecnico_sustituto: Number(idTecnicoSustituto),
+    });
+  }
+  return solicitar(`/${encodeURIComponent(id)}`, token, opciones);
 }
 
 async function solicitar(ruta, token, opciones = {}) {
@@ -38,6 +48,10 @@ async function solicitar(ruta, token, opciones = {}) {
     );
 
     error.status = respuesta.status;
+    if (resultado?.codigo) error.codigo = resultado.codigo;
+    if (Number.isInteger(resultado?.ordenes_abiertas)) {
+      error.ordenesAbiertas = resultado.ordenes_abiertas;
+    }
     throw error;
   }
 

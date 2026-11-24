@@ -254,6 +254,7 @@ const crearMantenimiento = async (req, res) => {
                 e.id_equipo,
                 e.nombre,
                 e.id_estado,
+                e.eliminado_en,
                 l.id_laboratorio,
                 l.id_sede,
                 s.nombre AS sede
@@ -275,6 +276,13 @@ const crearMantenimiento = async (req, res) => {
         }
 
         const equipoExistente = equipoConsulta.rows[0];
+
+        if (equipoExistente.eliminado_en !== null && equipoExistente.eliminado_en !== undefined) {
+            return res.status(409).json({
+                success: false,
+                message: 'No se pueden registrar mantenimientos sobre un equipo eliminado del inventario'
+            });
+        }
 
         // 7. Control de acceso por laboratorio
         // El Superadministrador tiene acceso global.
@@ -339,6 +347,7 @@ const crearMantenimiento = async (req, res) => {
                 SELECT
                     e.id_equipo,
                     e.id_estado,
+                    e.eliminado_en,
                     es.nombre AS estado_actual
                 FROM public.equipo e
                 LEFT JOIN public.estado es
@@ -358,6 +367,15 @@ const crearMantenimiento = async (req, res) => {
             }
 
             const equipoBloqueado = equipoBloqueadoRes.rows[0];
+
+            // Impedir mantenimientos nuevos sobre equipos eliminados lógicamente
+            if (equipoBloqueado.eliminado_en !== null && equipoBloqueado.eliminado_en !== undefined) {
+                await client.query('ROLLBACK');
+                return res.status(409).json({
+                    success: false,
+                    message: 'No se pueden registrar mantenimientos sobre un equipo eliminado del inventario'
+                });
+            }
 
             // Impedir mantenimientos nuevos sobre equipos dados de baja
             if (esEstadoBaja(equipoBloqueado.estado_actual)) {
