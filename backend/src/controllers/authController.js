@@ -2,6 +2,11 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const pool = require('../config/database');
+const {
+  solicitarRecuperacion,
+  validarTokenRecuperacion: verificarTokenRecuperacion,
+  restablecerContrasenaConToken,
+} = require('../services/recuperacionService');
 
 // Hash válido de bcrypt (12 rondas) usado solo para igualar tiempos de respuesta.
 const HASH_FICTICIO = bcrypt.hashSync('contrasena-ficticia-sin-uso', 12);
@@ -244,9 +249,78 @@ const cambiarContrasena = async (req, res) => {
   }
 };
 
+// Solicita un enlace temporal de recuperación de contraseña por correo.
+const olvideContrasena = async (req, res) => {
+  try {
+    const { correo } = req.body || {};
+    const resultado = await solicitarRecuperacion(pool, correo);
+    return res.status(200).json(resultado);
+  } catch (error) {
+    if (error.status) {
+      return res.status(error.status).json({
+        success: false,
+        message: error.message,
+      });
+    }
+    console.error('Error al solicitar recuperación de contraseña:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'No fue posible procesar la solicitud de recuperación.',
+    });
+  }
+};
+
+// Verifica si un token de recuperación sigue vigente antes de mostrar el formulario.
+const validarTokenRecuperacion = async (req, res) => {
+  try {
+    const token = req.query?.token;
+    const resultado = await verificarTokenRecuperacion(pool, token);
+    return res.status(200).json(resultado);
+  } catch (error) {
+    if (error.status) {
+      return res.status(error.status).json({
+        success: false,
+        message: error.message,
+      });
+    }
+    console.error('Error al validar token de recuperación:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'No fue posible validar el enlace de recuperación.',
+    });
+  }
+};
+
+// Restablece la contraseña usando un token temporal de un solo uso.
+const restablecerContrasena = async (req, res) => {
+  try {
+    const { token, contrasenaNueva } = req.body || {};
+    const resultado = await restablecerContrasenaConToken(pool, {
+      token,
+      contrasenaNueva,
+    });
+    return res.status(200).json(resultado);
+  } catch (error) {
+    if (error.status) {
+      return res.status(error.status).json({
+        success: false,
+        message: error.message,
+      });
+    }
+    console.error('Error al restablecer contraseña:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'No fue posible restablecer la contraseña.',
+    });
+  }
+};
+
 module.exports = {
   login,
   obtenerPerfil,
   logout,
   cambiarContrasena,
+  olvideContrasena,
+  validarTokenRecuperacion,
+  restablecerContrasena,
 };
