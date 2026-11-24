@@ -1,0 +1,136 @@
+diff --git a/frontend/index.html b/frontend/index.html
+--- a/frontend/index.html
++++ b/frontend/index.html
+@@ -3,7 +3,8 @@
+   <head>
+     <meta charset="UTF-8" />
+     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
++    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
++    <meta name="theme-color" content="#f5f6f7" />
+     <title>ULATINA | Inventario Tecnológico</title>
+   </head>
+   <body>
+diff --git a/frontend/src/pages/Login.jsx b/frontend/src/pages/Login.jsx
+--- a/frontend/src/pages/Login.jsx
++++ b/frontend/src/pages/Login.jsx
+@@ -1,5 +1,5 @@
+ import Notificacion from '../components/comunes/Notificacion';
+-import { useState } from 'react';
++import { useEffect, useState } from 'react';
+ import { ClipboardList, Monitor, Wrench } from 'lucide-react';
+ import { iniciarSesion } from '../services/authService';
+ 
+@@ -21,6 +21,13 @@
+   const [error, setError] = useState('');
+   const [mostrarModalRecuperacion, setMostrarModalRecuperacion] = useState(false);
+ 
++  useEffect(() => {
++    const tema = document.querySelector('meta[name="theme-color"]');
++    const anterior = tema?.getAttribute('content');
++    tema?.setAttribute('content', '#075640');
++    return () => { if (tema) tema.setAttribute('content', anterior || '#f5f6f7'); };
++  }, []);
++
+   const manejarLogin = async (event) => {
+     event.preventDefault();
+     setError('');
+@@ -44,7 +51,10 @@
+         localStorage.removeItem('ulatina_correo_recordado');
+       }
+ 
++      // Cerrar el teclado antes de entrar y comenzar en el encabezado del sistema.
++      if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+       onLogin(sesion);
++      requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' }));
+     } catch (err) {
+       setError(err.message || 'Error al iniciar sesión.');
+     } finally {
+diff --git a/frontend/src/styles/login.css b/frontend/src/styles/login.css
+--- a/frontend/src/styles/login.css
++++ b/frontend/src/styles/login.css
+@@ -730,3 +730,36 @@
+     transition-duration: 0.01ms !important;
+   }
+ }
++
++/* Safari móvil: fondo continuo, zonas seguras y controles sin zoom automático. */
++@media (max-width: 720px) {
++  html:has(.login-page),
++  body:has(.login-page) {
++    background: #075640;
++  }
++
++  .login-page {
++    min-height: 100dvh;
++    padding-top: max(20px, env(safe-area-inset-top));
++    padding-bottom: max(20px, env(safe-area-inset-bottom));
++    padding-left: max(20px, env(safe-area-inset-left));
++    padding-right: max(20px, env(safe-area-inset-right));
++  }
++
++  .login-page .login-input-wrapper input {
++    font-size: max(1rem, 16px);
++  }
++
++  .login-page .login-options { flex-wrap: wrap; }
++}
++
++@media (pointer: coarse) {
++  .login-page .login-input-wrapper input { font-size: max(1rem, 16px); }
++}
++
++@media (max-width: 390px) {
++  .login-page {
++    padding-left: max(12px, env(safe-area-inset-left));
++    padding-right: max(12px, env(safe-area-inset-right));
++  }
++}
+diff --git a/frontend/src/styles/tablasMovil.css b/frontend/src/styles/tablasMovil.css
+--- a/frontend/src/styles/tablasMovil.css
++++ b/frontend/src/styles/tablasMovil.css
+@@ -160,3 +160,20 @@
+     padding: 14px;
+   }
+ }
++
++@media (max-width: 700px) {
++  /* Los nombres pueden ser largos: evitar una media fila vacía a su derecha. */
++  .main-page .mod-tabla td[data-label="Reportado por"] {
++    grid-column: 1 / -1;
++  }
++
++  /* En pantallas táctiles Safari puede conservar :hover tras tocar un selector.
++     El color debe ser uniforme, incluidas las zonas vacías de la cuadrícula. */
++  .main-page .inv-tabla tbody tr:hover td {
++    background: transparent;
++  }
++  .main-page .inv-tabla tbody tr:hover td:first-child,
++  .main-page .inv-tabla tbody tr:focus-within td:first-child {
++    border-left: 0;
++  }
++}
+diff --git a/frontend/src/styles/paginasMovil.css b/frontend/src/styles/paginasMovil.css
+--- a/frontend/src/styles/paginasMovil.css
++++ b/frontend/src/styles/paginasMovil.css
+@@ -116,3 +116,20 @@
+     grid-template-columns: 1fr;
+   }
+ }
++
++@media (max-width: 800px) {
++  html:has(.main-layout),
++  body:has(.main-layout) { background: #f5f6f7; }
++
++  .main-layout { min-height: 100dvh; }
++
++  .main-layout .main-header {
++    padding-top: calc(12px + env(safe-area-inset-top));
++    padding-left: max(16px, env(safe-area-inset-left));
++    padding-right: max(16px, env(safe-area-inset-right));
++  }
++
++  .main-layout .main-page {
++    padding-bottom: calc(24px + env(safe-area-inset-bottom));
++  }
++}

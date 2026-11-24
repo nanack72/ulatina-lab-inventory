@@ -1,5 +1,5 @@
 import Notificacion from '../components/comunes/Notificacion';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ClipboardList, Monitor, Wrench } from 'lucide-react';
 import { iniciarSesion } from '../services/authService';
 
@@ -20,6 +20,13 @@ export default function Login({ onLogin }) {
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState('');
   const [mostrarModalRecuperacion, setMostrarModalRecuperacion] = useState(false);
+
+  useEffect(() => {
+    const tema = document.querySelector('meta[name="theme-color"]');
+    const anterior = tema?.getAttribute('content');
+    tema?.setAttribute('content', '#075640');
+    return () => { if (tema) tema.setAttribute('content', anterior || '#f5f6f7'); };
+  }, []);
 
   const manejarLogin = async (event) => {
     event.preventDefault();
@@ -44,7 +51,10 @@ export default function Login({ onLogin }) {
         localStorage.removeItem('ulatina_correo_recordado');
       }
 
+      // Cerrar el teclado antes de entrar y comenzar en el encabezado del sistema.
+      if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
       onLogin(sesion);
+      requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' }));
     } catch (err) {
       setError(err.message || 'Error al iniciar sesión.');
     } finally {

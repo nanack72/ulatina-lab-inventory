@@ -1,0 +1,135 @@
+/* ======================================================
+   AJUSTES DE TELÉFONO COMUNES A TODAS LAS PÁGINAS
+   (formularios, diálogos, pestañas y controles táctiles)
+   ====================================================== */
+
+@media (max-width: 700px) {
+  /* 16 px evita que iOS haga zoom al tocar un campo */
+  .main-page :is(input:not([type="checkbox"], [type="radio"], [type="file"]), select, textarea),
+  dialog :is(input:not([type="checkbox"], [type="radio"], [type="file"]), select, textarea) {
+    font-size: 16px;
+  }
+
+  /* El texto del select no se parte en dos líneas */
+  .main-page select,
+  dialog select {
+    display: flex;
+    align-items: center;
+    text-overflow: ellipsis;
+  }
+
+  /* Controles cómodos al tacto */
+  .main-page .btn:not(.btn-sm, .btn-icono),
+  dialog .btn:not(.btn-sm, .btn-icono) {
+    min-height: 44px;
+  }
+
+  .main-page .btn-sm,
+  dialog .btn-sm {
+    min-height: 40px;
+  }
+
+  .main-page .btn-icono,
+  dialog .btn-icono {
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  .main-page input[type="checkbox"],
+  .main-page input[type="radio"],
+  dialog input[type="checkbox"],
+  dialog input[type="radio"] {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* Formularios de página: una sola columna */
+  .main-page .registro-campos-grid,
+  .main-page .campos-grid,
+  .main-page .mod-campos {
+    grid-template-columns: 1fr;
+  }
+
+  /* Pestañas con scroll lateral, sin barra visible */
+  .main-page .hg-pestanas,
+  .main-page [class*="-pestanas"] {
+    gap: 22px;
+    margin-inline: -16px;
+    padding-inline: 16px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+
+  .main-page .hg-pestanas::-webkit-scrollbar,
+  .main-page [class*="-pestanas"]::-webkit-scrollbar {
+    display: none;
+  }
+
+  .main-page .hg-pestana,
+  .main-page [class*="-pestana"] {
+    flex: 0 0 auto;
+    min-height: 44px;
+    scroll-snap-align: start;
+  }
+
+  /* Diálogos: casi a pantalla completa, con las acciones siempre a mano */
+  .mod-dialogo,
+  .cfg-dialogo,
+  .usu-dialogo {
+    width: calc(100vw - 16px);
+    max-width: calc(100vw - 16px);
+    max-height: calc(100dvh - 16px);
+    padding: 16px;
+    border-radius: 14px;
+  }
+
+  .mod-dialogo .mod-acciones,
+  .cfg-dialogo .mod-acciones,
+  .usu-dialogo .mod-acciones,
+  .cfg-dialogo .cfg-modal-acciones,
+  .usu-dialogo .cfg-modal-acciones {
+    position: sticky;
+    bottom: -16px;
+    z-index: 2;
+    margin: 0 -16px -16px;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    background: #fff;
+  }
+
+  .mod-dialogo .mod-acciones .btn,
+  .cfg-dialogo .cfg-modal-acciones .btn,
+  .cfg-dialogo .mod-acciones .btn,
+  .usu-dialogo .mod-acciones .btn {
+    flex: 1 1 140px;
+  }
+}
+
+@media (max-width: 359px) {
+  .main-page .hg-pestanas,
+  .main-page [class*="-pestanas"] {
+    margin-inline: -12px;
+    padding-inline: 12px;
+  }
+
+  .main-page .inv-tabla tr,
+  .main-page .ini-tabla tr {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 800px) {
+  html:has(.main-layout),
+  body:has(.main-layout) { background: #f5f6f7; }
+
+  .main-layout { min-height: 100dvh; }
+
+  .main-layout .main-header {
+    padding-top: calc(12px + env(safe-area-inset-top));
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+  }
+
+  .main-layout .main-page {
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
+  }
+}

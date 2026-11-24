@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import NavegacionMovil from '../components/NavegacionMovil';
 import '../styles/navegacionMovil.css';
+import { useTablasEnTarjetas } from '../hooks/useTablasEnTarjetas';
 import Inicio from '../pages/Inicio';
 import Inventario from '../pages/Inventario';
 import EquipoDetalle from '../pages/EquipoDetalle';
@@ -18,6 +19,10 @@ import Usuarios from '../pages/Usuarios';
 import Reportes from '../pages/Reportes';
 import Mantenimiento from '../pages/Mantenimiento';
 import Incidencias from '../pages/Incidencias';
+
+// Van al final para que las reglas de teléfono pesen más que las de cada página.
+import '../styles/tablasMovil.css';
+import '../styles/paginasMovil.css';
 
 // ==========================================
 // NOMBRES DE LAS PÁGINAS
@@ -77,6 +82,7 @@ export default function MainLayout({
   cerrarSesion,
 }) {
   const [paginaActual, cambiarPagina] = useState('inicio');
+  useTablasEnTarjetas();
 
   const [equipoSeleccionado, setEquipoSeleccionado] =
     useState(null);
