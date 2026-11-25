@@ -3,6 +3,7 @@ import {
   AlertCircle,
   ArrowLeftRight,
   Check,
+  Ban,
   ChevronRight,
   Clock,
   MapPin,
@@ -49,7 +50,15 @@ const ETIQUETAS_MANTENIMIENTO = {
 
 // COMPONENTES DE LA PANTALLA
 
-function TarjetaResumen({ titulo, valor, detalle, icono: Icono, tono }) {
+function TarjetaResumen({
+  titulo,
+  valor,
+  detalle,
+  icono: Icono,
+  tono,
+  onAbrir,
+  disponible = true,
+}) {
   return (
     <article className={`ini-kpi ini-kpi--${tono}`}>
       <span className={`ini-icono ini-icono--${tono}`}>
@@ -61,6 +70,17 @@ function TarjetaResumen({ titulo, valor, detalle, icono: Icono, tono }) {
         <strong>{valor}</strong>
         <small>{detalle}</small>
       </div>
+      {onAbrir && (
+        <button
+          type="button"
+          className="ini-abrir-tarjeta"
+          onClick={onAbrir}
+          disabled={!disponible}
+          aria-label={`Ver ${titulo.toLowerCase()}`}
+        >
+          <ChevronRight size={17} aria-hidden="true" />
+        </button>
+      )}
     </article>
   );
 }
@@ -237,6 +257,8 @@ export default function Inicio({ usuario, token, onVerEquipo, onIrA, onSesionExp
       <section className="ini-kpis" aria-label="Resumen del inventario">
         <TarjetaResumen
           titulo="Total de equipos"
+          disponible={equiposListos}
+          onAbrir={() => onIrA?.('inventario', { inventario: '' })}
           valor={cifra(equiposListos, resumen.total)}
           detalle={
             equiposListos
@@ -249,6 +271,8 @@ export default function Inicio({ usuario, token, onVerEquipo, onIrA, onSesionExp
 
         <TarjetaResumen
           titulo="Equipos operativos"
+          disponible={equiposListos}
+          onAbrir={() => onIrA?.('inventario', { inventario: 'operativos' })}
           valor={cifra(equiposListos, resumen.operativos)}
           detalle={
             equiposListos ? `${resumen.porcentajeOperativos}% del inventario` : 'Consultando…'
@@ -258,7 +282,23 @@ export default function Inicio({ usuario, token, onVerEquipo, onIrA, onSesionExp
         />
 
         <TarjetaResumen
+          titulo="No operativos"
+          disponible={equiposListos}
+          onAbrir={() => onIrA?.('inventario', { inventario: 'no-operativos' })}
+          valor={cifra(equiposListos, resumen.noOperativos)}
+          detalle={
+            equiposListos
+              ? `${Math.round((100 - resumen.porcentajeOperativos) * 10) / 10}% del inventario`
+              : 'Consultando…'
+          }
+          icono={Ban}
+          tono="rojo"
+        />
+
+        <TarjetaResumen
           titulo="En mantenimiento"
+          disponible={equiposListos}
+          onAbrir={() => onIrA?.('inventario', { inventario: 'mantenimiento' })}
           valor={cifra(equiposListos, resumen.enMantenimiento)}
           detalle={
             !mantenimientosListos
@@ -273,6 +313,8 @@ export default function Inicio({ usuario, token, onVerEquipo, onIrA, onSesionExp
 
         <TarjetaResumen
           titulo="Mantenimientos abiertos"
+          disponible={mantenimientosListos}
+          onAbrir={() => onIrA?.('mantenimiento', { abiertos: true })}
           valor={cifra(mantenimientosListos, resumen.abiertos)}
           detalle={
             mantenimientosListos
@@ -294,21 +336,60 @@ export default function Inicio({ usuario, token, onVerEquipo, onIrA, onSesionExp
             <strong>{cifra(equiposListos, revision.total)}</strong>
             <small>Según antigüedad y condición</small>
           </div>
+          <button
+            type="button"
+            className="ini-abrir-tarjeta"
+            disabled={!equiposListos}
+            aria-label="Ver equipos por revisar"
+            onClick={() => onIrA?.('inventario', { inventario: 'revision' })}
+          >
+            <ChevronRight size={17} aria-hidden="true" />
+          </button>
         </div>
 
         <div className="ini-revision-desglose">
           <dl className="ini-revision-cifras">
             <div>
               <dt>Por antigüedad</dt>
-              <dd>{cifra(equiposListos, revision.porAntiguedad)}</dd>
+              <dd>
+                <button
+                  type="button"
+                  className="ini-ver-cifra"
+                  disabled={!equiposListos}
+                  aria-label="Ver equipos por antigüedad"
+                  onClick={() => onIrA?.('inventario', { inventario: 'antiguedad' })}
+                >
+                  {cifra(equiposListos, revision.porAntiguedad)}
+                </button>
+              </dd>
             </div>
             <div>
               <dt>Por condición</dt>
-              <dd>{cifra(equiposListos, revision.porCondicion)}</dd>
+              <dd>
+                <button
+                  type="button"
+                  className="ini-ver-cifra"
+                  disabled={!equiposListos}
+                  aria-label="Ver equipos por condición"
+                  onClick={() => onIrA?.('inventario', { inventario: 'condicion' })}
+                >
+                  {cifra(equiposListos, revision.porCondicion)}
+                </button>
+              </dd>
             </div>
             <div>
               <dt>Sin año válido</dt>
-              <dd>{cifra(equiposListos, revision.sinAnio)}</dd>
+              <dd>
+                <button
+                  type="button"
+                  className="ini-ver-cifra"
+                  disabled={!equiposListos}
+                  aria-label="Ver equipos sin año válido"
+                  onClick={() => onIrA?.('inventario', { inventario: 'sin-anio' })}
+                >
+                  {cifra(equiposListos, revision.sinAnio)}
+                </button>
+              </dd>
             </div>
           </dl>
           {equiposListos && revision.ambas > 0 && (

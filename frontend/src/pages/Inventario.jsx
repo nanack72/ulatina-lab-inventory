@@ -20,6 +20,7 @@ import '../styles/inventario.css';
 
 export default function Inventario({
   token,
+  resumenInicial = '',
   puedeRegistrar = false,
   puedeGestionarEliminados = false,
   onRegistrarEquipo,
@@ -28,7 +29,7 @@ export default function Inventario({
 }) {
   // ESTADOS DEL INVENTARIO
 
-  const [filtros, setFiltros] = useState(FILTROS_INICIALES);
+  const [filtros, setFiltros] = useState(() => ({ ...FILTROS_INICIALES, resumen: resumenInicial }));
 
   const [vista, setVista] = useState('activos');
   const [equipoRestaurar, setEquipoRestaurar] = useState(null);
@@ -117,7 +118,17 @@ export default function Inventario({
 
   // FILTROS ACTIVOS
 
+  const etiquetasResumen = {
+    operativos: 'Equipos operativos',
+    'no-operativos': 'Equipos no operativos',
+    mantenimiento: 'Equipos en mantenimiento',
+    revision: 'Equipos por revisar',
+    antiguedad: 'Por antigüedad',
+    condicion: 'Por condición',
+    'sin-anio': 'Sin año válido',
+  };
   const filtrosActivos = [
+    ...(filtros.resumen ? [{ clave: 'resumen', nombre: etiquetasResumen[filtros.resumen] }] : []),
     ...FILTROS_SELECT.filter(({ clave }) => filtros[clave]).map(({ clave, chip }) => ({
       clave,
       nombre: chip(filtros[clave]),

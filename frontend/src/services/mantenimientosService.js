@@ -5,6 +5,7 @@ const API_URL = '/api/mantenimientos';
  */
 export async function consultarMantenimientos(params = {}, token, signal) {
   const query = new URLSearchParams();
+  if (params.solo_abiertos) query.set('solo_abiertos', '1');
 
   if (params.pagina) query.set('pagina', params.pagina);
   if (params.limite) query.set('limite', params.limite);

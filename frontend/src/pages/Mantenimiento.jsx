@@ -21,7 +21,8 @@ import { obtenerEquipos } from '../services/equiposService';
 import { TIPOS_MANTENIMIENTO, ESTADOS_MANTENIMIENTO } from '../utils/mantenimiento';
 import '../styles/mantenimiento.css';
 
-export default function Mantenimiento({ token }) {
+export default function Mantenimiento({ token, soloAbiertosInicial = false }) {
+  const [soloAbiertos, setSoloAbiertos] = useState(soloAbiertosInicial);
   const [busqueda, setBusqueda] = useState(''),
     [tipo, setTipo] = useState(''),
     [estado, setEstado] = useState('');
@@ -38,6 +39,7 @@ export default function Mantenimiento({ token }) {
     (signal) =>
       consultarMantenimientos(
         {
+          solo_abiertos: soloAbiertos,
           pagina,
           limite,
           id_sede: ubicacion.sede,
@@ -49,7 +51,17 @@ export default function Mantenimiento({ token }) {
         token,
         signal
       ),
-    [ubicacion.sede, ubicacion.laboratorio, pagina, limite, busquedaDiferida, tipo, estado, token]
+    [
+      soloAbiertos,
+      ubicacion.sede,
+      ubicacion.laboratorio,
+      pagina,
+      limite,
+      busquedaDiferida,
+      tipo,
+      estado,
+      token,
+    ]
   );
   const { datos, cargando, error, recargar } = useListadoModulo(cargar);
   const cargarEquipos = useCallback(
@@ -97,6 +109,21 @@ export default function Mantenimiento({ token }) {
       </EncabezadoModulo>
       <Aviso error>{errorAccion || error}</Aviso>
       <Aviso>{mensaje}</Aviso>
+      {soloAbiertos && (
+        <div className="inv-chips">
+          <span>Mantenimientos abiertos</span>
+          <button
+            type="button"
+            className="btn btn-contorno"
+            onClick={() => {
+              setSoloAbiertos(false);
+              setPagina(1);
+            }}
+          >
+            Mostrar todos
+          </button>
+        </div>
+      )}
       <section className="inv-contenedor" aria-label="Listado de mantenimientos">
         <div className="inv-barra-filtros">
           <BusquedaModulo
