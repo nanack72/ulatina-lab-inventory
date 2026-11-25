@@ -34,6 +34,22 @@ import '../styles/usuarios.css';
 
 const LABORATORIOS_POR_PAGINA = 5;
 
+const ROLES_OPERATIVOS = [
+  'superadministrador',
+  'administrador',
+  'admin',
+  'coordinador',
+  'director',
+  'tecnico',
+];
+
+const normalizarRol = (rol) =>
+  String(rol ?? '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
 const PERMISOS_INVENTARIO = [
   {
     valor: 'consulta',
@@ -90,6 +106,8 @@ export default function Usuarios({ token, usuarioActual }) {
   const [formulario, setFormulario] = useState(formularioInicial);
   const [guardando, setGuardando] = useState(false);
   const [errorFormulario, setErrorFormulario] = useState('');
+  const [ordenesAbiertasEdicion, setOrdenesAbiertasEdicion] = useState(0);
+  const [idTecnicoSustituto, setIdTecnicoSustituto] = useState('');
 
   const dialogoRef = useRef(null);
   const guardandoRef = useRef(false);
@@ -150,6 +168,8 @@ export default function Usuarios({ token, usuarioActual }) {
     setPaginaLaboratorios(1);
     setUsuarioEditando(null);
     setFormulario(formularioInicial());
+    setOrdenesAbiertasEdicion(0);
+    setIdTecnicoSustituto('');
     setErrorFormulario('');
     setModalAbierto(true);
   }
@@ -159,6 +179,8 @@ export default function Usuarios({ token, usuarioActual }) {
     setFiltroSedeLaboratorios('');
     setPaginaLaboratorios(1);
     setUsuarioEditando(usuario);
+    setOrdenesAbiertasEdicion(Number(usuario.ordenes_abiertas) || 0);
+    setIdTecnicoSustituto('');
 
     setFormulario({
       nombre_completo: usuario.nombre_completo,
@@ -182,6 +204,8 @@ export default function Usuarios({ token, usuarioActual }) {
     setModalAbierto(false);
     setFormulario(formularioInicial());
     setUsuarioEditando(null);
+    setOrdenesAbiertasEdicion(0);
+    setIdTecnicoSustituto('');
     setErrorFormulario('');
   }
 
@@ -273,6 +297,18 @@ export default function Usuarios({ token, usuarioActual }) {
       }
     }
 
+    const requiereReasignacion =
+      Boolean(usuarioEditando) &&
+      !formulario.activo &&
+      ordenesAbiertasEdicion > 0;
+
+    if (requiereReasignacion && !idTecnicoSustituto) {
+      setErrorFormulario(
+        'Seleccione un usuario activo y autorizado para reasignar las órdenes abiertas antes de desactivar la cuenta (RN15).'
+      );
+      return;
+    }
+
     guardandoRef.current = true;
     setGuardando(true);
     setErrorFormulario('');
@@ -293,14 +329,23 @@ export default function Usuarios({ token, usuarioActual }) {
         datos.contrasena = formulario.contrasena;
       }
 
+      if (requiereReasignacion && idTecnicoSustituto) {
+        datos.id_tecnico_sustituto = Number(idTecnicoSustituto);
+      }
+
       const resultado = await guardarUsuario(usuarioEditando?.id_usuario, datos, token);
 
       setModalAbierto(false);
       setFormulario(formularioInicial());
       setUsuarioEditando(null);
+      setOrdenesAbiertasEdicion(0);
+      setIdTecnicoSustituto('');
       setMensaje(resultado.message);
       setRecarga((valor) => valor + 1);
     } catch (err) {
+      if (err.ordenesAbiertas > 0) {
+        setOrdenesAbiertasEdicion(err.ordenesAbiertas);
+      }
       setErrorFormulario(err.message || 'No fue posible guardar el usuario.');
     } finally {
       guardandoRef.current = false;
@@ -367,6 +412,18 @@ export default function Usuarios({ token, usuarioActual }) {
   const editandoCuentaPropia =
     usuarioEditando != null &&
     Number(usuarioEditando.id_usuario) === Number(usuarioActual?.idUsuario);
+
+  const requiereReasignacionEdicion =
+    usuarioEditando != null && !formulario.activo && ordenesAbiertasEdicion > 0;
+
+  const sustitutosEdicion = requiereReasignacionEdicion
+    ? usuarios.filter(
+        (candidato) =>
+          candidato.activo &&
+          Number(candidato.id_usuario) !== Number(usuarioEditando.id_usuario) &&
+          ROLES_OPERATIVOS.includes(normalizarRol(candidato.rol))
+      )
+    : [];
 
   if (viendoRoles)
     return (
@@ -633,6 +690,7 @@ export default function Usuarios({ token, usuarioActual }) {
       {usuarioBaja && (
         <BajaUsuario
           usuario={usuarioBaja}
+          usuarios={usuarios}
           token={token}
           onCerrar={() => setUsuarioBaja(null)}
           onCompletada={(resultado) => {
@@ -715,13 +773,52 @@ export default function Usuarios({ token, usuarioActual }) {
                     <select
                       disabled={editandoCuentaPropia}
                       value={formulario.activo ? 'activa' : 'inactiva'}
-                      onChange={(e) => cambiarCampo('activo', e.target.value === 'activa')}
+                      onChange={(e) => {
+                        const activa = e.target.value === 'activa';
+                        cambiarCampo('activo', activa);
+                        if (activa) setIdTecnicoSustituto('');
+                      }}
                     >
                       <option value="activa">Activa</option>
                       <option value="inactiva">Inactiva</option>
                     </select>
                   </label>
                 </div>
+
+                {requiereReasignacionEdicion && (
+                  <label className="cfg-campo">
+                    <span>
+                      Reasignar{' '}
+                      {ordenesAbiertasEdicion === 1
+                        ? '1 orden abierta'
+                        : `${ordenesAbiertasEdicion} órdenes abiertas`}{' '}
+                      a *
+                    </span>
+                    <select
+                      required
+                      value={idTecnicoSustituto}
+                      onChange={(e) =>
+                        setIdTecnicoSustituto(e.target.value)
+                      }
+                    >
+                      <option value="">
+                        Seleccione un usuario activo autorizado
+                      </option>
+                      {sustitutosEdicion.map((candidato) => (
+                        <option
+                          key={candidato.id_usuario}
+                          value={candidato.id_usuario}
+                        >
+                          {candidato.nombre_completo} ({candidato.rol})
+                        </option>
+                      ))}
+                    </select>
+                    <small>
+                      Solo se reasignan las órdenes en proceso o pendientes de repuesto (RN15).
+                      Las órdenes completadas conservan su autoría histórica.
+                    </small>
+                  </label>
+                )}
 
                 <label className="cfg-campo">
                   <span>Permisos de inventario *</span>

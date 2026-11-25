@@ -70,3 +70,95 @@ export async function cerrarSesion(token) {
 
   return resultado;
 }
+
+// Solicitar enlace temporal de recuperación de contraseña por correo
+export async function solicitarRecuperacionContrasena(correo) {
+  let respuesta;
+
+  try {
+    respuesta = await fetch(`${API_URL}/olvide-contrasena`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({ correo }),
+    });
+  } catch {
+    throw new Error('No se pudo conectar con el servidor. Verifique su conexión e intente de nuevo.');
+  }
+
+  const resultado = await respuesta.json().catch(() => null);
+
+  if (!respuesta.ok || resultado?.success !== true) {
+    const error = new Error(
+      resultado?.message || 'No fue posible procesar la solicitud de recuperación.'
+    );
+    error.status = respuesta.status;
+    throw error;
+  }
+
+  return resultado;
+}
+
+// Validar si un enlace temporal de recuperación sigue vigente
+export async function validarTokenRecuperacion(token, signal) {
+  let respuesta;
+
+  try {
+    respuesta = await fetch(
+      `${API_URL}/restablecer-contrasena/validar?token=${encodeURIComponent(token)}`,
+      {
+        signal,
+        headers: {
+          Accept: 'application/json',
+        },
+      }
+    );
+  } catch (error) {
+    if (error.name === 'AbortError') throw error;
+    throw new Error('No se pudo conectar con el servidor para validar el enlace.', { cause: error });
+  }
+
+  const resultado = await respuesta.json().catch(() => null);
+
+  if (!respuesta.ok || resultado?.success !== true) {
+    const error = new Error(
+      resultado?.message || 'El enlace de recuperación no es válido o ha expirado.'
+    );
+    error.status = respuesta.status;
+    throw error;
+  }
+
+  return resultado;
+}
+
+// Restablecer contraseña con token temporal de un solo uso
+export async function restablecerContrasena(token, contrasenaNueva) {
+  let respuesta;
+
+  try {
+    respuesta = await fetch(`${API_URL}/restablecer-contrasena`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({ token, contrasenaNueva }),
+    });
+  } catch {
+    throw new Error('No se pudo conectar con el servidor para restablecer la contraseña.');
+  }
+
+  const resultado = await respuesta.json().catch(() => null);
+
+  if (!respuesta.ok || resultado?.success !== true) {
+    const error = new Error(
+      resultado?.message || 'No fue posible restablecer la contraseña.'
+    );
+    error.status = respuesta.status;
+    throw error;
+  }
+
+  return resultado;
+}

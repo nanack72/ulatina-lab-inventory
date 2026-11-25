@@ -1,3 +1,5 @@
+const { validarYReasignarOrdenesAbiertas } = require('./reasignacionMantenimientos');
+
 const esSuper = (rol) =>
   String(rol || '')
     .trim()
@@ -64,7 +66,8 @@ async function tieneActividad(cliente, id) {
   return false;
 }
 
-async function darBajaUsuario(pool, id, actor) {
+async function darBajaUsuario(pool, id, actor, opciones = {}) {
+  const { idTecnicoSustituto = null } = opciones || {};
   if (
     !/^[1-9]\d*$/.test(String(id)) ||
     Number(id) > 2147483647 ||
@@ -103,7 +106,12 @@ async function darBajaUsuario(pool, id, actor) {
       );
       if (!otros.rows.length) throw fallo('Debe conservar al menos un Superadministrador activo.');
     }
-    let conservar = await tieneActividad(cliente, id);
+    const { reasignadas } = await validarYReasignarOrdenesAbiertas(
+      cliente,
+      id,
+      idTecnicoSustituto
+    );
+    let conservar = reasignadas > 0 || (await tieneActividad(cliente, id));
     if (!conservar) {
       await cliente.query('SAVEPOINT eliminar_cuenta');
       try {
@@ -128,19 +136,23 @@ async function darBajaUsuario(pool, id, actor) {
     return {
       success: true,
       accion: conservar ? 'desactivado' : 'eliminado',
-      message: conservar
-        ? 'Cuenta desactivada. Se conservan sus registros y la autoría de sus actividades.'
-        : 'Usuario sin actividad eliminado correctamente.',
+      ordenes_reasignadas: reasignadas,
+      message:
+        reasignadas > 0
+          ? `Se reasignaron ${reasignadas} ${reasignadas === 1 ? 'orden abierta' : 'órdenes abiertas'} y la cuenta fue desactivada conservando sus historiales.`
+          : conservar
+            ? 'Cuenta desactivada. Se conservan sus registros y la autoría de sus actividades.'
+            : 'Usuario sin actividad eliminado correctamente.',
     };
   } catch (error) {
     await cliente.query('ROLLBACK').catch(() => {});
     if (error.code === '42501') {
       console.error(
-        'Permisos insuficientes al dar de baja usuarios; revisar migración 003:',
+        'Permisos insuficientes al dar de baja o reasignar usuarios; revisar migraciones 003 y 009:',
         error
       );
       throw fallo(
-        'No fue posible dar de baja la cuenta. Contacte al responsable del sistema.',
+        'No fue posible dar de baja la cuenta o reasignar sus órdenes. Contacte al responsable del sistema.',
         503
       );
     }

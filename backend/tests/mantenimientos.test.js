@@ -62,7 +62,7 @@ test('Reglas de negocio de mantenimientos: RF21/RN12, RN16, RN14/RU09, RF22/RN13
     CREATE TABLE usuario(id_usuario int PRIMARY KEY, nombre_completo text, correo_institucional text);
     CREATE TABLE usuario_sede(id_usuario_sede int, id_usuario int, id_sede int);
     CREATE TABLE usuario_laboratorio(id_usuario_sede int, id_sede int, id_laboratorio int);
-    CREATE TABLE equipo(id_equipo int PRIMARY KEY, id_laboratorio int, id_estado int, nombre text, placa_institucional text, numero_serie text, marca text, modelo text, eliminado_en timestamptz);
+    CREATE TABLE equipo(id_equipo int PRIMARY KEY, id_laboratorio int, id_estado int, nombre text, placa_institucional text, numero_serie text, marca text, modelo text, anio int, caracteristicas text, comentarios text, ubicacion_detalle text, eliminado_en timestamptz);
     CREATE TABLE bitacora_mantenimiento(
       id_bitacora serial PRIMARY KEY,
       id_equipo int,
@@ -96,7 +96,8 @@ test('Reglas de negocio de mantenimientos: RF21/RN12, RN16, RN14/RU09, RF22/RN13
       (2, 'En mantenimiento', 'Equipo en mantenimiento'),
       (3, 'Dado de baja', 'Equipo dado de baja');
     INSERT INTO usuario VALUES (1, 'Admin', 'admin@ulatina.cr');
-    INSERT INTO equipo VALUES (10, 1, 1, 'Osciloscopio Digital', 'PLA-010', 'SER-010', 'Tektronix', 'TBS1052B', NULL);
+    INSERT INTO equipo (id_equipo, id_laboratorio, id_estado, nombre, placa_institucional, numero_serie, marca, modelo, eliminado_en)
+      VALUES (10, 1, 1, 'Osciloscopio Digital', 'PLA-010', 'SER-010', 'Tektronix', 'TBS1052B', NULL);
   `);
 
   const poolFalso = {
@@ -104,7 +105,7 @@ test('Reglas de negocio de mantenimientos: RF21/RN12, RN16, RN14/RU09, RF22/RN13
     connect: async () => ({
       query: (sql, args) => {
         if (/set_config/i.test(sql)) return Promise.resolve({ rows: [], rowCount: 0 });
-        return db.query(sql.replace(/FOR UPDATE OF [a-z, ]+/gi, ''), args);
+        return db.query(sql.replace(/FOR (?:UPDATE|SHARE) OF [a-z, ]+/gi, ''), args);
       },
       release() {},
     }),
@@ -279,6 +280,165 @@ test('Reglas de negocio de mantenimientos: RF21/RN12, RN16, RN14/RU09, RF22/RN13
     [otroCorrectivo.body.data.id_bitacora]
   );
   assert.strictEqual(reparacion.rows[0].estado_mantenimiento, 'En Proceso');
+});
+
+test('Punto #13: bloqueo sobre equipos eliminados (eliminado_en), conservación histórica y visibilidad global de Coordinador/Director (PGlite)', async (t) => {
+  const db = new PGlite();
+  t.after(() => db.close());
+
+  await db.exec(`
+    CREATE TABLE sede(id_sede int PRIMARY KEY, nombre text);
+    CREATE TABLE laboratorio(id_laboratorio int PRIMARY KEY, id_sede int, codigo text, nombre text);
+    CREATE TABLE estado(id_estado serial PRIMARY KEY, nombre text UNIQUE, descripcion text);
+    CREATE TABLE usuario(id_usuario int PRIMARY KEY, nombre_completo text, correo_institucional text);
+    CREATE TABLE usuario_sede(id_usuario_sede int, id_usuario int, id_sede int);
+    CREATE TABLE usuario_laboratorio(id_usuario_sede int, id_sede int, id_laboratorio int);
+    CREATE TABLE equipo(
+      id_equipo int PRIMARY KEY,
+      id_laboratorio int,
+      id_estado int,
+      nombre text,
+      placa_institucional text,
+      numero_serie text,
+      marca text,
+      modelo text,
+      anio int,
+      caracteristicas text,
+      comentarios text,
+      ubicacion_detalle text,
+      eliminado_en timestamptz
+    );
+    CREATE TABLE bitacora_mantenimiento(
+      id_bitacora serial PRIMARY KEY,
+      id_equipo int,
+      id_usuario_tecnico int,
+      tipo_mantenimiento text,
+      motivo_falla text,
+      descripcion_trabajo text,
+      horas_invertidas numeric,
+      fecha_mantenimiento timestamptz,
+      estado_mantenimiento text
+    );
+    CREATE TABLE evidencia_fotografica(
+      id_evidencia serial PRIMARY KEY,
+      id_bitacora int,
+      tipo_evidencia text,
+      url_foto text,
+      descripcion text
+    );
+    CREATE TABLE incidencia_reporte(
+      id_incidencia serial PRIMARY KEY,
+      id_equipo int,
+      id_usuario_reporta int,
+      titulo text,
+      descripcion_falla text,
+      prioridad text,
+      estado_incidencia text,
+      fecha_reporte timestamptz
+    );
+    INSERT INTO sede VALUES (1, 'Heredia');
+    INSERT INTO laboratorio VALUES (1, 1, 'LAB-01', 'Lab 1'), (2, 1, 'LAB-02', 'Lab 2');
+    INSERT INTO estado (id_estado, nombre, descripcion) VALUES (1, 'Operativo', 'Operativo');
+    INSERT INTO usuario VALUES
+      (1, 'Admin', 'admin@ulatina.cr'),
+      (2, 'Técnico Lab 1', 'tec@ulatina.cr'),
+      (3, 'Coordinadora', 'coord@ulatina.cr'),
+      (4, 'Director', 'dir@ulatina.cr');
+    INSERT INTO usuario_sede VALUES (1, 2, 1);
+    INSERT INTO usuario_laboratorio VALUES (1, 1, 1);
+    INSERT INTO equipo (id_equipo, id_laboratorio, id_estado, nombre, placa_institucional, numero_serie, marca, modelo, eliminado_en) VALUES
+      (10, 1, 1, 'Equipo Eliminado', 'PLA-DEL', 'SER-DEL', 'Dell', 'OptiPlex', '2026-11-20 10:00:00+00'),
+      (20, 2, 1, 'Equipo Activo Lab 2', 'PLA-ACT', 'SER-ACT', 'HP', 'ProDesk', NULL);
+    INSERT INTO bitacora_mantenimiento (id_equipo, id_usuario_tecnico, tipo_mantenimiento, descripcion_trabajo, horas_invertidas, fecha_mantenimiento, estado_mantenimiento) VALUES
+      (10, 2, 'Preventivo', 'Mantenimiento histórico previo a eliminación', 1, '2026-11-10 10:00:00+00', 'Completado'),
+      (20, 1, 'Preventivo', 'Mantenimiento en Lab 2', 1, '2026-11-15 10:00:00+00', 'Completado');
+    INSERT INTO incidencia_reporte (id_equipo, id_usuario_reporta, titulo, descripcion_falla, prioridad, estado_incidencia, fecha_reporte) VALUES
+      (10, 2, 'Incidencia histórica', 'Falla registrada antes de eliminar', 'Media', 'Resuelta', '2026-11-05 10:00:00+00');
+  `);
+
+  const poolFalso = {
+    query: (sql, args) => db.query(sql, args),
+    connect: async () => ({
+      query: (sql, args) => {
+        if (/set_config/i.test(sql)) return Promise.resolve({ rows: [], rowCount: 0 });
+        return db.query(sql.replace(/FOR (?:UPDATE|SHARE) OF [a-z, ]+/gi, ''), args);
+      },
+      release() {}
+    })
+  };
+
+  const cargarControlador = (rutaRelativa) => {
+    const archivo = path.join(__dirname, rutaRelativa);
+    const localReq = createRequire(archivo);
+    const mod = { exports: {} };
+    vm.runInNewContext(fs.readFileSync(archivo, 'utf8'), {
+      module: mod,
+      console,
+      require: (n) => {
+        if (n === '../config/database') return poolFalso;
+        if (n === '../utils/accesoEquipos') return { verificarAccesoEquipo: async () => true };
+        return localReq(n);
+      }
+    });
+    return mod.exports;
+  };
+
+  const mantCtrl = cargarControlador('../src/controllers/mantenimientosController.js');
+  const incCtrl = cargarControlador('../src/controllers/incidenciasController.js');
+  const { listarMantenimientos } = require('../src/services/mantenimientosListado');
+
+  const invocar = async (fn, req, usuario = { idUsuario: 1, rol: 'Superadministrador' }) => {
+    const res = {
+      codigo: 200,
+      status(c) { this.codigo = c; return this; },
+      json(d) { this.body = d; return this; }
+    };
+    await fn({ ...req, usuario }, res);
+    return res;
+  };
+
+  // 1. Bloquear nuevo mantenimiento sobre equipo eliminado lógicamente (409)
+  const mantEliminado = await invocar(mantCtrl.crearMantenimiento, {
+    body: {
+      id_equipo: 10,
+      tipo_mantenimiento: 'Preventivo',
+      descripcion_trabajo: 'Intento sobre equipo eliminado',
+      horas_invertidas: 1
+    }
+  });
+  assert.strictEqual(mantEliminado.codigo, 409);
+
+  // 2. Bloquear nueva incidencia sobre equipo eliminado lógicamente (404 desde inventario activo)
+  const incEliminada = await invocar(incCtrl.crearIncidencia, {
+    body: {
+      id_equipo: 10,
+      titulo: 'Falla en equipo eliminado',
+      descripcion_falla: 'No debe permitirse registrar',
+      prioridad: 'Alta',
+    },
+  });
+  assert.strictEqual(incEliminada.codigo, 404);
+
+  // 3. Conservar antecedentes históricos del equipo eliminado en consultas GET
+  const histMant = await invocar(mantCtrl.obtenerHistorialPorEquipo, {
+    params: { idEquipo: '10' }
+  });
+  assert.strictEqual(histMant.codigo, 200);
+  assert.strictEqual(histMant.body.total, 1);
+
+  const histInc = await invocar(incCtrl.obtenerIncidencias, { query: {} });
+  assert.strictEqual(histInc.codigo, 200);
+  assert.strictEqual(histInc.body.total, 1);
+  assert.strictEqual(histInc.body.data[0].id_equipo, 10);
+
+  // 4. Visibilidad global en listarMantenimientos para Coordinador y Director vs Técnico restringido
+  const vistaCoord = await listarMantenimientos(poolFalso, {}, { idUsuario: 3, rol: 'Coordinador' });
+  const vistaDir = await listarMantenimientos(poolFalso, {}, { idUsuario: 4, rol: 'Director' });
+  const vistaTec = await listarMantenimientos(poolFalso, {}, { idUsuario: 2, rol: 'Tecnico' });
+  assert.strictEqual(vistaCoord.total, 2);
+  assert.strictEqual(vistaDir.total, 2);
+  assert.strictEqual(vistaTec.total, 1);
+  assert.strictEqual(vistaTec.data[0].id_equipo, 10);
 });
 
 test(

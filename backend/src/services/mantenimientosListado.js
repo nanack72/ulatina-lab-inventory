@@ -1,4 +1,18 @@
 const { nombreCampo } = require('../utils/nombresCampos');
+const ROLES_GLOBALES = [
+  'superadministrador',
+  'administrador',
+  'admin',
+  'coordinador',
+  'director',
+];
+const normalizarRol = (rol) =>
+  String(rol ?? '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+const tieneAccesoGlobal = (rol) => ROLES_GLOBALES.includes(normalizarRol(rol));
 const fallo = (mensaje) => Object.assign(new Error(mensaje), { status: 400 });
 function entero(valor, nombre, defecto) {
   if (valor === undefined || valor === '') return defecto;
@@ -33,7 +47,7 @@ async function listarMantenimientos(pool, query, usuario) {
   if (limite > 100) throw fallo('El límite máximo es 100.');
   const valores = [
     Number(usuario.idUsuario),
-    String(usuario.rol).trim().toLowerCase() === 'superadministrador',
+    tieneAccesoGlobal(usuario.rol),
   ];
   const condiciones = [
     `($2::boolean OR EXISTS (SELECT 1 FROM public.usuario_sede us JOIN public.usuario_laboratorio ul ON ul.id_usuario_sede=us.id_usuario_sede WHERE us.id_usuario=$1 AND us.id_sede=l.id_sede AND ul.id_sede=l.id_sede AND ul.id_laboratorio=l.id_laboratorio))`,

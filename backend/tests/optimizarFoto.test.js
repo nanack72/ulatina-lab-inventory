@@ -103,7 +103,7 @@ test('la subida de equipo persiste el resultado optimizado, no la foto original'
   assert.equal(resultado.optimizacion.bytes_guardados, guardado[4].length);
 });
 
-test('la evidencia guarda el archivo optimizado y conserva su extensión y asociación', async (t) => {
+test('la evidencia guarda la imagen optimizada en PostgreSQL y conserva su asociación', async (t) => {
   const fs = require('node:fs/promises'),
     os = require('node:os'),
     path = require('node:path');
@@ -111,13 +111,11 @@ test('la evidencia guarda el archivo optimizado y conserva su extensión y asoci
     { createRequire } = require('node:module');
   const carpeta = await fs.mkdtemp(path.join(os.tmpdir(), 'pes-foto-'));
   t.after(() => fs.rm(carpeta, { recursive: true, force: true }));
-  const archivo = path.join(carpeta, 'prueba.jpg');
   const original = await sharp({
     create: { width: 2400, height: 1600, channels: 3, background: '#205c49' },
   })
     .jpeg()
     .toBuffer();
-  await fs.writeFile(archivo, original);
   const ruta = path.resolve(__dirname, '../src/controllers/evidenciasController.js');
   const local = createRequire(ruta),
     modulo = { exports: {} };
@@ -160,14 +158,17 @@ test('la evidencia guarda el archivo optimizado y conserva su extensión y asoci
   };
   await modulo.exports.subirEvidencia(
     {
-      file: { path: archivo, filename: 'prueba.jpg', mimetype: 'image/jpeg' },
+      file: { buffer: original, originalname: 'prueba.jpg', mimetype: 'image/jpeg' },
       body: { id_bitacora: '4', tipo_evidencia: 'Antes' },
       usuario: { rol: 'Superadministrador' },
     },
     res
   );
   assert.equal(res.codigo, 201);
-  assert.equal((await sharp(await fs.readFile(archivo)).metadata()).width, 1920);
   assert.equal(insertado[0], 4);
-  assert.equal(insertado[2], '/uploads/evidencias/prueba.jpg');
+  assert.ok(String(insertado[2]).startsWith('db://evidencias/'));
+  assert.equal(insertado[4], 'image/webp');
+  assert.ok(Buffer.isBuffer(insertado[5]));
+  assert.equal((await sharp(insertado[5]).metadata()).width, 1280);
+  assert.ok(insertado[5].length < original.length);
 });

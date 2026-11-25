@@ -84,7 +84,7 @@ const crearIncidencia = async (req, res) => {
 
     const equipoId = Number(id_equipo);
 
-    // Verificar que el equipo exista y no esté dado de baja
+    // Verificar que el equipo exista y no esté eliminado ni dado de baja
     cliente = await pool.connect();
     await cliente.query('BEGIN');
     const equipoRes = await cliente.query(

@@ -1,15 +1,3 @@
--- ============================================================
--- SISTEMA DE GESTIÓN DE INVENTARIO TECNOLÓGICO
--- Migración 002: Permisos de pes_runtime para evidencias fotográficas
--- ============================================================
---
--- Ejecutar como: neondb_owner
--- Requiere: migración 001 aplicada y tabla public.evidencia_fotografica
---
--- Permite al backend registrar evidencias (INSERT) y usar la secuencia
--- de id_evidencia. No se concede UPDATE, DELETE ni TRUNCATE.
--- ============================================================
-
 BEGIN;
 
 SET LOCAL ROLE pes_owner;
