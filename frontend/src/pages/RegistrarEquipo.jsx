@@ -5,7 +5,7 @@ import '../styles/fotosEquipos.css';
 import { notificar } from '../utils/notificaciones';
 import Notificacion from '../components/comunes/Notificacion';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Save, Monitor, Cpu, MapPin, FileText, Images } from 'lucide-react';
+import { ArrowLeft, Save, Monitor, Cpu, MapPin, Images } from 'lucide-react';
 
 import {
   obtenerCategorias,
@@ -55,10 +55,28 @@ export default function RegistrarEquipo({ token, onCancelar, onRegistrado }) {
   const [progresoFotos, setProgresoFotos] = useState('');
   const registroRef = useRef(null);
 
+  function hayCambiosSinGuardar() {
+    return (
+      fotos.length > 0 ||
+      Object.keys(FORMULARIO_INICIAL).some(
+        (campo) => campo !== 'id_estado' && formulario[campo] !== FORMULARIO_INICIAL[campo]
+      )
+    );
+  }
+
   function salir() {
     if (enviandoRef.current) return;
-    if (registroRef.current) onRegistrado?.();
-    else onCancelar?.();
+    if (registroRef.current) {
+      onRegistrado?.();
+      return;
+    }
+    if (
+      hayCambiosSinGuardar() &&
+      !window.confirm('Tiene datos sin guardar. ¿Desea salir y descartarlos?')
+    ) {
+      return;
+    }
+    onCancelar?.();
   }
 
   const [categorias, setCategorias] = useState([]);
@@ -93,6 +111,19 @@ export default function RegistrarEquipo({ token, onCancelar, onRegistrado }) {
 
         setCategorias(datosCategorias);
         setEstados(datosEstados);
+
+        // Los equipos nuevos casi siempre entran como operativos.
+        const operativo = datosEstados.find((estado) =>
+          /^(operativo|disponible)$/i.test(nombreCatalogo(estado))
+        );
+        if (operativo) {
+          setFormulario((anterior) =>
+            anterior.id_estado
+              ? anterior
+              : { ...anterior, id_estado: String(operativo.id_estado) }
+          );
+        }
+
         setSedes(datosSedes);
         setLaboratorios(datosLaboratorios);
       } catch (err) {
@@ -126,10 +157,15 @@ export default function RegistrarEquipo({ token, onCancelar, onRegistrado }) {
 
     setFormulario((anterior) => {
       if (name === 'id_sede') {
+        const delaSede = laboratorios.filter(
+          (laboratorio) => String(laboratorio.id_sede) === String(value)
+        );
+
         return {
           ...anterior,
           id_sede: value,
-          id_laboratorio: '',
+          // Con un solo laboratorio autorizado en la sede se elige solo.
+          id_laboratorio: delaSede.length === 1 ? String(delaSede[0].id_laboratorio) : '',
         };
       }
 
@@ -268,7 +304,7 @@ export default function RegistrarEquipo({ token, onCancelar, onRegistrado }) {
   }
 
   return (
-    <div className="registro-pagina">
+    <div className="registro-pagina registro-pagina--formulario">
       {/* VOLVER */}
       <button type="button" className="registro-volver" onClick={salir} disabled={guardando}>
         <ArrowLeft size={17} />
@@ -280,6 +316,10 @@ export default function RegistrarEquipo({ token, onCancelar, onRegistrado }) {
         <div>
           <h1>Registrar equipo</h1>
           <p>Complete la información del nuevo equipo tecnológico.</p>
+          <p className="registro-nota">
+            Los campos con <span className="registro-requerido" aria-hidden="true">*</span> son
+            obligatorios.
+          </p>
         </div>
       </div>
 
@@ -308,7 +348,6 @@ export default function RegistrarEquipo({ token, onCancelar, onRegistrado }) {
           <fieldset className="registro-datos" disabled={guardando || !!equipoCreado}>
             <legend className="selector-etiqueta">Datos del equipo</legend>
             <div className="registro-grid">
-              {/* IDENTIFICACIÓN */}
               <Seccion titulo="Identificación del equipo" icono={Monitor}>
                 <div className="registro-campos-grid">
                   <Campo etiqueta="Nombre del equipo" requerido htmlFor="registrar-nombre">
@@ -322,6 +361,24 @@ export default function RegistrarEquipo({ token, onCancelar, onRegistrado }) {
                       maxLength={150}
                       required
                     />
+                  </Campo>
+
+                  <Campo etiqueta="Categoría" requerido htmlFor="registrar-id_categoria">
+                    <select
+                      id="registrar-id_categoria"
+                      name="id_categoria"
+                      value={formulario.id_categoria}
+                      onChange={actualizarCampo}
+                      required
+                    >
+                      <option value="">Seleccionar categoría</option>
+
+                      {categorias.map((categoria) => (
+                        <option key={categoria.id_categoria} value={categoria.id_categoria}>
+                          {nombreCatalogo(categoria)}
+                        </option>
+                      ))}
+                    </select>
                   </Campo>
 
                   <Campo etiqueta="Placa institucional" htmlFor="registrar-placa_institucional">
@@ -346,80 +403,10 @@ export default function RegistrarEquipo({ token, onCancelar, onRegistrado }) {
                     />
                   </Campo>
 
-                  <Campo etiqueta="Categoría" requerido htmlFor="registrar-id_categoria">
-                    <select
-                      id="registrar-id_categoria"
-                      name="id_categoria"
-                      value={formulario.id_categoria}
-                      onChange={actualizarCampo}
-                      required
-                    >
-                      <option value="">Seleccionar categoría</option>
-
-                      {categorias.map((categoria) => (
-                        <option key={categoria.id_categoria} value={categoria.id_categoria}>
-                          {nombreCatalogo(categoria)}
-                        </option>
-                      ))}
-                    </select>
-                  </Campo>
                 </div>
               </Seccion>
 
-              {/* CARACTERÍSTICAS TÉCNICAS */}
-              <Seccion titulo="Características técnicas" icono={Cpu}>
-                <div className="registro-campos-grid">
-                  <Campo etiqueta="Marca" htmlFor="registrar-marca">
-                    <input
-                      type="text"
-                      id="registrar-marca"
-                      name="marca"
-                      value={formulario.marca}
-                      onChange={actualizarCampo}
-                      placeholder="Ej. HP"
-                    />
-                  </Campo>
-
-                  <Campo etiqueta="Modelo" htmlFor="registrar-modelo">
-                    <input
-                      type="text"
-                      id="registrar-modelo"
-                      name="modelo"
-                      value={formulario.modelo}
-                      onChange={actualizarCampo}
-                      placeholder="Ej. ProDesk 400"
-                    />
-                  </Campo>
-
-                  <Campo etiqueta="Año" htmlFor="registrar-anio">
-                    <input
-                      type="number"
-                      id="registrar-anio"
-                      name="anio"
-                      value={formulario.anio}
-                      onChange={actualizarCampo}
-                      placeholder="Ej. 2026"
-                      min="1900"
-                      max={new Date().getFullYear() + 1}
-                      step="1"
-                    />
-                  </Campo>
-
-                  <Campo etiqueta="Características" htmlFor="registrar-caracteristicas">
-                    <textarea
-                      id="registrar-caracteristicas"
-                      name="caracteristicas"
-                      value={formulario.caracteristicas}
-                      onChange={actualizarCampo}
-                      placeholder="Procesador, memoria, almacenamiento..."
-                      rows={3}
-                    />
-                  </Campo>
-                </div>
-              </Seccion>
-
-              {/* UBICACIÓN */}
-              <Seccion titulo="Ubicación del equipo" icono={MapPin}>
+              <Seccion titulo="Ubicación y estado" icono={MapPin}>
                 <div className="registro-campos-grid">
                   <Campo etiqueta="Sede" requerido htmlFor="registrar-id_sede">
                     <select
@@ -449,6 +436,13 @@ export default function RegistrarEquipo({ token, onCancelar, onRegistrado }) {
                     etiqueta="Laboratorio autorizado"
                     requerido
                     htmlFor="registrar-id_laboratorio"
+                    ayuda={
+                      !formulario.id_sede
+                        ? 'Seleccione primero una sede.'
+                        : laboratoriosFiltrados.length === 0
+                          ? 'No tiene laboratorios autorizados en esta sede.'
+                          : undefined
+                    }
                   >
                     <select
                       id="registrar-id_laboratorio"
@@ -496,21 +490,71 @@ export default function RegistrarEquipo({ token, onCancelar, onRegistrado }) {
                       ))}
                     </select>
                   </Campo>
+
                 </div>
               </Seccion>
 
-              {/* OBSERVACIONES */}
-              <Seccion titulo="Observaciones" icono={FileText}>
-                <Campo etiqueta="Comentarios adicionales" htmlFor="registrar-comentarios">
-                  <textarea
-                    id="registrar-comentarios"
-                    name="comentarios"
-                    value={formulario.comentarios}
-                    onChange={actualizarCampo}
-                    placeholder="Observaciones importantes del equipo..."
-                    rows={5}
-                  />
-                </Campo>
+              <Seccion titulo="Detalles adicionales (opcional)" icono={Cpu}>
+                <div className="registro-campos-grid registro-campos-grid--tres">
+                  <Campo etiqueta="Marca" htmlFor="registrar-marca">
+                    <input
+                      type="text"
+                      id="registrar-marca"
+                      name="marca"
+                      value={formulario.marca}
+                      onChange={actualizarCampo}
+                      placeholder="Ej. HP"
+                    />
+                  </Campo>
+
+                  <Campo etiqueta="Modelo" htmlFor="registrar-modelo">
+                    <input
+                      type="text"
+                      id="registrar-modelo"
+                      name="modelo"
+                      value={formulario.modelo}
+                      onChange={actualizarCampo}
+                      placeholder="Ej. ProDesk 400"
+                    />
+                  </Campo>
+
+                  <Campo etiqueta="Año" htmlFor="registrar-anio">
+                    <input
+                      type="number"
+                      id="registrar-anio"
+                      name="anio"
+                      value={formulario.anio}
+                      onChange={actualizarCampo}
+                      placeholder="Ej. 2026"
+                      min="1900"
+                      max={new Date().getFullYear() + 1}
+                      step="1"
+                    />
+                  </Campo>
+
+                  <Campo etiqueta="Características" ancho htmlFor="registrar-caracteristicas">
+                    <textarea
+                      id="registrar-caracteristicas"
+                      name="caracteristicas"
+                      value={formulario.caracteristicas}
+                      onChange={actualizarCampo}
+                      placeholder="Procesador, memoria, almacenamiento..."
+                      rows={3}
+                    />
+                  </Campo>
+
+                  <Campo etiqueta="Comentarios adicionales" ancho htmlFor="registrar-comentarios">
+                    <textarea
+                      id="registrar-comentarios"
+                      name="comentarios"
+                      value={formulario.comentarios}
+                      onChange={actualizarCampo}
+                      placeholder="Observaciones importantes del equipo..."
+                      rows={3}
+                    />
+                  </Campo>
+
+                </div>
               </Seccion>
             </div>
           </fieldset>
@@ -530,7 +574,11 @@ export default function RegistrarEquipo({ token, onCancelar, onRegistrado }) {
 
           {/* BOTONES */}
           <div className="registro-acciones">
-            <span>Los campos marcados con * son obligatorios.</span>
+            <span>
+              {equipoCreado
+                ? 'El equipo ya está registrado.'
+                : 'Podrá editar estos datos y agregar fotos después.'}
+            </span>
 
             <div className="registro-botones">
               <button

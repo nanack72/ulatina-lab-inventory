@@ -1,3 +1,4 @@
+import SelectConBusqueda from '../comunes/SelectConBusqueda';
 import FiltrosUbicacion from '../comunes/FiltrosUbicacion';
 import { useEffect, useRef, useState } from 'react';
 import { DialogoModulo, Aviso } from '../comunes/Modulo';
@@ -14,11 +15,14 @@ export default function ModalRegistrarMantenimiento({
   token,
 }) {
   const [ubicacion, setUbicacion] = useState({ sede: '', laboratorio: '' });
-  const equiposFiltrados = equiposDisponibles.filter(
-    (eq) =>
-      (!ubicacion.sede || String(eq.id_sede) === ubicacion.sede) &&
-      (!ubicacion.laboratorio || String(eq.id_laboratorio) === ubicacion.laboratorio)
-  );
+  const ubicacionCompleta = Boolean(ubicacion.sede && ubicacion.laboratorio);
+  const equiposFiltrados = ubicacionCompleta
+    ? equiposDisponibles.filter(
+        (eq) =>
+          String(eq.id_sede) === String(ubicacion.sede) &&
+          String(eq.id_laboratorio) === String(ubicacion.laboratorio)
+      )
+    : [];
   const [equipo, setEquipo] = useState(''),
     [tipo, setTipo] = useState('Preventivo'),
     [motivo, setMotivo] = useState(''),
@@ -63,6 +67,13 @@ export default function ModalRegistrarMantenimiento({
   async function guardar(e) {
     e.preventDefault();
     if (ocupado.current) return;
+    if (
+      !idGuardado &&
+      (!ubicacionCompleta || !equiposFiltrados.some((eq) => String(eq.id_equipo) === equipo))
+    ) {
+      setError('Seleccione una sede, un laboratorio y un equipo de esa ubicación.');
+      return;
+    }
     ocupado.current = true;
     setGuardando(true);
     setError('');
@@ -120,6 +131,8 @@ export default function ModalRegistrarMantenimiento({
           <legend className="mod-sr">Datos de mantenimiento</legend>
           <div className="mod-campos">
             <FiltrosUbicacion
+              requerido
+              conBusqueda
               token={token}
               valor={ubicacion}
               disabled={guardando || !!idGuardado}
@@ -129,26 +142,45 @@ export default function ModalRegistrarMantenimiento({
               }}
             />
           </div>
-          <label className="mod-campo" htmlFor="mant-equipo">
-            Equipo *
-            <select
+          <div className="mod-campo">
+            <label htmlFor="mant-equipo">
+              Equipo{' '}
+              <span className="mod-requerido" aria-hidden="true">
+                *
+              </span>
+            </label>
+            <SelectConBusqueda
+              key={ubicacion.sede + '-' + ubicacion.laboratorio}
               id="mant-equipo"
               name="id_equipo"
               value={equipo}
               required
-              disabled={cargandoEquipos || !!idGuardado}
+              disabled={
+                cargandoEquipos ||
+                !!idGuardado ||
+                !ubicacionCompleta ||
+                equiposFiltrados.length === 0
+              }
               onChange={(e) => setEquipo(e.target.value)}
-            >
-              <option value="">
-                {cargandoEquipos ? 'Cargando equipos…' : 'Seleccione un equipo'}
-              </option>
-              {equiposFiltrados.map((eq) => (
-                <option key={eq.id_equipo} value={eq.id_equipo}>
-                  {eq.placa_institucional || eq.numero_serie || 'Sin placa'} · {eq.nombre}
-                </option>
-              ))}
-            </select>
-          </label>
+              placeholder={
+                cargandoEquipos
+                  ? 'Cargando equipos…'
+                  : !ubicacionCompleta
+                    ? 'Seleccione primero sede y laboratorio'
+                    : equiposFiltrados.length
+                      ? 'Seleccione un equipo'
+                      : 'No hay equipos en este laboratorio'
+              }
+              busqueda="Buscar por nombre, placa o serie…"
+              opciones={equiposFiltrados.map((eq) => ({
+                valor: String(eq.id_equipo),
+                texto:
+                  (eq.placa_institucional || eq.numero_serie || 'Sin placa') + ' · ' + eq.nombre,
+                busqueda: eq.numero_serie || '',
+              }))}
+            />
+          </div>
+
           <div className="mod-campos">
             <label className="mod-campo" htmlFor="mant-tipo">
               Tipo
@@ -197,7 +229,10 @@ export default function ModalRegistrarMantenimiento({
             </>
           )}
           <label className="mod-campo" htmlFor="mant-trabajo">
-            Trabajo realizado *
+            Trabajo realizado{' '}
+            <span className="mod-requerido" aria-hidden="true">
+              *
+            </span>
             <textarea
               id="mant-trabajo"
               name="descripcion_trabajo"
@@ -209,7 +244,10 @@ export default function ModalRegistrarMantenimiento({
             />
           </label>
           <label className="mod-campo" htmlFor="mant-horas">
-            Horas invertidas
+            Horas invertidas{' '}
+            <span className="mod-requerido" aria-hidden="true">
+              *
+            </span>
             <input
               id="mant-horas"
               name="horas_invertidas"

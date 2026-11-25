@@ -175,7 +175,7 @@
 }
 
 .registro-campo select:disabled {
-  background: #f4f6f5;
+  background-color: #f4f6f5;
   color: #98a5a0;
   cursor: not-allowed;
 }
@@ -318,4 +318,113 @@
   background: var(--verde-suave);
   color: var(--verde);
   line-height: 1.5;
+}
+
+/* ======================================================
+   FORMULARIO DE REGISTRO: una columna, obligatorios primero
+   ====================================================== */
+
+.registro-pagina--formulario {
+  max-width: 920px;
+  margin-inline: auto;
+}
+
+.registro-pagina--formulario .registro-grid {
+  grid-template-columns: 1fr;
+  gap: 18px;
+}
+
+.registro-pagina--formulario .registro-fotos {
+  margin-top: 18px;
+}
+
+.registro-encabezado .registro-nota {
+  margin-top: 6px;
+  color: var(--texto-secundario);
+  font-size: 13px;
+}
+
+/* Etiquetas, ayudas y asterisco */
+
+.registro-etiqueta {
+  color: #3f5249;
+  font-size: 13px;
+}
+
+.registro-requerido {
+  color: #b34343;
+  font-weight: 700;
+}
+
+.registro-ayuda {
+  color: #75869b;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.registro-campo--ancho {
+  grid-column: 1 / -1;
+}
+
+.registro-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Inputs y selects con la misma altura (la flecha del select viene de selectores.css) */
+
+.registro-campo input,
+.registro-campo select {
+  height: 44px;
+}
+
+.registro-campo input {
+  padding-block: 0;
+}
+
+/* Con el select personalizado el texto y la flecha deben quedar centrados */
+.registro-campo select {
+  display: flex;
+  align-items: center;
+}
+
+.registro-campo textarea {
+  padding-block: 11px;
+}
+
+/* Botones siempre a la vista */
+
+.registro-pagina--formulario .registro-acciones {
+  position: sticky;
+  bottom: 12px;
+  z-index: 5;
+  margin-top: 18px;
+  box-shadow: 0 8px 24px rgba(18, 58, 43, 0.14);
+}
+
+.registro-pagina--formulario .registro-acciones > span {
+  color: var(--texto-secundario);
+  font-size: 12px;
+}
+
+@media (min-width: 701px) {
+  .registro-campos-grid--tres {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .registro-campo input,
+  .registro-campo select,
+  .registro-campo textarea {
+    font-size: 16px;
+  }
+
+  .registro-pagina--formulario .registro-acciones {
+    bottom: 8px;
+  }
 }

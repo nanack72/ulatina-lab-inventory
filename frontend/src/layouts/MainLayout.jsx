@@ -66,6 +66,7 @@ function obtenerIdEquipo(equipo) {
 
 export default function MainLayout({ usuario, token, cerrarSesion }) {
   const [paginaActual, cambiarPagina] = useState('inicio');
+  const [contextoInicio, setContextoInicio] = useState({});
   useTablasEnTarjetas();
 
   const [equipoSeleccionado, setEquipoSeleccionado] = useState(null);
@@ -195,7 +196,8 @@ export default function MainLayout({ usuario, token, cerrarSesion }) {
 
   // NAVEGACIÓN DEL SIDEBAR
 
-  function navegarA(pagina) {
+  function navegarA(pagina, contexto = {}) {
+    setContextoInicio(contexto);
     cerrarPantallasInventario();
     cambiarPagina(pagina);
   }
@@ -306,6 +308,8 @@ export default function MainLayout({ usuario, token, cerrarSesion }) {
       // LISTADO DE INVENTARIO
       return (
         <Inventario
+          key={contextoInicio.inventario || 'todos'}
+          resumenInicial={contextoInicio.inventario || ''}
           token={token}
           puedeGestionarEliminados={
             normalizarRol(usuario?.rol) === 'superadministrador' ||
@@ -381,7 +385,14 @@ export default function MainLayout({ usuario, token, cerrarSesion }) {
 
     // MANTENIMIENTO
     if (paginaActual === 'mantenimiento') {
-      return <Mantenimiento token={token} usuario={usuario} />;
+      return (
+        <Mantenimiento
+          key={String(!!contextoInicio.abiertos)}
+          token={token}
+          usuario={usuario}
+          soloAbiertosInicial={contextoInicio.abiertos === true}
+        />
+      );
     }
 
     // INCIDENCIAS

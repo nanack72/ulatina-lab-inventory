@@ -1,11 +1,5 @@
 const { nombreCampo } = require('../utils/nombresCampos');
-const ROLES_GLOBALES = [
-  'superadministrador',
-  'administrador',
-  'admin',
-  'coordinador',
-  'director',
-];
+const ROLES_GLOBALES = ['superadministrador', 'administrador', 'admin', 'coordinador', 'director'];
 const normalizarRol = (rol) =>
   String(rol ?? '')
     .trim()
@@ -45,13 +39,15 @@ async function listarMantenimientos(pool, query, usuario) {
   const pagina = entero(query.pagina, 'pagina', 1),
     limite = entero(query.limite, 'limite', 10);
   if (limite > 100) throw fallo('El límite máximo es 100.');
-  const valores = [
-    Number(usuario.idUsuario),
-    tieneAccesoGlobal(usuario.rol),
-  ];
+  const valores = [Number(usuario.idUsuario), tieneAccesoGlobal(usuario.rol)];
   const condiciones = [
     `($2::boolean OR EXISTS (SELECT 1 FROM public.usuario_sede us JOIN public.usuario_laboratorio ul ON ul.id_usuario_sede=us.id_usuario_sede WHERE us.id_usuario=$1 AND us.id_sede=l.id_sede AND ul.id_sede=l.id_sede AND ul.id_laboratorio=l.id_laboratorio))`,
   ];
+  if (query.solo_abiertos !== undefined && !['', '1'].includes(query.solo_abiertos)) {
+    throw fallo('El filtro de mantenimientos abiertos no es válido.');
+  }
+  if (query.solo_abiertos === '1')
+    condiciones.push("lower(trim(coalesce(bm.estado_mantenimiento, ''))) <> 'completado'");
   for (const [nombre, columna] of [
     ['id_equipo', 'bm.id_equipo'],
     ['id_sede', 'l.id_sede'],

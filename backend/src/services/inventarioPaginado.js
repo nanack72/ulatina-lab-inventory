@@ -131,7 +131,35 @@ async function consultarPaginaInventario(db, query, usuario) {
   }
   const pagina = entero('pagina', 1, 100000);
   const limite = entero('limite', 5, 100);
-  const resultado = await db.query(CONSULTA, [
+  const resumen = query.resumen ?? '';
+  const anioActual = "EXTRACT(YEAR FROM CURRENT_TIMESTAMP AT TIME ZONE 'America/Costa_Rica')";
+  const antiguo = `cr.anios_revision BETWEEN 1 AND 100 AND er.anio BETWEEN 1900 AND ${anioActual}
+    AND ${anioActual} - er.anio >= cr.anios_revision`;
+  const condicionado = 'esr.requiere_revision IS TRUE';
+  const sinAnio = `cr.anios_revision BETWEEN 1 AND 100 AND (er.anio IS NULL OR er.anio < 1900 OR er.anio > ${anioActual})`;
+  const revision = (criterio) => `EXISTS (SELECT 1 FROM public.equipo er
+    JOIN public.categoria cr ON cr.id_categoria = er.id_categoria
+    JOIN public.estado esr ON esr.id_estado = er.id_estado
+    WHERE er.id_equipo = visibles.id_equipo AND (${criterio}))`;
+  const criterios = {
+    '': 'TRUE',
+    operativos: "estado_n IN ('operativo', 'activo')",
+    mantenimiento: "position('mantenimiento' IN estado_n) > 0",
+    revision: revision(`(${antiguo}) OR (${condicionado})`),
+    antiguedad: revision(antiguo),
+    condicion: revision(condicionado),
+    'sin-anio': revision(sinAnio),
+  };
+  if (typeof resumen !== 'string' || !Object.hasOwn(criterios, resumen)) {
+    throw solicitudInvalida('El filtro del resumen no es válido.');
+  }
+  const consulta = resumen
+    ? CONSULTA.replace(
+        'SELECT * FROM visibles\n    WHERE',
+        `SELECT * FROM visibles\n    WHERE (${criterios[resumen]}) AND`
+      )
+    : CONSULTA;
+  const resultado = await db.query(consulta, [
     global,
     idUsuario,
     ...textos,

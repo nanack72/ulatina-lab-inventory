@@ -498,3 +498,51 @@ button.ini-equipo:hover {
 .ini-pagina .ini-revision-cifras dd {
   color: var(--peligro);
 }
+
+/* Las tarjetas abren los resultados que representan. */
+.ini-kpis .ini-kpi,
+.ini-revision-resumen {
+  position: relative;
+}
+.ini-abrir-tarjeta {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: var(--verde);
+  cursor: pointer;
+}
+.ini-abrir-tarjeta > svg {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+}
+.ini-abrir-tarjeta:hover {
+  background: #215e4b08;
+}
+.ini-abrir-tarjeta:focus-visible,
+.ini-ver-cifra:focus-visible {
+  outline: 2px solid var(--verde);
+  outline-offset: 3px;
+}
+.ini-abrir-tarjeta:disabled,
+.ini-ver-cifra:disabled {
+  cursor: default;
+}
+.ini-ver-cifra {
+  border: 0;
+  padding: 0;
+  min-width: 44px;
+  min-height: 44px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.ini-ver-cifra:hover {
+  text-decoration: underline;
+}
