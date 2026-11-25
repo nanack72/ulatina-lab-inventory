@@ -72,18 +72,28 @@ export default function FotosEquipo({
     operando.current = true;
     setOcupado(true);
     setError('');
-    try {
-      await borrarFoto(idEquipo, eliminando.id_foto, token);
-      setEliminando(null);
-      setRecarga((v) => v + 1);
-      setMensaje('Foto eliminada.');
-    } catch (error) {
-      setError(error.message);
-    } finally {
-      operando.current = false;
-      setOcupado(false);
+    const fallidas = [];
+    const borradas = [];
+    for (const foto of eliminando) {
+      try {
+        await borrarFoto(idEquipo, foto.id_foto, token);
+        borradas.push(foto.id_foto);
+      } catch (error) {
+        fallidas.push(foto);
+        setError(error.message);
+      }
     }
+    setFotos((prev) => prev.filter((f) => !borradas.includes(f.id_foto)));
+    if (borradas.length)
+      setMensaje(
+        `${borradas.length} ${borradas.length === 1 ? 'foto eliminada.' : 'fotos eliminadas.'}`
+      );
+    setEliminando(fallidas.length ? fallidas : null);
+    setConfirmado(false);
+    operando.current = false;
+    setOcupado(false);
   }
+
   return (
     <section className="detalle-tarjeta fotos-panel">
       <h2>Fotos del equipo</h2>
@@ -96,10 +106,16 @@ export default function FotosEquipo({
         token={token}
         puedeEliminar={puedeEliminar}
         ocupado={ocupado}
+        onEliminarVarias={(fotos) => {
+          setError('');
+          setMensaje('');
+          setConfirmado(false);
+          setEliminando(fotos);
+        }}
         onEliminar={(foto) => {
           setError('');
           setConfirmado(false);
-          setEliminando(foto);
+          setEliminando([foto]);
         }}
       />
       {puedeAgregar && (
@@ -128,8 +144,14 @@ export default function FotosEquipo({
           if (operando.current) e.preventDefault();
         }}
       >
-        <h2 id="foto-eliminar-titulo">Eliminar foto</h2>
-        <p>{eliminando?.nombre_archivo}</p>
+        <h2 id="foto-eliminar-titulo">
+          {eliminando?.length === 1 ? 'Eliminar foto' : 'Eliminar fotos seleccionadas'}
+        </h2>
+        <p>
+          {eliminando?.length === 1
+            ? eliminando[0].nombre_archivo
+            : `Se eliminarán ${eliminando?.length || 0} fotos del equipo.`}
+        </p>
         {error && <Notificacion tipo="error">{error}</Notificacion>}
         <label className="cfg-confirmar-check">
           <input
@@ -138,7 +160,7 @@ export default function FotosEquipo({
             disabled={ocupado}
             onChange={(e) => setConfirmado(e.target.checked)}
           />
-          Entiendo que esta foto se eliminará permanentemente.
+          Entiendo que las fotos seleccionadas se eliminarán permanentemente.
         </label>
         <div className="cfg-modal-acciones">
           <button
@@ -156,7 +178,11 @@ export default function FotosEquipo({
             disabled={ocupado || !confirmado}
             onClick={eliminar}
           >
-            Eliminar foto
+            {ocupado
+              ? 'Eliminando…'
+              : eliminando?.length === 1
+                ? 'Eliminar foto'
+                : 'Eliminar fotos'}
           </button>
         </div>
       </dialog>

@@ -144,6 +144,7 @@ async function consultarPaginaInventario(db, query, usuario) {
   const criterios = {
     '': 'TRUE',
     operativos: "estado_n IN ('operativo', 'activo')",
+    'no-operativos': "COALESCE(estado_n, '') NOT IN ('operativo', 'activo')",
     mantenimiento: "position('mantenimiento' IN estado_n) > 0",
     revision: revision(`(${antiguo}) OR (${condicionado})`),
     antiguedad: revision(antiguo),

@@ -136,7 +136,7 @@ export default function EditarEquipo({ idEquipo, token, onCancelar, onActualizad
   }
 
   return (
-    <div className="registro-pagina">
+    <div className="registro-pagina registro-pagina--formulario">
       <button type="button" className="registro-volver" onClick={onCancelar} disabled={guardando}>
         <ArrowLeft size={17} />
         Volver al inventario
@@ -161,7 +161,7 @@ export default function EditarEquipo({ idEquipo, token, onCancelar, onActualizad
         <form onSubmit={guardarCambios}>
           <div className="registro-grid">
             <Seccion titulo="Identificación del equipo" icono={Monitor}>
-              <div className="registro-campos-grid">
+              <div className="registro-campos-grid registro-campos-grid--tres">
                 <Campo etiqueta="Nombre del equipo" requerido htmlFor="editar-nombre">
                   <input
                     type="text"
@@ -197,7 +197,7 @@ export default function EditarEquipo({ idEquipo, token, onCancelar, onActualizad
             </Seccion>
 
             <Seccion titulo="Características técnicas" icono={Cpu}>
-              <div className="registro-campos-grid">
+              <div className="registro-campos-grid registro-campos-grid--tres">
                 <Campo etiqueta="Marca" htmlFor="editar-marca">
                   <input
                     type="text"
@@ -231,13 +231,13 @@ export default function EditarEquipo({ idEquipo, token, onCancelar, onActualizad
                   />
                 </Campo>
 
-                <Campo etiqueta="Características" htmlFor="editar-caracteristicas">
+                <Campo etiqueta="Características" htmlFor="editar-caracteristicas" ancho>
                   <textarea
                     id="editar-caracteristicas"
                     name="caracteristicas"
                     value={formulario.caracteristicas}
                     onChange={actualizarCampo}
-                    rows={4}
+                    rows={3}
                     placeholder="Descripción técnica del equipo"
                   />
                 </Campo>
@@ -251,18 +251,10 @@ export default function EditarEquipo({ idEquipo, token, onCancelar, onActualizad
                   name="comentarios"
                   value={formulario.comentarios}
                   onChange={actualizarCampo}
-                  rows={5}
+                  rows={3}
                   placeholder="Observaciones del equipo"
                 />
               </Campo>
-            </Seccion>
-
-            <Seccion titulo="Información que se conserva" icono={FileText}>
-              <p className="registro-aviso">
-                La categoría, sede, laboratorio, ubicación detallada y estado actual no se
-                modificarán desde este formulario. Los cambios de ubicación y estado se realizarán
-                desde sus funciones específicas para conservar el historial.
-              </p>
             </Seccion>
           </div>
 

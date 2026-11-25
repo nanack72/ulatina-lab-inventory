@@ -3,6 +3,7 @@ import {
   AlertCircle,
   ArrowLeftRight,
   Check,
+  Ban,
   ChevronRight,
   Clock,
   MapPin,
@@ -278,6 +279,20 @@ export default function Inicio({ usuario, token, onVerEquipo, onIrA, onSesionExp
           }
           icono={Check}
           tono="verde"
+        />
+
+        <TarjetaResumen
+          titulo="No operativos"
+          disponible={equiposListos}
+          onAbrir={() => onIrA?.('inventario', { inventario: 'no-operativos' })}
+          valor={cifra(equiposListos, resumen.noOperativos)}
+          detalle={
+            equiposListos
+              ? `${Math.round((100 - resumen.porcentajeOperativos) * 10) / 10}% del inventario`
+              : 'Consultando…'
+          }
+          icono={Ban}
+          tono="rojo"
         />
 
         <TarjetaResumen

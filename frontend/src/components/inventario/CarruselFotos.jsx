@@ -37,7 +37,10 @@ export default function CarruselFotos({
   puedeEliminar,
   ocupado,
   onEliminar,
+  onEliminarVarias,
 }) {
+  const [seleccion, setSeleccion] = useState([]);
+  const seleccionadas = fotos.filter((f) => seleccion.includes(f.id_foto));
   const id = useId();
   const pista = useRef(null);
   const visor = useRef(null);
@@ -138,6 +141,7 @@ export default function CarruselFotos({
     visor.current.close();
   }
   function verTodas() {
+    setSeleccion([]);
     setPaginaGaleria(Math.floor(actual / 9));
     setGaleriaAbierta(true);
     galeria.current.showModal();
@@ -293,30 +297,91 @@ export default function CarruselFotos({
         <div className="foto-visor-cabecera">
           <div>
             <h2 id={`${id}-galeria`}>Todas las fotos del equipo</h2>
-            <p>{fotos.length} fotos · Seleccione una para verla en el carrusel</p>
+            <p>{fotos.length} fotos · Amplíe una imagen o seleccione las que desea eliminar.</p>
           </div>
           <button autoFocus type="button" aria-label="Cerrar galería" onClick={cerrarGaleria}>
             <X size={24} aria-hidden="true" />
           </button>
         </div>
+        {puedeEliminar && (
+          <div className="foto-seleccion-barra">
+            <button
+              type="button"
+              disabled={ocupado}
+              onClick={() =>
+                setSeleccion(
+                  seleccionadas.length === fotos.length ? [] : fotos.map((f) => f.id_foto)
+                )
+              }
+            >
+              {seleccionadas.length === fotos.length ? 'Quitar selección' : 'Seleccionar todas'}
+            </button>
+            <span role="status">{seleccionadas.length} seleccionadas</span>
+            <button
+              type="button"
+              className="foto-eliminar-seleccion"
+              disabled={ocupado || !seleccionadas.length}
+              onClick={() => {
+                cerrarGaleria();
+                onEliminarVarias(seleccionadas);
+              }}
+            >
+              <Trash2 size={16} aria-hidden="true" />
+              Eliminar seleccionadas
+            </button>
+          </div>
+        )}
         {galeriaAbierta && (
           <div className="foto-mosaico">
             {miniaturas.map((foto, i) => {
               const posicion = paginaActual * 9 + i;
               return (
-                <button
-                  type="button"
-                  className="foto-miniatura"
+                <div
+                  className="foto-miniatura foto-tarjeta"
                   key={foto.id_foto}
-                  aria-label={`Seleccionar foto ${posicion + 1}: ${foto.nombre_archivo}`}
-                  aria-current={posicion === actual ? 'true' : undefined}
-                  onClick={() => elegirFoto(posicion)}
+                  data-seleccionada={seleccion.includes(foto.id_foto)}
                 >
                   <Foto idEquipo={idEquipo} foto={foto} token={token} cargar />
                   <span>
                     {posicion + 1}. {foto.nombre_archivo}
                   </span>
-                </button>
+                  <div className="foto-tarjeta-acciones">
+                    {puedeEliminar && (
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={seleccion.includes(foto.id_foto)}
+                          disabled={ocupado}
+                          aria-label={`Seleccionar foto ${posicion + 1}: ${foto.nombre_archivo}`}
+                          onChange={(e) =>
+                            setSeleccion((prev) =>
+                              e.target.checked
+                                ? [...prev, foto.id_foto]
+                                : prev.filter((id) => id !== foto.id_foto)
+                            )
+                          }
+                        />
+                        Seleccionar
+                      </label>
+                    )}
+                    <button
+                      type="button"
+                      aria-label={`Ampliar foto ${posicion + 1}: ${foto.nombre_archivo}`}
+                      onClick={() => setAmpliada(foto)}
+                    >
+                      <Maximize2 size={16} aria-hidden="true" />
+                      Ampliar
+                    </button>
+                    <button
+                      type="button"
+                      className="foto-ir-carrusel"
+                      aria-label={`Ver foto ${posicion + 1} en el carrusel`}
+                      onClick={() => elegirFoto(posicion)}
+                    >
+                      <ChevronRight size={16} aria-hidden="true" />
+                    </button>
+                  </div>
+                </div>
               );
             })}
           </div>

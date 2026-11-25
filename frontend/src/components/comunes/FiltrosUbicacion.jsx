@@ -47,13 +47,15 @@ export default function FiltrosUbicacion({
     <>
       <Aviso error>{error}</Aviso>
       <label className="mod-campo" htmlFor={id + '-sede'}>
-        Sede
-        {requerido && (
-          <span className="mod-requerido" aria-hidden="true">
-            {' '}
-            *
-          </span>
-        )}
+        <span className="mod-etiqueta">
+          Sede
+          {requerido && (
+            <span className="mod-requerido" aria-hidden="true">
+              {' '}
+              *
+            </span>
+          )}
+        </span>
         <select
           id={id + '-sede'}
           required={requerido}

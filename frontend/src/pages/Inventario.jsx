@@ -120,6 +120,7 @@ export default function Inventario({
 
   const etiquetasResumen = {
     operativos: 'Equipos operativos',
+    'no-operativos': 'Equipos no operativos',
     mantenimiento: 'Equipos en mantenimiento',
     revision: 'Equipos por revisar',
     antiguedad: 'Por antigüedad',
