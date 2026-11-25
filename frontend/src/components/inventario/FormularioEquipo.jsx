@@ -4,9 +4,9 @@ export function Campo({ etiqueta, htmlFor, requerido = false, children }) {
       <span className="registro-etiqueta">
         {etiqueta}
         {requerido && (
-          <span className="registro-requerido" aria-hidden="true">
-            {' '}
-            *
+          <span className="registro-requerido">
+            {' (obligatorio) '}
+            <span aria-hidden="true">*</span>
           </span>
         )}
       </span>

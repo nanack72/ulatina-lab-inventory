@@ -295,3 +295,27 @@
   font-size: 13px;
   line-height: 1.7;
 }
+
+.registro-datos {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.registro-fotos {
+  margin-top: 20px;
+}
+.registro-fotos .registro-tarjeta-contenido > p {
+  margin: 0 0 14px;
+  color: var(--texto-secundario);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.registro-fotos-aviso {
+  padding: 14px 16px;
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  background: var(--verde-suave);
+  color: var(--verde);
+  line-height: 1.5;
+}

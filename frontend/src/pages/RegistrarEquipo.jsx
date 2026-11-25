@@ -1,7 +1,11 @@
+import AdjuntarFotos from '../components/inventario/AdjuntarFotos';
+import { agregarFoto } from '../services/fotosEquipoService';
+import { MAX_FOTOS_EQUIPO } from '../utils/limitesFotos';
+import '../styles/fotosEquipos.css';
 import { notificar } from '../utils/notificaciones';
 import Notificacion from '../components/comunes/Notificacion';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Save, Monitor, Cpu, MapPin, FileText } from 'lucide-react';
+import { ArrowLeft, Save, Monitor, Cpu, MapPin, FileText, Images } from 'lucide-react';
 
 import {
   obtenerCategorias,
@@ -45,6 +49,17 @@ function nombreCatalogo(elemento) {
 
 export default function RegistrarEquipo({ token, onCancelar, onRegistrado }) {
   const [formulario, setFormulario] = useState(FORMULARIO_INICIAL);
+  const [fotos, setFotos] = useState([]);
+  const [equipoCreado, setEquipoCreado] = useState(null);
+  const [fotosGuardadas, setFotosGuardadas] = useState(0);
+  const [progresoFotos, setProgresoFotos] = useState('');
+  const registroRef = useRef(null);
+
+  function salir() {
+    if (enviandoRef.current) return;
+    if (registroRef.current) onRegistrado?.();
+    else onCancelar?.();
+  }
 
   const [categorias, setCategorias] = useState([]);
   const [estados, setEstados] = useState([]);
@@ -173,7 +188,7 @@ export default function RegistrarEquipo({ token, onCancelar, onRegistrado }) {
 
     if (enviandoRef.current || cargandoCatalogos) return;
 
-    const mensajeValidacion = validarFormulario();
+    const mensajeValidacion = registroRef.current ? '' : validarFormulario();
 
     if (mensajeValidacion) {
       setError(mensajeValidacion);
@@ -200,9 +215,45 @@ export default function RegistrarEquipo({ token, onCancelar, onRegistrado }) {
     };
 
     try {
-      await registrarEquipo(datosEquipo, token);
-
-      notificar({ tipo: 'exito', mensaje: 'Equipo registrado correctamente.' });
+      if (!registroRef.current) {
+        const resultado = await registrarEquipo(datosEquipo, token);
+        registroRef.current = resultado;
+        setEquipoCreado(resultado);
+      }
+      const id = Number(registroRef.current.data?.id_equipo);
+      if (fotos.length && (!Number.isSafeInteger(id) || id <= 0)) {
+        throw new Error(
+          'El equipo se guardó, pero no fue posible identificarlo para subir las fotos. Puede agregarlas después desde su detalle.'
+        );
+      }
+      const pendientes = [];
+      let guardadas = 0;
+      let ultimoError = '';
+      for (const [indice, foto] of fotos.entries()) {
+        setProgresoFotos(`Subiendo foto ${indice + 1} de ${fotos.length}…`);
+        try {
+          await agregarFoto(id, foto, token);
+          guardadas += 1;
+        } catch (err) {
+          pendientes.push(foto);
+          ultimoError = err.message || 'No fue posible subir la fotografía.';
+        }
+      }
+      setFotosGuardadas((anterior) => anterior + guardadas);
+      setFotos(pendientes);
+      if (pendientes.length) {
+        setError(
+          `El equipo ya está registrado. Quedan ${pendientes.length} fotos pendientes. ${ultimoError} Puede reintentar sin crear otro equipo.`
+        );
+        return;
+      }
+      notificar({
+        tipo: 'exito',
+        mensaje:
+          fotosGuardadas + guardadas > 0
+            ? 'Equipo registrado y fotografías guardadas correctamente.'
+            : 'Equipo registrado correctamente.',
+      });
 
       if (typeof onRegistrado === 'function') {
         onRegistrado();
@@ -212,13 +263,14 @@ export default function RegistrarEquipo({ token, onCancelar, onRegistrado }) {
     } finally {
       enviandoRef.current = false;
       setGuardando(false);
+      setProgresoFotos('');
     }
   }
 
   return (
     <div className="registro-pagina">
       {/* VOLVER */}
-      <button type="button" className="registro-volver" onClick={onCancelar} disabled={guardando}>
+      <button type="button" className="registro-volver" onClick={salir} disabled={guardando}>
         <ArrowLeft size={17} />
         Volver al inventario
       </button>
@@ -246,210 +298,233 @@ export default function RegistrarEquipo({ token, onCancelar, onRegistrado }) {
         </div>
       ) : (
         <form onSubmit={manejarRegistro}>
-          <div className="registro-grid">
-            {/* IDENTIFICACIÓN */}
-            <Seccion titulo="Identificación del equipo" icono={Monitor}>
-              <div className="registro-campos-grid">
-                <Campo etiqueta="Nombre del equipo" requerido htmlFor="registrar-nombre">
-                  <input
-                    type="text"
-                    id="registrar-nombre"
-                    name="nombre"
-                    value={formulario.nombre}
-                    onChange={actualizarCampo}
-                    placeholder="Ej. Computadora laboratorio 301"
-                    maxLength={150}
-                    required
-                  />
-                </Campo>
+          {equipoCreado && (
+            <p className="registro-fotos-aviso" role="status">
+              El equipo ya está registrado. Sus datos quedan bloqueados para evitar duplicarlo.
+              {fotosGuardadas > 0 && ` Hay ${fotosGuardadas} fotos guardadas.`} Puede reintentar las
+              pendientes o volver al inventario y agregarlas después desde el detalle.
+            </p>
+          )}
+          <fieldset className="registro-datos" disabled={guardando || !!equipoCreado}>
+            <legend className="selector-etiqueta">Datos del equipo</legend>
+            <div className="registro-grid">
+              {/* IDENTIFICACIÓN */}
+              <Seccion titulo="Identificación del equipo" icono={Monitor}>
+                <div className="registro-campos-grid">
+                  <Campo etiqueta="Nombre del equipo" requerido htmlFor="registrar-nombre">
+                    <input
+                      type="text"
+                      id="registrar-nombre"
+                      name="nombre"
+                      value={formulario.nombre}
+                      onChange={actualizarCampo}
+                      placeholder="Ej. Computadora laboratorio 301"
+                      maxLength={150}
+                      required
+                    />
+                  </Campo>
 
-                <Campo etiqueta="Placa institucional" htmlFor="registrar-placa_institucional">
-                  <input
-                    type="text"
-                    id="registrar-placa_institucional"
-                    name="placa_institucional"
-                    value={formulario.placa_institucional}
-                    onChange={actualizarCampo}
-                    placeholder="Ej. UL-00125"
-                  />
-                </Campo>
+                  <Campo etiqueta="Placa institucional" htmlFor="registrar-placa_institucional">
+                    <input
+                      type="text"
+                      id="registrar-placa_institucional"
+                      name="placa_institucional"
+                      value={formulario.placa_institucional}
+                      onChange={actualizarCampo}
+                      placeholder="Ej. UL-00125"
+                    />
+                  </Campo>
 
-                <Campo etiqueta="Número de serie" htmlFor="registrar-numero_serie">
-                  <input
-                    type="text"
-                    id="registrar-numero_serie"
-                    name="numero_serie"
-                    value={formulario.numero_serie}
-                    onChange={actualizarCampo}
-                    placeholder="Número de serie"
-                  />
-                </Campo>
+                  <Campo etiqueta="Número de serie" htmlFor="registrar-numero_serie">
+                    <input
+                      type="text"
+                      id="registrar-numero_serie"
+                      name="numero_serie"
+                      value={formulario.numero_serie}
+                      onChange={actualizarCampo}
+                      placeholder="Número de serie"
+                    />
+                  </Campo>
 
-                <Campo etiqueta="Categoría" requerido htmlFor="registrar-id_categoria">
-                  <select
-                    id="registrar-id_categoria"
-                    name="id_categoria"
-                    value={formulario.id_categoria}
-                    onChange={actualizarCampo}
-                    required
-                  >
-                    <option value="">Seleccionar categoría</option>
+                  <Campo etiqueta="Categoría" requerido htmlFor="registrar-id_categoria">
+                    <select
+                      id="registrar-id_categoria"
+                      name="id_categoria"
+                      value={formulario.id_categoria}
+                      onChange={actualizarCampo}
+                      required
+                    >
+                      <option value="">Seleccionar categoría</option>
 
-                    {categorias.map((categoria) => (
-                      <option key={categoria.id_categoria} value={categoria.id_categoria}>
-                        {nombreCatalogo(categoria)}
-                      </option>
-                    ))}
-                  </select>
-                </Campo>
-              </div>
-            </Seccion>
-
-            {/* CARACTERÍSTICAS TÉCNICAS */}
-            <Seccion titulo="Características técnicas" icono={Cpu}>
-              <div className="registro-campos-grid">
-                <Campo etiqueta="Marca" htmlFor="registrar-marca">
-                  <input
-                    type="text"
-                    id="registrar-marca"
-                    name="marca"
-                    value={formulario.marca}
-                    onChange={actualizarCampo}
-                    placeholder="Ej. HP"
-                  />
-                </Campo>
-
-                <Campo etiqueta="Modelo" htmlFor="registrar-modelo">
-                  <input
-                    type="text"
-                    id="registrar-modelo"
-                    name="modelo"
-                    value={formulario.modelo}
-                    onChange={actualizarCampo}
-                    placeholder="Ej. ProDesk 400"
-                  />
-                </Campo>
-
-                <Campo etiqueta="Año" htmlFor="registrar-anio">
-                  <input
-                    type="number"
-                    id="registrar-anio"
-                    name="anio"
-                    value={formulario.anio}
-                    onChange={actualizarCampo}
-                    placeholder="Ej. 2026"
-                    min="1900"
-                    max={new Date().getFullYear() + 1}
-                    step="1"
-                  />
-                </Campo>
-
-                <Campo etiqueta="Características" htmlFor="registrar-caracteristicas">
-                  <textarea
-                    id="registrar-caracteristicas"
-                    name="caracteristicas"
-                    value={formulario.caracteristicas}
-                    onChange={actualizarCampo}
-                    placeholder="Procesador, memoria, almacenamiento..."
-                    rows={3}
-                  />
-                </Campo>
-              </div>
-            </Seccion>
-
-            {/* UBICACIÓN */}
-            <Seccion titulo="Ubicación del equipo" icono={MapPin}>
-              <div className="registro-campos-grid">
-                <Campo etiqueta="Sede" requerido htmlFor="registrar-id_sede">
-                  <select
-                    id="registrar-id_sede"
-                    name="id_sede"
-                    value={formulario.id_sede}
-                    onChange={actualizarCampo}
-                    required
-                  >
-                    <option value="">Seleccionar sede</option>
-
-                    {sedes
-                      .filter((sede) =>
-                        laboratorios.some(
-                          (laboratorio) => String(laboratorio.id_sede) === String(sede.id_sede)
-                        )
-                      )
-                      .map((sede) => (
-                        <option key={sede.id_sede} value={sede.id_sede}>
-                          {nombreCatalogo(sede)}
+                      {categorias.map((categoria) => (
+                        <option key={categoria.id_categoria} value={categoria.id_categoria}>
+                          {nombreCatalogo(categoria)}
                         </option>
                       ))}
-                  </select>
-                </Campo>
+                    </select>
+                  </Campo>
+                </div>
+              </Seccion>
 
-                <Campo
-                  etiqueta="Laboratorio autorizado"
-                  requerido
-                  htmlFor="registrar-id_laboratorio"
-                >
-                  <select
-                    id="registrar-id_laboratorio"
-                    name="id_laboratorio"
-                    value={formulario.id_laboratorio}
-                    onChange={actualizarCampo}
-                    disabled={!formulario.id_sede}
-                    required
+              {/* CARACTERÍSTICAS TÉCNICAS */}
+              <Seccion titulo="Características técnicas" icono={Cpu}>
+                <div className="registro-campos-grid">
+                  <Campo etiqueta="Marca" htmlFor="registrar-marca">
+                    <input
+                      type="text"
+                      id="registrar-marca"
+                      name="marca"
+                      value={formulario.marca}
+                      onChange={actualizarCampo}
+                      placeholder="Ej. HP"
+                    />
+                  </Campo>
+
+                  <Campo etiqueta="Modelo" htmlFor="registrar-modelo">
+                    <input
+                      type="text"
+                      id="registrar-modelo"
+                      name="modelo"
+                      value={formulario.modelo}
+                      onChange={actualizarCampo}
+                      placeholder="Ej. ProDesk 400"
+                    />
+                  </Campo>
+
+                  <Campo etiqueta="Año" htmlFor="registrar-anio">
+                    <input
+                      type="number"
+                      id="registrar-anio"
+                      name="anio"
+                      value={formulario.anio}
+                      onChange={actualizarCampo}
+                      placeholder="Ej. 2026"
+                      min="1900"
+                      max={new Date().getFullYear() + 1}
+                      step="1"
+                    />
+                  </Campo>
+
+                  <Campo etiqueta="Características" htmlFor="registrar-caracteristicas">
+                    <textarea
+                      id="registrar-caracteristicas"
+                      name="caracteristicas"
+                      value={formulario.caracteristicas}
+                      onChange={actualizarCampo}
+                      placeholder="Procesador, memoria, almacenamiento..."
+                      rows={3}
+                    />
+                  </Campo>
+                </div>
+              </Seccion>
+
+              {/* UBICACIÓN */}
+              <Seccion titulo="Ubicación del equipo" icono={MapPin}>
+                <div className="registro-campos-grid">
+                  <Campo etiqueta="Sede" requerido htmlFor="registrar-id_sede">
+                    <select
+                      id="registrar-id_sede"
+                      name="id_sede"
+                      value={formulario.id_sede}
+                      onChange={actualizarCampo}
+                      required
+                    >
+                      <option value="">Seleccionar sede</option>
+
+                      {sedes
+                        .filter((sede) =>
+                          laboratorios.some(
+                            (laboratorio) => String(laboratorio.id_sede) === String(sede.id_sede)
+                          )
+                        )
+                        .map((sede) => (
+                          <option key={sede.id_sede} value={sede.id_sede}>
+                            {nombreCatalogo(sede)}
+                          </option>
+                        ))}
+                    </select>
+                  </Campo>
+
+                  <Campo
+                    etiqueta="Laboratorio autorizado"
+                    requerido
+                    htmlFor="registrar-id_laboratorio"
                   >
-                    <option value="">Seleccionar laboratorio</option>
+                    <select
+                      id="registrar-id_laboratorio"
+                      name="id_laboratorio"
+                      value={formulario.id_laboratorio}
+                      onChange={actualizarCampo}
+                      disabled={!formulario.id_sede}
+                      required
+                    >
+                      <option value="">Seleccionar laboratorio</option>
 
-                    {laboratoriosFiltrados.map((laboratorio) => (
-                      <option key={laboratorio.id_laboratorio} value={laboratorio.id_laboratorio}>
-                        {nombreCatalogo(laboratorio)}
-                      </option>
-                    ))}
-                  </select>
-                </Campo>
+                      {laboratoriosFiltrados.map((laboratorio) => (
+                        <option key={laboratorio.id_laboratorio} value={laboratorio.id_laboratorio}>
+                          {nombreCatalogo(laboratorio)}
+                        </option>
+                      ))}
+                    </select>
+                  </Campo>
 
-                <Campo etiqueta="Ubicación detallada" htmlFor="registrar-ubicacion_detalle">
-                  <input
-                    type="text"
-                    id="registrar-ubicacion_detalle"
-                    name="ubicacion_detalle"
-                    value={formulario.ubicacion_detalle}
+                  <Campo etiqueta="Ubicación detallada" htmlFor="registrar-ubicacion_detalle">
+                    <input
+                      type="text"
+                      id="registrar-ubicacion_detalle"
+                      name="ubicacion_detalle"
+                      value={formulario.ubicacion_detalle}
+                      onChange={actualizarCampo}
+                      placeholder="Ej. Mesa 2, estación 04"
+                    />
+                  </Campo>
+
+                  <Campo etiqueta="Estado del equipo" requerido htmlFor="registrar-id_estado">
+                    <select
+                      id="registrar-id_estado"
+                      name="id_estado"
+                      value={formulario.id_estado}
+                      onChange={actualizarCampo}
+                      required
+                    >
+                      <option value="">Seleccionar estado</option>
+
+                      {estados.map((estado) => (
+                        <option key={estado.id_estado} value={estado.id_estado}>
+                          {nombreCatalogo(estado)}
+                        </option>
+                      ))}
+                    </select>
+                  </Campo>
+                </div>
+              </Seccion>
+
+              {/* OBSERVACIONES */}
+              <Seccion titulo="Observaciones" icono={FileText}>
+                <Campo etiqueta="Comentarios adicionales" htmlFor="registrar-comentarios">
+                  <textarea
+                    id="registrar-comentarios"
+                    name="comentarios"
+                    value={formulario.comentarios}
                     onChange={actualizarCampo}
-                    placeholder="Ej. Mesa 2, estación 04"
+                    placeholder="Observaciones importantes del equipo..."
+                    rows={5}
                   />
                 </Campo>
-
-                <Campo etiqueta="Estado del equipo" requerido htmlFor="registrar-id_estado">
-                  <select
-                    id="registrar-id_estado"
-                    name="id_estado"
-                    value={formulario.id_estado}
-                    onChange={actualizarCampo}
-                    required
-                  >
-                    <option value="">Seleccionar estado</option>
-
-                    {estados.map((estado) => (
-                      <option key={estado.id_estado} value={estado.id_estado}>
-                        {nombreCatalogo(estado)}
-                      </option>
-                    ))}
-                  </select>
-                </Campo>
-              </div>
-            </Seccion>
-
-            {/* OBSERVACIONES */}
-            <Seccion titulo="Observaciones" icono={FileText}>
-              <Campo etiqueta="Comentarios adicionales" htmlFor="registrar-comentarios">
-                <textarea
-                  id="registrar-comentarios"
-                  name="comentarios"
-                  value={formulario.comentarios}
-                  onChange={actualizarCampo}
-                  placeholder="Observaciones importantes del equipo..."
-                  rows={5}
-                />
-              </Campo>
+              </Seccion>
+            </div>
+          </fieldset>
+          <div className="registro-fotos">
+            <Seccion titulo="Fotografías del equipo (opcional)" icono={Images}>
+              <p>Puede adjuntarlas ahora o agregarlas después desde el detalle del equipo.</p>
+              <AdjuntarFotos
+                archivos={fotos}
+                onChange={setFotos}
+                disabled={guardando}
+                mostrarVistaPrevia
+                maxFotos={MAX_FOTOS_EQUIPO - fotosGuardadas}
+              />
+              {guardando && <p role="status">{progresoFotos || 'Guardando equipo…'}</p>}
             </Seccion>
           </div>
 
@@ -461,10 +536,10 @@ export default function RegistrarEquipo({ token, onCancelar, onRegistrado }) {
               <button
                 type="button"
                 className="btn btn-lg btn-secundario"
-                onClick={onCancelar}
+                onClick={salir}
                 disabled={guardando}
               >
-                Cancelar
+                {equipoCreado ? 'Ir al inventario' : 'Cancelar'}
               </button>
 
               <button
@@ -473,7 +548,13 @@ export default function RegistrarEquipo({ token, onCancelar, onRegistrado }) {
                 disabled={guardando || cargandoCatalogos || (!!error && categorias.length === 0)}
               >
                 <Save size={17} />
-                {guardando ? 'Guardando...' : 'Guardar equipo'}
+                {guardando
+                  ? 'Guardando…'
+                  : equipoCreado
+                    ? fotos.length
+                      ? 'Reintentar fotos'
+                      : 'Finalizar'
+                    : 'Guardar equipo'}
               </button>
             </div>
           </div>

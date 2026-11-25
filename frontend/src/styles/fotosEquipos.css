@@ -481,3 +481,13 @@
     transition: none;
   }
 }
+
+.fotos-adjuntar .foto-seleccionada-preview {
+  width: 72px;
+  height: 56px;
+  object-fit: contain;
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+  background: #fff;
+  flex-shrink: 0;
+}
