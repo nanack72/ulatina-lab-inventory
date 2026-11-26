@@ -269,10 +269,11 @@ async function restablecerContrasenaConToken(pool, { token, contrasenaNueva }) {
     const actualizacion = await cliente.query(
       `
         UPDATE public.usuario
-        SET contrasena_hash = $1
+        SET contrasena_hash = $1,
+            version_sesion = version_sesion + 1
         WHERE id_usuario = $2
           AND activo = true
-        RETURNING id_usuario
+        RETURNING id_usuario, version_sesion
       `,
       [hashNuevo, registro.id_usuario]
     );
