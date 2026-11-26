@@ -1,12 +1,5 @@
 const { nombreCampo } = require('../utils/nombresCampos');
-const ROLES_GLOBALES = ['superadministrador', 'administrador', 'admin', 'coordinador', 'director'];
-const normalizarRol = (rol) =>
-  String(rol ?? '')
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
-const tieneAccesoGlobal = (rol) => ROLES_GLOBALES.includes(normalizarRol(rol));
+const { tieneAccesoGlobal } = require('../utils/alcanceUsuario');
 const fallo = (mensaje) => Object.assign(new Error(mensaje), { status: 400 });
 function entero(valor, nombre, defecto) {
   if (valor === undefined || valor === '') return defecto;

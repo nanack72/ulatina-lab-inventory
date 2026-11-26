@@ -2,6 +2,7 @@ const pool = require('../config/database');
 const { listarMantenimientos } = require('../services/mantenimientosListado');
 const { validarEntradaMantenimiento } = require('../utils/validacionMantenimiento');
 const { verificarAccesoEquipo } = require('../utils/accesoEquipos');
+const { tieneAccesoGlobal } = require('../utils/alcanceUsuario');
 
 const normalizarTexto = (texto) =>
   String(texto ?? '')
@@ -11,16 +12,13 @@ const normalizarTexto = (texto) =>
     .replace(/[\u0300-\u036f]/g, '');
 
 /**
- * Roles con visibilidad global sobre sedes y laboratorios.
- * Coherente con incidencias, evidencias y reportes.
+ * Únicamente el Superadministrador posee acceso global sobre sedes y laboratorios.
+ * Coherente con inventario, dashboard, incidencias, evidencias y reportes.
  *
  * @param {string} rol - Rol actual del usuario
  * @returns {boolean}
  */
-const esUsuarioAdministrador = (rol) =>
-  ['superadministrador', 'administrador', 'admin', 'coordinador', 'director'].includes(
-    normalizarTexto(rol)
-  );
+const esUsuarioAdministrador = (rol) => tieneAccesoGlobal(rol);
 
 const esEstadoBaja = (nombreEstado) => {
   const n = normalizarTexto(nombreEstado);

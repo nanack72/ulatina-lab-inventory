@@ -124,16 +124,40 @@ test('RN15: bloqueo y reasignación de órdenes abiertas en darBajaUsuario (DELE
     ]);
   });
 
-  await t.test('permite reasignar a un Coordinador con acceso global sin asignación manual de laboratorio', async () => {
-    await reiniciar();
-    const res = await darBajaUsuario(pool, '2', 1, { idTecnicoSustituto: 7 });
-    assert.equal(res.accion, 'desactivado');
-    assert.equal(res.ordenes_reasignadas, 2);
-    const reasignadas = await db.query(
-      'SELECT COUNT(*)::int AS n FROM bitacora_mantenimiento WHERE id_usuario_tecnico = 7'
-    );
-    assert.equal(reasignadas.rows[0].n, 2);
-  });
+  await t.test(
+    'rechaza reasignar a un Coordinador sin el laboratorio asignado y permite a Superadministrador o Coordinador con ese laboratorio',
+    async () => {
+      await reiniciar();
+      // Coordinador (7) sin asignación al Lab 1 -> 409 (solo Superadministrador tiene acceso global)
+      await assert.rejects(
+        () => darBajaUsuario(pool, '2', 1, { idTecnicoSustituto: 7 }),
+        (err) => err.status === 409
+      );
+
+      // Si al Coordinador (7) se le asigna el Lab 1, sí puede recibir las órdenes abiertas
+      await db.exec(`
+        INSERT INTO usuario_sede VALUES (13, 7, 1);
+        INSERT INTO usuario_laboratorio VALUES (13, 1);
+      `);
+      const resCoord = await darBajaUsuario(pool, '2', 1, { idTecnicoSustituto: 7 });
+      assert.equal(resCoord.accion, 'desactivado');
+      assert.equal(resCoord.ordenes_reasignadas, 2);
+      const reasignadasCoord = await db.query(
+        'SELECT COUNT(*)::int AS n FROM bitacora_mantenimiento WHERE id_usuario_tecnico = 7'
+      );
+      assert.equal(reasignadasCoord.rows[0].n, 2);
+
+      // Superadministrador (1) conserva acceso global sin asignación manual de laboratorio
+      await reiniciar();
+      const resSuper = await darBajaUsuario(pool, '2', 1, { idTecnicoSustituto: 1 });
+      assert.equal(resSuper.accion, 'desactivado');
+      assert.equal(resSuper.ordenes_reasignadas, 2);
+      const reasignadasSuper = await db.query(
+        'SELECT COUNT(*)::int AS n FROM bitacora_mantenimiento WHERE id_usuario_tecnico = 1'
+      );
+      assert.equal(reasignadasSuper.rows[0].n, 2);
+    }
+  );
 });
 
 test('RN15: endpoints HTTP GET/PUT/DELETE en usuariosRoutes.js protegen ambas puertas', async (t) => {

@@ -1,4 +1,5 @@
 const pool = require('../config/database');
+const { tieneAccesoGlobal } = require('./alcanceUsuario');
 
 // Comprobar acceso del usuario a un equipo
 const verificarAccesoEquipo = async (idEquipo, usuario) => {
@@ -8,8 +9,8 @@ const verificarAccesoEquipo = async (idEquipo, usuario) => {
     return false;
   }
 
-  // Acceso global provisional para superadministrador
-  const accesoGlobal = usuario.rol?.toLowerCase() === 'superadministrador';
+  // Únicamente el Superadministrador posee acceso global automático
+  const accesoGlobal = tieneAccesoGlobal(usuario);
 
   const valores = [Number(idEquipo)];
 

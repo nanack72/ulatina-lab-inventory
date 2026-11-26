@@ -1,5 +1,6 @@
 const ExcelJS = require('exceljs');
 const pool = require('../config/database');
+const { tieneAccesoGlobal } = require('../utils/alcanceUsuario');
 
 // Normalización consistente para comparar textos sin distinguir mayúsculas ni tildes
 const normalizarTexto = (texto) =>
@@ -24,12 +25,8 @@ const esEstadoDanado = (estado) => {
   return /\bdanad[oa]s?\b/.test(n) && !/^(no|sin)\b/.test(n);
 };
 
-// Los técnicos solo ven sus laboratorios; la dirección y coordinación ven todo
-const esTecnico = (usuario) =>
-  ['tecnico', 'técnico'].includes((usuario?.rol || '').toLowerCase().trim());
-
-// Filtro SQL para limitar la consulta a los laboratorios asignados al técnico
-const FILTRO_TECNICO = `
+// Filtro SQL para limitar la consulta a las sedes y laboratorios asignados al usuario
+const FILTRO_LABORATORIO_ASIGNADO = `
   EXISTS (
     SELECT 1
     FROM public.usuario_sede us
@@ -42,16 +39,16 @@ const FILTRO_TECNICO = `
   )
 `;
 
-// Ajusta las condiciones de búsqueda según el rol del usuario
+// Únicamente el Superadministrador tiene vista global; los demás roles ven solo sus laboratorios asignados
 const alcanceUsuario = (usuario) => {
-  if (esTecnico(usuario)) {
-    return {
-      condicion: FILTRO_TECNICO,
-      params: [Number(usuario.idUsuario)],
-    };
+  if (tieneAccesoGlobal(usuario)) {
+    return { condicion: 'TRUE', params: [] };
   }
 
-  return { condicion: 'TRUE', params: [] };
+  return {
+    condicion: FILTRO_LABORATORIO_ASIGNADO,
+    params: [Number(usuario?.idUsuario)],
+  };
 };
 
 // Consulta de inventario con su laboratorio, categoría y estado

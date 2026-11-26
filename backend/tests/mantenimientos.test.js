@@ -343,7 +343,7 @@ test('Reglas de negocio de mantenimientos: RF21/RN12, RN16, RN14/RU09, RF22/RN13
   assert.strictEqual(correctivoBypass.body.data.cambio_estado.id_estado_nuevo, 2);
 });
 
-test('Punto #13: bloqueo sobre equipos eliminados (eliminado_en), conservación histórica y visibilidad global de Coordinador/Director (PGlite)', async (t) => {
+test('Punto #13: bloqueo sobre equipos eliminados (eliminado_en), conservación histórica y alcance por laboratorio (PGlite)', async (t) => {
   const db = new PGlite();
   t.after(() => db.close());
 
@@ -492,12 +492,18 @@ test('Punto #13: bloqueo sobre equipos eliminados (eliminado_en), conservación 
   assert.strictEqual(histInc.body.total, 1);
   assert.strictEqual(histInc.body.data[0].id_equipo, 10);
 
-  // 4. Visibilidad global en listarMantenimientos para Coordinador y Director vs Técnico restringido
+  // 4. Solo Superadministrador tiene vista global; Coordinador, Director y Técnico ven únicamente sus laboratorios asignados
+  const vistaSuper = await listarMantenimientos(
+    poolFalso,
+    {},
+    { idUsuario: 1, rol: 'Superadministrador' }
+  );
   const vistaCoord = await listarMantenimientos(poolFalso, {}, { idUsuario: 3, rol: 'Coordinador' });
   const vistaDir = await listarMantenimientos(poolFalso, {}, { idUsuario: 4, rol: 'Director' });
   const vistaTec = await listarMantenimientos(poolFalso, {}, { idUsuario: 2, rol: 'Tecnico' });
-  assert.strictEqual(vistaCoord.total, 2);
-  assert.strictEqual(vistaDir.total, 2);
+  assert.strictEqual(vistaSuper.total, 2);
+  assert.strictEqual(vistaCoord.total, 0);
+  assert.strictEqual(vistaDir.total, 0);
   assert.strictEqual(vistaTec.total, 1);
   assert.strictEqual(vistaTec.data[0].id_equipo, 10);
 });
