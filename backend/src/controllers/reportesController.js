@@ -1,6 +1,29 @@
 const ExcelJS = require('exceljs');
 const pool = require('../config/database');
 
+// Normalización consistente para comparar textos sin distinguir mayúsculas ni tildes
+const normalizarTexto = (texto) =>
+  String(texto ?? '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ');
+
+// Clasificación de estados alineada con Inventario e Inicio:
+// evita contar "No operativo" o "Inoperativo" como operativo.
+const esEstadoOperativo = (estado) => ['operativo', 'activo'].includes(normalizarTexto(estado));
+
+const esEstadoMantenimiento = (estado) => {
+  const n = normalizarTexto(estado);
+  return /\bmantenimiento\b/.test(n) && !/^(no|sin)\b/.test(n);
+};
+
+const esEstadoDanado = (estado) => {
+  const n = normalizarTexto(estado);
+  return /\bdanad[oa]s?\b/.test(n) && !/^(no|sin)\b/.test(n);
+};
+
 // Los técnicos solo ven sus laboratorios; la dirección y coordinación ven todo
 const esTecnico = (usuario) =>
   ['tecnico', 'técnico'].includes((usuario?.rol || '').toLowerCase().trim());
@@ -155,11 +178,9 @@ const obtenerResumenGeneral = async (req, res) => {
 
     const porEstado = estadosRes.rows;
 
-    // Sumar por familia de estado (operativo, en mantenimiento, dañado)
-    const sumarEstado = (patron) =>
-      porEstado
-        .filter((f) => patron.test(f.estado.toLowerCase()))
-        .reduce((acc, f) => acc + f.cantidad, 0);
+    // Sumar por familia de estado sin falsos positivos (ej. "No operativo" != "Operativo")
+    const sumarEstado = (predicado) =>
+      porEstado.filter((f) => predicado(f.estado)).reduce((acc, f) => acc + f.cantidad, 0);
 
     const contarTipo = (tipo) =>
       tiposRes.rows.find((f) => (f.tipo || '').toLowerCase() === tipo)?.cantidad || 0;
@@ -172,9 +193,9 @@ const obtenerResumenGeneral = async (req, res) => {
       data: {
         total_equipos: totalRes.rows[0].total,
         equipos_por_estado: {
-          operativo: sumarEstado(/operativ/),
-          en_mantenimiento: sumarEstado(/mantenimiento/),
-          danado: sumarEstado(/da[ñn]ad/),
+          operativo: sumarEstado(esEstadoOperativo),
+          en_mantenimiento: sumarEstado(esEstadoMantenimiento),
+          danado: sumarEstado(esEstadoDanado),
           detalle: porEstado,
         },
         mantenimientos: {
