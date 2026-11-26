@@ -280,6 +280,67 @@ test('Reglas de negocio de mantenimientos: RF21/RN12, RN16, RN14/RU09, RF22/RN13
     [otroCorrectivo.body.data.id_bitacora]
   );
   assert.strictEqual(reparacion.rows[0].estado_mantenimiento, 'En Proceso');
+
+  // Actualizar un correctivo aún abierto con id_nuevo_estado=Operativo tampoco libera el equipo
+  const cambioPendienteConOperativo = await invocar(
+    moduloCtrl.exports.actualizarEstadoMantenimiento,
+    {
+      params: { id: String(otroCorrectivo.body.data.id_bitacora) },
+      body: { estado_mantenimiento: 'Pendiente Repuesto', id_nuevo_estado: 1 },
+    }
+  );
+  assert.strictEqual(cambioPendienteConOperativo.codigo, 200);
+  const estadoAunEnMant = await db.query(
+    'SELECT es.nombre FROM equipo e JOIN estado es ON es.id_estado=e.id_estado WHERE e.id_equipo=10'
+  );
+  assert.strictEqual(estadoAunEnMant.rows[0].nombre, 'En mantenimiento');
+
+  // Crear un preventivo con id_nuevo_estado=Operativo mientras hay correctivo activo tampoco libera el equipo
+  const prevConOperativo = await invocar(moduloCtrl.exports.crearMantenimiento, {
+    body: {
+      id_equipo: 10,
+      tipo_mantenimiento: 'Preventivo',
+      descripcion_trabajo: 'Intento de liberar equipo con preventivo',
+      horas_invertidas: 0.5,
+      id_nuevo_estado: 1,
+    },
+  });
+  assert.strictEqual(prevConOperativo.codigo, 201);
+  const estadoTrasPrev = await db.query(
+    'SELECT es.nombre FROM equipo e JOIN estado es ON es.id_estado=e.id_estado WHERE e.id_equipo=10'
+  );
+  assert.strictEqual(estadoTrasPrev.rows[0].nombre, 'En mantenimiento');
+
+  // Cerrar el correctivo abierto para dejar el equipo Operativo y probar intento de bypass al crear correctivo
+  await db.query(
+    `INSERT INTO evidencia_fotografica (id_bitacora, tipo_evidencia, url_foto) VALUES
+      ($1, 'Antes', '/a2.png'), ($1, 'Después', '/d2.png')`,
+    [otroCorrectivo.body.data.id_bitacora]
+  );
+  const cierreOtro = await invocar(moduloCtrl.exports.actualizarEstadoMantenimiento, {
+    params: { id: String(otroCorrectivo.body.data.id_bitacora) },
+    body: { estado_mantenimiento: 'Completado' },
+  });
+  assert.strictEqual(cierreOtro.codigo, 200);
+
+  // RF21 / RN12: aunque la solicitud envíe id_nuevo_estado=1 (Operativo), un Correctivo fuerza 'En mantenimiento'
+  const correctivoBypass = await invocar(moduloCtrl.exports.crearMantenimiento, {
+    body: {
+      id_equipo: 10,
+      tipo_mantenimiento: 'Correctivo',
+      motivo_falla: 'Intento de omitir estado automático',
+      descripcion_trabajo: 'Verificar que no quede Operativo',
+      horas_invertidas: 1,
+      id_nuevo_estado: 1,
+      motivo_cambio_estado: 'Intento de mantener Operativo',
+    },
+  });
+  assert.strictEqual(correctivoBypass.codigo, 201);
+  const estadoTrasBypass = await db.query(
+    'SELECT es.nombre FROM equipo e JOIN estado es ON es.id_estado=e.id_estado WHERE e.id_equipo=10'
+  );
+  assert.strictEqual(estadoTrasBypass.rows[0].nombre, 'En mantenimiento');
+  assert.strictEqual(correctivoBypass.body.data.cambio_estado.id_estado_nuevo, 2);
 });
 
 test('Punto #13: bloqueo sobre equipos eliminados (eliminado_en), conservación histórica y visibilidad global de Coordinador/Director (PGlite)', async (t) => {
