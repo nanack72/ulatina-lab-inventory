@@ -1,5 +1,6 @@
 require('dotenv').config();
 
+const path = require('node:path');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -124,6 +125,14 @@ app.get('/api/health/db', async (req, res) => {
       message: 'No se pudo conectar con PostgreSQL',
     });
   }
+});
+
+// Servir el frontend compilado sin interceptar las rutas de la API.
+const frontendDist = path.resolve(__dirname, '../../frontend/dist');
+const servirFrontend = express.static(frontendDist);
+app.use((req, res, next) => {
+  if (/^\/api(?:\/|$)/i.test(req.path)) return next();
+  return servirFrontend(req, res, next);
 });
 
 // Los errores de lectura del cuerpo también deben devolver JSON a la interfaz.
