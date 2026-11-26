@@ -36,6 +36,12 @@ if (process.env.TRUST_PROXY) {
 
 app.use(
   helmet({
+    // Las vistas previas y las fotos privadas usan URLs blob creadas por la app.
+    contentSecurityPolicy: {
+      directives: {
+        imgSrc: ["'self'", 'data:', 'blob:'],
+      },
+    },
     // El frontend (otro origen) consume la API y las evidencias por fetch.
     crossOriginResourcePolicy: { policy: 'cross-origin' },
   })
