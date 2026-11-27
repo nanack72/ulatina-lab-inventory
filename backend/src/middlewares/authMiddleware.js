@@ -45,7 +45,9 @@ const verificarToken = async (req, res, next) => {
     !formatoUUID.test(decoded.jti) ||
     !Number.isSafeInteger(decoded.idUsuario) ||
     decoded.idUsuario <= 0 ||
-    !Number.isSafeInteger(decoded.exp)
+    !Number.isSafeInteger(decoded.exp) ||
+    !Number.isSafeInteger(decoded.versionSesion) ||
+    decoded.versionSesion < 1
   ) {
     return res.status(401).json({
       success: false,
@@ -53,7 +55,7 @@ const verificarToken = async (req, res, next) => {
     });
   }
 
-  // 3. Consultar revocación, estado, rol y permiso actuales.
+  // 3. Consultar revocación, versión de sesión, estado, rol y permiso actuales.
   try {
     const query = `
             SELECT
@@ -64,6 +66,7 @@ const verificarToken = async (req, res, next) => {
                 u.activo,
                 u.permiso_inventario,
                 u.puede_eliminar_equipos,
+                u.version_sesion,
                 r.nombre AS rol,
                 EXISTS (
                     SELECT 1
@@ -99,6 +102,15 @@ const verificarToken = async (req, res, next) => {
       return res.status(401).json({
         success: false,
         message: 'La sesión fue cerrada. Inicie sesión nuevamente.',
+      });
+    }
+
+    const versionActual = Number(usuario.version_sesion);
+    if (!Number.isSafeInteger(versionActual) || decoded.versionSesion !== versionActual) {
+      return res.status(401).json({
+        success: false,
+        message:
+          'Su sesión ya no es válida porque la contraseña fue modificada. Inicie sesión nuevamente.',
       });
     }
 

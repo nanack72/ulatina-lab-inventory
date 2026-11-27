@@ -1,12 +1,5 @@
 const { nombreCampo } = require('../utils/nombresCampos');
-const ROLES_GLOBALES = ['superadministrador', 'administrador', 'admin', 'coordinador', 'director'];
-const normalizarRol = (rol) =>
-  String(rol ?? '')
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
-const tieneAccesoGlobal = (rol) => ROLES_GLOBALES.includes(normalizarRol(rol));
+const { tieneAccesoGlobal } = require('../utils/alcanceUsuario');
 const fallo = (mensaje) => Object.assign(new Error(mensaje), { status: 400 });
 function entero(valor, nombre, defecto) {
   if (valor === undefined || valor === '') return defecto;
@@ -108,8 +101,34 @@ async function listarMantenimientos(pool, query, usuario) {
       u.nombre_completo AS nombre_tecnico,u.correo_institucional AS correo_tecnico,l.id_laboratorio,l.codigo AS codigo_laboratorio,l.nombre AS nombre_laboratorio,s.id_sede,s.nombre AS nombre_sede
     FROM public.bitacora_mantenimiento bm JOIN public.equipo e ON e.id_equipo=bm.id_equipo JOIN public.usuario u ON u.id_usuario=bm.id_usuario_tecnico JOIN public.laboratorio l ON l.id_laboratorio=e.id_laboratorio JOIN public.sede s ON s.id_sede=l.id_sede LEFT JOIN public.estado es ON es.id_estado=e.id_estado
     WHERE ${condiciones.join(' AND ')}
-  ), total AS (SELECT count(*)::int AS total FROM base), limites AS (SELECT total,LEAST(${p}::int,GREATEST(1,ceil(total::numeric/${n})::int)) AS pagina,GREATEST(1,ceil(total::numeric/${n})::int) AS "totalPaginas" FROM total)
-  SELECT total,pagina,"totalPaginas",(SELECT coalesce(json_agg(fila),'[]'::json) FROM (SELECT * FROM base ORDER BY fecha_mantenimiento DESC,id_bitacora DESC LIMIT ${n} OFFSET (SELECT (pagina-1)*${n} FROM limites)) fila) AS data FROM limites`;
+  ), total AS (
+    SELECT
+      count(*)::int AS total,
+      count(*) FILTER (WHERE lower(trim(coalesce(estado_mantenimiento, ''))) <> 'completado')::int AS abiertos,
+      count(*) FILTER (WHERE lower(trim(coalesce(estado_mantenimiento, ''))) = 'en proceso')::int AS en_proceso,
+      count(*) FILTER (WHERE lower(trim(coalesce(estado_mantenimiento, ''))) = 'pendiente repuesto')::int AS esperando_repuesto,
+      count(*) FILTER (
+        WHERE lower(trim(coalesce(estado_mantenimiento, ''))) <> 'completado'
+          AND lower(trim(coalesce(tipo_mantenimiento, ''))) = 'correctivo'
+      )::int AS correctivos
+    FROM base
+  ), limites AS (
+    SELECT
+      total,
+      LEAST(${p}::int, GREATEST(1, ceil(total::numeric/${n})::int)) AS pagina,
+      GREATEST(1, ceil(total::numeric/${n})::int) AS "totalPaginas",
+      json_build_object(
+        'abiertos', abiertos,
+        'enProceso', en_proceso,
+        'esperandoRepuesto', esperando_repuesto,
+        'correctivos', correctivos,
+        'preventivos', GREATEST(0, abiertos - correctivos)
+      ) AS resumen
+    FROM total
+  )
+  SELECT total, pagina, "totalPaginas", resumen,
+    (SELECT coalesce(json_agg(fila), '[]'::json) FROM (SELECT * FROM base ORDER BY fecha_mantenimiento DESC, id_bitacora DESC LIMIT ${n} OFFSET (SELECT (pagina - 1) * ${n} FROM limites)) fila) AS data
+  FROM limites`;
   return { success: true, limite, ...(await pool.query(sql, valores)).rows[0] };
 }
 module.exports = { listarMantenimientos };

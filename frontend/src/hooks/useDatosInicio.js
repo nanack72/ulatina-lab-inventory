@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { obtenerActividadReciente, obtenerMantenimientos } from '../services/dashboardService';
+import {
+  obtenerActividadReciente,
+  obtenerMantenimientosInicio,
+} from '../services/dashboardService';
+import { MANTENIMIENTOS_RECIENTES } from '../utils/dashboard';
 
 const ACTIVIDAD_VISIBLE = 6;
 
@@ -9,6 +13,7 @@ const ACTIVIDAD_VISIBLE = 6;
 export function useDatosInicio(token, onSesionExpirada) {
   const [datos, setDatos] = useState(() => ({
     mantenimientos: [],
+    resumenMantenimientos: null,
     actividad: [],
     errorMantenimientos: '',
     errorActividad: '',
@@ -30,7 +35,7 @@ export function useDatosInicio(token, onSesionExpirada) {
       setCargando(true);
 
       const [mantenimientos, actividad] = await Promise.allSettled([
-        obtenerMantenimientos(token, controlador.signal),
+        obtenerMantenimientosInicio(token, controlador.signal, MANTENIMIENTOS_RECIENTES),
         obtenerActividadReciente(token, controlador.signal, ACTIVIDAD_VISIBLE),
       ]);
 
@@ -50,7 +55,10 @@ export function useDatosInicio(token, onSesionExpirada) {
           : '';
 
       setDatos({
-        mantenimientos: mantenimientos.status === 'fulfilled' ? mantenimientos.value : [],
+        mantenimientos:
+          mantenimientos.status === 'fulfilled' ? mantenimientos.value.data : [],
+        resumenMantenimientos:
+          mantenimientos.status === 'fulfilled' ? mantenimientos.value.resumen : null,
         actividad: actividad.status === 'fulfilled' ? actividad.value : [],
         errorMantenimientos: mensaje(mantenimientos),
         errorActividad: mensaje(actividad),

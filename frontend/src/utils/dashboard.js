@@ -1,4 +1,4 @@
-import { normalizar, tipoEstado } from './inventario';
+import { normalizar, tipoEstado } from './inventario.js';
 
 export const MANTENIMIENTOS_RECIENTES = 5;
 
@@ -75,27 +75,44 @@ export function tipoMantenimiento(estado) {
 }
 
 // Resumen de números para las tarjetas y las alertas.
-export function resumirInicio(equipos, mantenimientos) {
+// Cuando el backend entrega resumenMantenimientos (calculado en SQL sobre todo el
+// alcance del usuario), se utilizan esas cifras reales en lugar de contar solo la página visible.
+export function resumirInicio(equipos, mantenimientos, resumenMantenimientos = null) {
   const total = equipos.length;
   const contar = (tipo) => equipos.filter((equipo) => tipoEstado(equipo.estado) === tipo).length;
 
   const operativos = contar('operativo');
 
-  const abiertos = mantenimientos.filter(
-    (m) => tipoMantenimiento(m.estado_mantenimiento) !== 'completado'
-  );
+  const tieneResumenServidor =
+    resumenMantenimientos &&
+    typeof resumenMantenimientos === 'object' &&
+    Number.isFinite(Number(resumenMantenimientos.abiertos));
 
-  const enProceso = abiertos.filter(
-    (m) => tipoMantenimiento(m.estado_mantenimiento) === 'proceso'
-  ).length;
+  let abiertosTotal;
+  let enProceso;
+  let esperandoRepuesto;
+  let correctivos;
 
-  const esperandoRepuesto = abiertos.filter(
-    (m) => tipoMantenimiento(m.estado_mantenimiento) === 'repuesto'
-  ).length;
-
-  const correctivos = abiertos.filter(
-    (m) => normalizar(m.tipo_mantenimiento) === 'correctivo'
-  ).length;
+  if (tieneResumenServidor) {
+    abiertosTotal = Number(resumenMantenimientos.abiertos) || 0;
+    enProceso = Number(resumenMantenimientos.enProceso) || 0;
+    esperandoRepuesto = Number(resumenMantenimientos.esperandoRepuesto) || 0;
+    correctivos = Number(resumenMantenimientos.correctivos) || 0;
+  } else {
+    const abiertos = mantenimientos.filter(
+      (m) => tipoMantenimiento(m.estado_mantenimiento) !== 'completado'
+    );
+    abiertosTotal = abiertos.length;
+    enProceso = abiertos.filter(
+      (m) => tipoMantenimiento(m.estado_mantenimiento) === 'proceso'
+    ).length;
+    esperandoRepuesto = abiertos.filter(
+      (m) => tipoMantenimiento(m.estado_mantenimiento) === 'repuesto'
+    ).length;
+    correctivos = abiertos.filter(
+      (m) => normalizar(m.tipo_mantenimiento) === 'correctivo'
+    ).length;
+  }
 
   return {
     total,
@@ -105,11 +122,11 @@ export function resumirInicio(equipos, mantenimientos) {
     porcentajeOperativos: total ? Math.round((operativos / total) * 1000) / 10 : 0,
     enMantenimiento: contar('mantenimiento'),
     fueraDeServicio: contar('baja'),
-    abiertos: abiertos.length,
+    abiertos: abiertosTotal,
     enProceso,
     esperandoRepuesto,
     correctivos,
-    preventivos: abiertos.length - correctivos,
+    preventivos: Math.max(0, abiertosTotal - correctivos),
   };
 }
 

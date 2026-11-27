@@ -3,6 +3,7 @@ const fs = require('node:fs/promises');
 const crypto = require('node:crypto');
 const pool = require('../config/database');
 const { verificarAccesoEquipo } = require('../utils/accesoEquipos');
+const { tieneAccesoGlobal } = require('../utils/alcanceUsuario');
 const {
   DIRECTORIO_EVIDENCIAS,
   eliminarArchivo,
@@ -25,11 +26,7 @@ const resolverTipo = (valor) => TIPOS_VALIDOS.find((t) => normalizar(t) === norm
 const esIdValido = (valor) =>
   /^[1-9]\d*$/.test(String(valor ?? '')) && Number.isSafeInteger(Number(valor));
 
-// Administradores y roles de gestión (Coordinador, Director) ven todo; el técnico solo sus laboratorios
-const tieneAccesoGlobal = (rol) =>
-  ['superadministrador', 'administrador', 'admin', 'coordinador', 'director'].includes(
-    (rol || '').toLowerCase().trim()
-  );
+// Únicamente el Superadministrador posee acceso global; los demás roles dependen de sus laboratorios asignados
 
 // Busca la bitácora y su estado actual (null si no existe)
 const buscarBitacora = async (idBitacora) => {

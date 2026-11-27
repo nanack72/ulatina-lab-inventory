@@ -14,14 +14,37 @@ export default function Reportes({ token }) {
     [pagina, setPagina] = useState(1);
   const [limite, setLimite] = useState(10);
   const [ubicacion, setUbicacion] = useState({ sede: '', laboratorio: '' });
+  const [fechaDesde, setFechaDesde] = useState('');
+  const [fechaHasta, setFechaHasta] = useState('');
   const ocupado = useRef(false);
+  const hayFiltrosActivos = Boolean(
+    ubicacion.sede || ubicacion.laboratorio || fechaDesde || fechaHasta
+  );
+
+  function limpiarFiltros() {
+    setUbicacion({ sede: '', laboratorio: '' });
+    setFechaDesde('');
+    setFechaHasta('');
+    setErrorDescarga('');
+    setPagina(1);
+  }
+
   async function descargar() {
     if (ocupado.current) return;
+    if (fechaDesde && fechaHasta && fechaDesde > fechaHasta) {
+      setErrorDescarga('La fecha inicial no puede ser posterior a la final.');
+      return;
+    }
     ocupado.current = true;
     setDescargando(true);
     setErrorDescarga('');
     try {
-      await descargarReporteExcel(token);
+      await descargarReporteExcel(token, {
+        id_sede: ubicacion.sede,
+        id_laboratorio: ubicacion.laboratorio,
+        fecha_desde: fechaDesde,
+        fecha_hasta: fechaHasta,
+      });
     } catch (err) {
       setErrorDescarga(err.message);
     } finally {
@@ -115,8 +138,8 @@ export default function Reportes({ token }) {
             </section>
             <section className="inv-contenedor" aria-label="Distribución por laboratorio">
               <div className="inv-barra-filtros">
-                <h2 className="mod-titulo-tabla">Equipos por laboratorio</h2>
-                <div className="inv-selectores">
+                <h2 className="mod-titulo-tabla">Equipos por laboratorio y filtros de exportación</h2>
+                <div className="inv-selectores mod-filtros-reporte">
                   <FiltrosUbicacion
                     compacto
                     token={token}
@@ -126,8 +149,48 @@ export default function Reportes({ token }) {
                       setPagina(1);
                     }}
                   />
+                  <label className="mod-filtro-fecha" htmlFor="rep-fecha-desde">
+                    <span>Desde</span>
+                    <input
+                      id="rep-fecha-desde"
+                      type="date"
+                      value={fechaDesde}
+                      max={fechaHasta || undefined}
+                      onChange={(e) => {
+                        setFechaDesde(e.target.value);
+                        setErrorDescarga('');
+                      }}
+                    />
+                  </label>
+                  <label className="mod-filtro-fecha" htmlFor="rep-fecha-hasta">
+                    <span>Hasta</span>
+                    <input
+                      id="rep-fecha-hasta"
+                      type="date"
+                      value={fechaHasta}
+                      min={fechaDesde || undefined}
+                      onChange={(e) => {
+                        setFechaHasta(e.target.value);
+                        setErrorDescarga('');
+                      }}
+                    />
+                  </label>
+                  {hayFiltrosActivos && (
+                    <button
+                      type="button"
+                      className="btn btn-secundario"
+                      onClick={limpiarFiltros}
+                    >
+                      Limpiar filtros
+                    </button>
+                  )}
                 </div>
               </div>
+              <p className="mod-nota-exportacion">
+                La exportación a Excel incluye las hojas <strong>Inventario</strong>,{' '}
+                <strong>Mantenimientos</strong> e <strong>Incidencias</strong> respetando la sede,
+                el laboratorio y el rango de fechas seleccionados.
+              </p>
               <div
                 className="mod-tabla-wrap"
                 role="region"
