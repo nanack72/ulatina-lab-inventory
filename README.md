@@ -1,119 +1,48 @@
-## Sistema de Inventario de Activos Tecnológicos — PES
+# Sistema de inventario de activos tecnológicos
 
-Sistema web desarrollado como parte de la **Práctica Empresarial Supervisada (PES)** para apoyar la administración y el control de los equipos tecnológicos de los laboratorios de la **Universidad Latina de Costa Rica, sede Heredia**.
+Proyecto de Práctica Empresarial Supervisada de Arianna Quirós García y Óscar Andrés Mononga Espitia para la Universidad Latina de Costa Rica. Centraliza el inventario de los laboratorios y el seguimiento de los equipos por sede.
 
-## Descripción del proyecto
+## Funciones
 
-El proyecto tiene como finalidad desarrollar una plataforma web que permita centralizar la información de los activos tecnológicos, facilitando su registro, consulta, actualización, localización y seguimiento.
-
-El sistema contempla la gestión del inventario, el historial de movimientos y cambios de estado, el control de mantenimientos, la administración de usuarios y el acceso según roles y permisos.
-
-## Objetivo
-
-Desarrollar un sistema web que facilite la gestión y el seguimiento de los activos tecnológicos de los laboratorios universitarios, contribuyendo a mejorar la organización, disponibilidad y trazabilidad de la información.
-
-## Funcionalidades contempladas
-
-- Registro y actualización de equipos tecnológicos.
-- Consulta de inventario con búsquedas y filtros.
-- Clasificación de equipos por categoría, estado, sede y laboratorio.
-- Historial de cambios de ubicación y estado.
-- Gestión y seguimiento de mantenimientos.
-- Registro de incidencias y evidencias fotográficas.
-- Autenticación y administración de usuarios.
-- Control de acceso mediante roles y permisos.
-- Generación de reportes básicos.
-- Interfaz web responsiva.
-
-> **Nota:** Las funcionalidades se encuentran en diferentes etapas de desarrollo. Esta lista representa el alcance previsto del sistema, no funcionalidades completamente implementadas.
+- Inventario con búsqueda, filtros y paginación. Registro, edición, traslado, cambio de estado, eliminación lógica y restauración según permisos.
+- Historial de cambios por equipo, fotografías e importación de equipos desde archivos Excel.
+- Panel de Inicio con accesos al inventario filtrado y criterios de revisión por antigüedad y condición. La antigüedad se configura por categoría.
+- Mantenimientos, evidencias fotográficas, incidencias, reportes y exportación básica a Excel.
+- Gestión de cuentas, roles, sedes, laboratorios, categorías y estados.
 
 ## Tecnologías
 
-| Componente                   | Tecnología        |
-| Frontend                     | React             |
-| Estilos                      | Tailwind CSS      |
-| Backend                      | Node.js y Express |
-| Base de datos                | PostgreSQL        |
-| Alojamiento de base de datos | Neon              |
-| Diseño de interfaces         | Figma             |
-| Control de versiones         | Git y GitHub      |
+React, Vite y CSS propio en el frontend. Node.js y Express en el backend. PostgreSQL para datos, historiales y fotografías nuevas. Neon se usa en el ambiente de demostración.
 
-## Arquitectura
+## Instalación local
 
-El sistema utiliza una arquitectura cliente-servidor, compuesta por una interfaz web desarrollada con React, una API REST implementada con Node.js y Express, y una base de datos relacional PostgreSQL alojada en Neon.
+1. Instalá Node.js 22.12 o posterior y prepará una base PostgreSQL de desarrollo.
+2. Restaurá el esquema base, incluidos los mecanismos de historial. Si partís de un esquema anterior, aplicá en orden las migraciones pendientes de `database/migrations`. Las migraciones requieren el esquema inicial. En una base de demo, cargá catálogos y una cuenta de prueba.
+3. Copiá `backend/.env.example` a `backend/.env`. Configurá `DATABASE_URL` con la conexión de desarrollo y `JWT_SECRET` con un secreto propio. Usá `PORT=3000` para el proxy local de Vite. La recuperación por correo requiere configurar `FRONTEND_URL` y las variables SMTP.
+4. Desde la raíz del repositorio, instalá las dependencias:
 
-## Estructura del proyecto
+   ```sh
+   npm --prefix backend ci
+   npm --prefix frontend ci --include=dev
+   ```
 
-ulatina-lab-inventory/
-├── backend/
-│   └── src/
-│       ├── config/
-│       ├── controllers/
-│       ├── middlewares/
-│       ├── routes/
-│       ├── services/
-│       └── app.js
-├── frontend/             
-├── .gitignore
-└── README.md
+5. Abrí dos terminales en la raíz. Ejecutá `npm --prefix backend run dev` en una y `npm --prefix frontend run dev` en la otra. Abrí la URL que muestre Vite, normalmente `http://localhost:5173`. Podés comprobar la conexión de la API en `http://localhost:3000/api/health/db`.
 
-La estructura puede modificarse conforme avance el desarrollo.
+## Pruebas
 
-## Estado del desarrollo
+Desde la raíz del repositorio:
 
-Actualmente se cuenta con una base de datos relacional en PostgreSQL, conexión funcional desde el backend y endpoints para consultar información del inventario.
+```sh
+npm --prefix backend test
+npm --prefix frontend test
+npm --prefix frontend run lint
+npm --prefix frontend run build
+```
 
-Se han desarrollado consultas de equipos, búsquedas mediante filtros y validaciones de identificadores. Asimismo, la base de datos cuenta con mecanismos automáticos para conservar historiales de cambios.
+Algunas pruebas de integración del backend requieren una API y credenciales de prueba configuradas. Usá un entorno separado con datos ficticios.
 
-El módulo de autenticación, las operaciones de registro y modificación, la interfaz web y la integración entre componentes continúan en desarrollo.
+## Despliegue
 
-## Equipo de desarrollo
+Compilá el frontend con `npm --prefix frontend run build` e iniciá Express con `npm --prefix backend start`. El frontend usa rutas relativas `/api`. En la rama de demo de Render, Express debe servir `frontend/dist`; en un despliegue separado, configurá el servidor web para dirigir `/api` al backend bajo el mismo dominio. El proxy de Vite corresponde al entorno local.
 
-Proyecto desarrollado por:
-
-- **Arianna Quirós García:** gestión del inventario de equipos tecnológicos.
-- **Óscar Andrés Mononga Espitia:** autenticación, usuarios, roles, mantenimientos y funcionalidades complementarias.
-
-**Contexto académico:** Práctica Empresarial Supervisada (PES).
-
-**Institución:** Universidad Latina de Costa Rica, sede Heredia.
-
-## Configuración del entorno
-
-Para ejecutar el backend en un entorno de desarrollo:
-
-1. Clonar el repositorio.
-2. Ingresar a la carpeta `backend`.
-3. Instalar las dependencias con `npm install`.
-4. Configurar un archivo `.env` con las variables de entorno necesarias.
-5. Ejecutar `npm run dev`.
-
-Ejemplo de variables de entorno:
-
-PORT=3000
-DATABASE_URL=postgresql://...
-JWT_SECRET=...
-
-Las credenciales deben almacenarse de forma privada y no deben incluirse en el repositorio.
-
-## Consideraciones
-
-### Conexión de la interfaz con la API
-
-Todos los servicios de la interfaz utilizan rutas relativas `/api`.
-En desarrollo, Vite las envía a `http://localhost:3000`.
-Al publicar, el servidor web debe dirigir `/api` hacia Express en el mismo origen;
-la configuración de proxy de Vite no se aplica al sitio compilado.
-El historial de modificaciones ya no utiliza `VITE_API_URL`.
-
-### Pruebas de las primeras correcciones
-
-Desde `backend`, ejecutar `npm ci` y después `npm test`.
-Las pruebas del parser utilizan un servidor local temporal y sustituyen las rutas,
-la base de datos y las tareas programadas. No se conectan a Neon ni comprueban
-autorización o escritura de equipos. Cubren el límite especial de importación,
-el límite general, errores JSON y la solicitud del historial.
-
-Desde `frontend`, ejecutar `npm ci`, `npm run lint` y `npm run build`.
-
-Este repositorio corresponde a un proyecto académico en desarrollo. Las funcionalidades pendientes de autenticación, autorización y escritura segura deben completarse y verificarse antes de utilizar el sistema con información institucional real.
+Configurá los secretos en la plataforma de despliegue y usá una base de demo independiente. Para un despliegue institucional, prepará un rol de base con permisos limitados y verificá los accesos por laboratorio y la restauración de respaldos.

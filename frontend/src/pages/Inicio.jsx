@@ -289,7 +289,7 @@ export default function Inicio({ usuario, token, onVerEquipo, onIrA, onSesionExp
           valor={cifra(equiposListos, resumen.noOperativos)}
           detalle={
             equiposListos
-              ? `${Math.round((100 - resumen.porcentajeOperativos) * 10) / 10}% del inventario`
+              ? `${resumen.porcentajeNoOperativos}% del inventario`
               : 'Consultando…'
           }
           icono={Ban}

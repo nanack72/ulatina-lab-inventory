@@ -389,6 +389,47 @@
   font-size: 13px;
 }
 
+.cfg-campo-casilla {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-content: center;
+  align-items: center;
+  gap: 4px 10px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-sm);
+  background: var(--verde-suave);
+  cursor: pointer;
+}
+
+.cfg-campo-casilla > span {
+  grid-area: 1 / 2;
+  color: var(--texto);
+  font-weight: 600;
+}
+
+.cfg-campo-casilla > input[type='checkbox'] {
+  grid-area: 1 / 1;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--verde);
+  cursor: inherit;
+}
+
+.cfg-campo-casilla > small {
+  grid-column: 2;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.cfg-campo-casilla:has(input:disabled) {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
 .cfg-campo textarea {
   resize: vertical;
 }

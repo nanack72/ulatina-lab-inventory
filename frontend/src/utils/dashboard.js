@@ -119,6 +119,7 @@ export function resumirInicio(equipos, mantenimientos, resumenMantenimientos = n
     laboratorios: new Set(equipos.map((equipo) => equipo.laboratorio).filter(Boolean)).size,
     operativos,
     noOperativos: total - operativos,
+    porcentajeNoOperativos: total ? Math.round(((total - operativos) / total) * 1000) / 10 : 0,
     porcentajeOperativos: total ? Math.round((operativos / total) * 1000) / 10 : 0,
     enMantenimiento: contar('mantenimiento'),
     fueraDeServicio: contar('baja'),

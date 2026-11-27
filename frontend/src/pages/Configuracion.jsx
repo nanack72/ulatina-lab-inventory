@@ -529,7 +529,10 @@ export default function Configuracion({ token, soloRoles = false }) {
               <form onSubmit={guardar}>
                 <fieldset className="cfg-formulario" disabled={guardando}>
                   {config.campos.map(({ campo, titulo, max, obligatorio, tipo, ayuda }, indice) => (
-                    <label key={campo} className="cfg-campo">
+                    <label
+                      key={campo}
+                      className={tipo === 'booleano' ? 'cfg-campo cfg-campo-casilla' : 'cfg-campo'}
+                    >
                       <span>
                         {titulo}
                         {obligatorio ? ' *' : ''}
