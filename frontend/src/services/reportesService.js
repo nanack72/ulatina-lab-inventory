@@ -53,9 +53,18 @@ export async function consultarMantenimientosPorLaboratorio(idLaboratorio, token
 /**
  * Descarga el archivo de reporte consolidado en formato Excel (.xlsx).
  * Procesa la respuesta binaria como Blob y genera la descarga nativa.
+ * Respeta los filtros opcionales de sede, laboratorio y rango de fechas.
  */
-export async function descargarReporteExcel(token) {
-  const respuesta = await fetch(`${API_URL}/exportar-excel`, {
+export async function descargarReporteExcel(token, filtros = {}) {
+  const params = new URLSearchParams();
+
+  if (filtros?.id_sede) params.set('id_sede', String(filtros.id_sede));
+  if (filtros?.id_laboratorio) params.set('id_laboratorio', String(filtros.id_laboratorio));
+  if (filtros?.fecha_desde) params.set('fecha_desde', String(filtros.fecha_desde));
+  if (filtros?.fecha_hasta) params.set('fecha_hasta', String(filtros.fecha_hasta));
+
+  const query = params.toString();
+  const respuesta = await fetch(`${API_URL}/exportar-excel${query ? `?${query}` : ''}`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },

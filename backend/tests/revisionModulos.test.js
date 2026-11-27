@@ -122,4 +122,24 @@ test('paginación real de mantenimientos y permisos con PostgreSQL temporal', as
   assert.equal((await listarMantenimientos(pool, {}, { idUsuario: 3, rol: 'Tecnico' })).total, 0);
   await db.exec('INSERT INTO usuario_laboratorio VALUES(1,1,1)');
   assert.equal((await listarMantenimientos(pool, {}, tecnico)).total, 25);
+
+  // Resumen real sobre TODO el conjunto accesible aunque la página limite a 5 o 10 filas (ej. 12 órdenes abiertas)
+  await db.exec(`
+    INSERT INTO bitacora_mantenimiento
+    SELECT 100 + n, 1, 2,
+      CASE WHEN n <= 5 THEN 'Correctivo' ELSE 'Preventivo' END,
+      null, 'Orden abierta ' || n, 1,
+      '2026-11-10 12:00:00+00'::timestamptz + (n || ' minutes')::interval,
+      CASE WHEN n <= 4 THEN 'Pendiente Repuesto' ELSE 'En Proceso' END
+    FROM generate_series(1, 12) n;
+  `);
+  const paginaInicio = await listarMantenimientos(pool, { pagina: 1, limite: 5 }, tecnico);
+  assert.equal(paginaInicio.data.length, 5);
+  assert.deepEqual(paginaInicio.resumen, {
+    abiertos: 12,
+    enProceso: 8,
+    esperandoRepuesto: 4,
+    correctivos: 5,
+    preventivos: 7,
+  });
 });

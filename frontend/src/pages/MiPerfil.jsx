@@ -5,7 +5,7 @@ import { UserRound, Mail, Shield, LockKeyhole } from 'lucide-react';
 import CambiarContrasena from '../components/CambiarContrasena';
 import '../styles/miPerfil.css';
 
-export default function MiPerfil({ usuario, token }) {
+export default function MiPerfil({ usuario, token, onTokenActualizado }) {
   const [mostrarCambio, setMostrarCambio] = useState(false);
   const [mensaje, setMensaje] = useState('');
 
@@ -101,9 +101,12 @@ export default function MiPerfil({ usuario, token }) {
         <CambiarContrasena
           token={token}
           onCerrar={() => setMostrarCambio(false)}
-          onContrasenaCambiada={() => {
+          onContrasenaCambiada={(tokenNuevo) => {
+            if (tokenNuevo) {
+              onTokenActualizado?.(tokenNuevo);
+            }
             setMostrarCambio(false);
-            setMensaje('Contraseña actualizada correctamente.');
+            setMensaje('Contraseña actualizada correctamente. Las sesiones anteriores fueron cerradas.');
           }}
         />
       )}

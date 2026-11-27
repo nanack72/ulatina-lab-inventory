@@ -64,7 +64,7 @@ function obtenerIdEquipo(equipo) {
 
 // COMPONENTE PRINCIPAL
 
-export default function MainLayout({ usuario, token, cerrarSesion }) {
+export default function MainLayout({ usuario, token, cerrarSesion, onTokenActualizado }) {
   const [paginaActual, cambiarPagina] = useState('inicio');
   const [contextoInicio, setContextoInicio] = useState({});
   useTablasEnTarjetas();
@@ -353,7 +353,13 @@ export default function MainLayout({ usuario, token, cerrarSesion }) {
 
     // MI PERFIL
     if (paginaActual === 'perfil') {
-      return <MiPerfil usuario={usuario} token={token} />;
+      return (
+        <MiPerfil
+          usuario={usuario}
+          token={token}
+          onTokenActualizado={onTokenActualizado}
+        />
+      );
     }
 
     // ADMINISTRACIÓN DE USUARIOS

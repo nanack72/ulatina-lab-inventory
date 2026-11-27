@@ -2,6 +2,7 @@ const pool = require('../config/database');
 const { listarMantenimientos } = require('../services/mantenimientosListado');
 const { validarEntradaMantenimiento } = require('../utils/validacionMantenimiento');
 const { verificarAccesoEquipo } = require('../utils/accesoEquipos');
+const { tieneAccesoGlobal } = require('../utils/alcanceUsuario');
 
 const normalizarTexto = (texto) =>
   String(texto ?? '')
@@ -11,16 +12,13 @@ const normalizarTexto = (texto) =>
     .replace(/[\u0300-\u036f]/g, '');
 
 /**
- * Roles con visibilidad global sobre sedes y laboratorios.
- * Coherente con incidencias, evidencias y reportes.
+ * Únicamente el Superadministrador posee acceso global sobre sedes y laboratorios.
+ * Coherente con inventario, dashboard, incidencias, evidencias y reportes.
  *
  * @param {string} rol - Rol actual del usuario
  * @returns {boolean}
  */
-const esUsuarioAdministrador = (rol) =>
-  ['superadministrador', 'administrador', 'admin', 'coordinador', 'director'].includes(
-    normalizarTexto(rol)
-  );
+const esUsuarioAdministrador = (rol) => tieneAccesoGlobal(rol);
 
 const esEstadoBaja = (nombreEstado) => {
   const n = normalizarTexto(nombreEstado);
@@ -365,6 +363,8 @@ const crearMantenimiento = async (req, res) => {
         });
       }
 
+      let estadoForzadoPorCorrectivo = false;
+
       // RN16: impedir abrir un segundo correctivo mientras ya exista uno en curso
       if (tipoEncontrado === 'Correctivo') {
         const correctivoActivo = await client.query(
@@ -388,17 +388,49 @@ const crearMantenimiento = async (req, res) => {
           });
         }
 
-        // RF21 / RN12: al abrir un correctivo, pasar el equipo automáticamente a 'En mantenimiento'
-        if (!nuevoEstadoId) {
+        // RF21 / RN12: al abrir un correctivo, pasar el equipo siempre a 'En mantenimiento'
+        // aunque la solicitud incluya un id_nuevo_estado distinto (ej. Operativo)
+        const estadoMantenimiento = await resolverEstadoPorNombre(
+          client,
+          'En mantenimiento',
+          'Equipo retirado temporalmente del uso por mantenimiento correctivo'
+        );
+
+        if (!estadoMantenimiento) {
+          throw new Error('No se pudo resolver el estado de mantenimiento.');
+        }
+
+        if (nuevoEstadoId !== null && nuevoEstadoId !== estadoMantenimiento.id_estado) {
+          estadoForzadoPorCorrectivo = true;
+        }
+        nuevoEstadoId = estadoMantenimiento.id_estado;
+      } else if (nuevoEstadoId !== null) {
+        // Un preventivo con id_nuevo_estado tampoco puede liberar un equipo con correctivo activo
+        const correctivoActivo = await client.query(
+          `
+                    SELECT 1
+                    FROM public.bitacora_mantenimiento
+                    WHERE id_equipo = $1
+                      AND LOWER(TRIM(tipo_mantenimiento)) = 'correctivo'
+                      AND LOWER(TRIM(estado_mantenimiento)) IN ('en proceso', 'pendiente repuesto')
+                    LIMIT 1
+                    `,
+          [equipoId]
+        );
+
+        if (correctivoActivo.rowCount > 0) {
           const estadoMantenimiento = await resolverEstadoPorNombre(
             client,
             'En mantenimiento',
-            'Equipo retirado temporalmente del uso por mantenimiento correctivo'
+            'Equipo con mantenimiento correctivo pendiente'
           );
-
-          if (estadoMantenimiento) {
-            nuevoEstadoId = estadoMantenimiento.id_estado;
+          if (!estadoMantenimiento) {
+            throw new Error('No se pudo resolver el estado de mantenimiento.');
           }
+          if (nuevoEstadoId !== estadoMantenimiento.id_estado) {
+            estadoForzadoPorCorrectivo = true;
+          }
+          nuevoEstadoId = estadoMantenimiento.id_estado;
         }
       }
 
@@ -440,7 +472,7 @@ const crearMantenimiento = async (req, res) => {
 
       const mantenimientoCreado = resultadoBitacora.rows[0];
 
-      let auditoriaEstado = null;
+      let cambioEstadoInfo = null;
 
       // Cambiar estado del equipo si corresponde
       if (nuevoEstadoId && nuevoEstadoId !== equipoBloqueado.id_estado) {
@@ -455,7 +487,7 @@ const crearMantenimiento = async (req, res) => {
 
         // Descripción del cambio para el historial
         const motivoFinal =
-          motivo_cambio_estado && motivo_cambio_estado.trim()
+          !estadoForzadoPorCorrectivo && motivo_cambio_estado && motivo_cambio_estado.trim()
             ? motivo_cambio_estado.trim().slice(0, 255)
             : `Cambio automático por mantenimiento #${mantenimientoCreado.id_bitacora} (${tipoEncontrado} - ${estadoMantenimientoFinal})`.slice(
                 0,
@@ -479,7 +511,11 @@ const crearMantenimiento = async (req, res) => {
           [motivoFinal, equipoId]
         );
 
-        auditoriaEstado = resultadoHistorial.rows[0];
+        cambioEstadoInfo = {
+          id_estado_anterior: equipoBloqueado.id_estado,
+          id_estado_nuevo: nuevoEstadoId,
+          historial: resultadoHistorial.rows[0] || null,
+        };
       }
 
       await client.query('COMMIT');
@@ -489,13 +525,7 @@ const crearMantenimiento = async (req, res) => {
         message: 'Mantenimiento registrado exitosamente',
         data: {
           ...mantenimientoCreado,
-          cambio_estado: auditoriaEstado
-            ? {
-                id_estado_anterior: equipoBloqueado.id_estado,
-                id_estado_nuevo: nuevoEstadoId,
-                historial: auditoriaEstado,
-              }
-            : null,
+          cambio_estado: cambioEstadoInfo,
         },
       });
     } catch (transaccionError) {
@@ -1060,6 +1090,8 @@ const actualizarEstadoMantenimiento = async (req, res) => {
         });
       }
 
+      let estadoForzadoPorCorrectivo = false;
+
       // RN14 / RU09: exigir evidencia fotográfica antes de marcar como Completado
       if (estadoMantenimientoNormalizado === 'Completado') {
         const validacionEvidencias = await validarEvidenciasParaCierre(
@@ -1093,6 +1125,9 @@ const actualizarEstadoMantenimiento = async (req, res) => {
             'Equipo con mantenimiento correctivo pendiente'
           );
           if (!estadoPendiente) throw new Error('No se pudo resolver el estado de mantenimiento.');
+          if (nuevoEstadoEquipoId !== null && nuevoEstadoEquipoId !== estadoPendiente.id_estado) {
+            estadoForzadoPorCorrectivo = true;
+          }
           nuevoEstadoEquipoId = estadoPendiente.id_estado;
         }
 
@@ -1108,6 +1143,37 @@ const actualizarEstadoMantenimiento = async (req, res) => {
           if (estadoOperativo) {
             nuevoEstadoEquipoId = estadoOperativo.id_estado;
           }
+        }
+      } else if (nuevoEstadoEquipoId !== null) {
+        // Mientras exista un correctivo abierto (esta orden u otra), no se puede cambiar el equipo a otro estado
+        const esCorrectivoAbierto =
+          normalizarTexto(ordenBloqueada.tipo_mantenimiento) === 'correctivo';
+        let tieneCorrectivoPendiente = esCorrectivoAbierto;
+
+        if (!tieneCorrectivoPendiente) {
+          const pendientes = await client.query(
+            `
+                    SELECT 1 FROM public.bitacora_mantenimiento
+                    WHERE id_equipo = $1
+                      AND LOWER(TRIM(tipo_mantenimiento)) = 'correctivo'
+                      AND LOWER(TRIM(estado_mantenimiento)) IN ('en proceso', 'pendiente repuesto')
+                    LIMIT 1`,
+            [ordenBloqueada.id_equipo]
+          );
+          tieneCorrectivoPendiente = pendientes.rowCount > 0;
+        }
+
+        if (tieneCorrectivoPendiente) {
+          const estadoPendiente = await resolverEstadoPorNombre(
+            client,
+            'En mantenimiento',
+            'Equipo con mantenimiento correctivo pendiente'
+          );
+          if (!estadoPendiente) throw new Error('No se pudo resolver el estado de mantenimiento.');
+          if (nuevoEstadoEquipoId !== estadoPendiente.id_estado) {
+            estadoForzadoPorCorrectivo = true;
+          }
+          nuevoEstadoEquipoId = estadoPendiente.id_estado;
         }
       }
 
@@ -1162,7 +1228,7 @@ const actualizarEstadoMantenimiento = async (req, res) => {
 
         // Preparar motivo del cambio de estado
         const motivoTexto =
-          motivo_cambio_estado && motivo_cambio_estado.trim()
+          !estadoForzadoPorCorrectivo && motivo_cambio_estado && motivo_cambio_estado.trim()
             ? motivo_cambio_estado.trim().slice(0, 255)
             : `Cambio automático por cierre/actualización de mantenimiento #${id} (${mantenimientoActualizado.estado_mantenimiento})`.slice(
                 0,

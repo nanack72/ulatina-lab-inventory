@@ -161,6 +161,7 @@ export default function Inicio({ usuario, token, onVerEquipo, onIrA, onSesionExp
 
   const {
     mantenimientos,
+    resumenMantenimientos,
     actividad,
     cargando: cargandoDatos,
     errorMantenimientos,
@@ -170,7 +171,7 @@ export default function Inicio({ usuario, token, onVerEquipo, onIrA, onSesionExp
   } = useDatosInicio(token, onSesionExpirada);
 
   const cargando = cargandoEquipos || cargandoDatos;
-  const resumen = resumirInicio(equipos, mantenimientos);
+  const resumen = resumirInicio(equipos, mantenimientos, resumenMantenimientos);
 
   const hoy = new Date(ahora);
   const revision = resumirRevisionEquipos(equipos, hoy.getFullYear());

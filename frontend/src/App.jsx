@@ -19,6 +19,12 @@ export default function App() {
     setSesion({ token, usuario });
   };
 
+  // Actualizar el token activo tras rotar credenciales en Mi perfil
+  const actualizarToken = (nuevoToken) => {
+    if (!nuevoToken) return;
+    setSesion((actual) => (actual ? { ...actual, token: nuevoToken } : actual));
+  };
+
   // Cerrar sesión de forma segura en el backend
   const cerrarSesion = async () => {
     if (cerrandoSesionRef.current || !sesion) {
@@ -63,7 +69,12 @@ export default function App() {
     <>
       {errorLogout && <Notificacion tipo="error">{errorLogout}</Notificacion>}
 
-      <MainLayout usuario={sesion.usuario} token={sesion.token} cerrarSesion={cerrarSesion} />
+      <MainLayout
+        usuario={sesion.usuario}
+        token={sesion.token}
+        cerrarSesion={cerrarSesion}
+        onTokenActualizado={actualizarToken}
+      />
     </>
   );
 }

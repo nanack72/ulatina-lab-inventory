@@ -11,6 +11,24 @@ const {
 // Hash válido de bcrypt (12 rondas) usado solo para igualar tiempos de respuesta.
 const HASH_FICTICIO = bcrypt.hashSync('contrasena-ficticia-sin-uso', 12);
 
+const firmarTokenSesion = (usuario) =>
+  jwt.sign(
+    {
+      idUsuario: usuario.id_usuario,
+      nombre: usuario.nombre_completo,
+      correo: usuario.correo_institucional,
+      idRol: usuario.id_rol,
+      rol: usuario.rol,
+      versionSesion: Number(usuario.version_sesion),
+    },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: process.env.JWT_EXPIRES_IN || '8h',
+      jwtid: crypto.randomUUID(),
+      algorithm: 'HS256',
+    }
+  );
+
 // Procesa el inicio de sesión del usuario.
 const login = async (req, res) => {
   const { correo, contrasena } = req.body || {};
@@ -39,6 +57,7 @@ const login = async (req, res) => {
                 u.activo,
                 u.permiso_inventario,
                 u.puede_eliminar_equipos,
+                u.version_sesion,
                 r.nombre AS rol
             FROM public.usuario u
             INNER JOIN public.rol r
@@ -76,21 +95,7 @@ const login = async (req, res) => {
     }
 
     // El permiso se consulta en PostgreSQL mediante authMiddleware.
-    const token = jwt.sign(
-      {
-        idUsuario: usuario.id_usuario,
-        nombre: usuario.nombre_completo,
-        correo: usuario.correo_institucional,
-        idRol: usuario.id_rol,
-        rol: usuario.rol,
-      },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: process.env.JWT_EXPIRES_IN || '8h',
-        jwtid: crypto.randomUUID(),
-        algorithm: 'HS256',
-      }
-    );
+    const token = firmarTokenSesion(usuario);
 
     // Nunca devolver el hash de la contraseña.
     return res.json({
@@ -219,11 +224,12 @@ const cambiarContrasena = async (req, res) => {
     const actualizacion = await pool.query(
       `
             UPDATE public.usuario
-            SET contrasena_hash = $1
+            SET contrasena_hash = $1,
+                version_sesion = version_sesion + 1
             WHERE id_usuario = $2
               AND activo = true
               AND contrasena_hash = $3
-            RETURNING id_usuario
+            RETURNING id_usuario, version_sesion
             `,
       [hashNuevo, idUsuario, hashActual]
     );
@@ -235,9 +241,22 @@ const cambiarContrasena = async (req, res) => {
       });
     }
 
+    // Invalidar todos los JWT previos (incluido el anterior de esta sesión) y emitir uno nuevo
+    const tokenNuevo = process.env.JWT_SECRET
+      ? firmarTokenSesion({
+          id_usuario: req.usuario.idUsuario,
+          nombre_completo: req.usuario.nombre,
+          correo_institucional: req.usuario.correo,
+          id_rol: req.usuario.idRol,
+          rol: req.usuario.rol,
+          version_sesion: actualizacion.rows[0].version_sesion,
+        })
+      : null;
+
     return res.status(200).json({
       success: true,
-      message: 'Contraseña actualizada correctamente.',
+      message: 'Contraseña actualizada correctamente. Las sesiones anteriores fueron cerradas.',
+      ...(tokenNuevo ? { token: tokenNuevo } : {}),
     });
   } catch (error) {
     console.error('Error al cambiar contraseña:', error);

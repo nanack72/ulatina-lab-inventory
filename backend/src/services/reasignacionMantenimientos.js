@@ -1,19 +1,17 @@
-const ROLES_GLOBALES = [
+const { normalizarRol, tieneAccesoGlobal } = require('../utils/alcanceUsuario');
+
+const ROLES_GLOBALES = ['superadministrador'];
+
+const ROLES_OPERATIVOS = [
   'superadministrador',
   'administrador',
   'admin',
   'coordinador',
   'director',
+  'tecnico',
 ];
 
-const ROLES_OPERATIVOS = [...ROLES_GLOBALES, 'tecnico'];
-
-const normalizarTexto = (valor) =>
-  String(valor ?? '')
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
+const normalizarTexto = normalizarRol;
 
 const esIdPositivo = (valor) =>
   ['string', 'number'].includes(typeof valor) &&
@@ -140,9 +138,9 @@ async function validarYReasignarOrdenesAbiertas(
     );
   }
 
-  // Si el sustituto no tiene acceso global, comprobar que tenga permiso sobre
-  // los laboratorios de las órdenes abiertas (cuando las tablas existan).
-  if (!ROLES_GLOBALES.includes(rolSustituto)) {
+  // Si el sustituto no tiene acceso global (solo Superadministrador), comprobar que
+  // tenga permiso sobre los laboratorios de las órdenes abiertas (cuando las tablas existan).
+  if (!tieneAccesoGlobal(rolSustituto)) {
     const [hayEquipo, hayLab, hayUsuarioSede, hayUsuarioLab] =
       await Promise.all([
         tablaExiste(cliente, 'public.equipo'),

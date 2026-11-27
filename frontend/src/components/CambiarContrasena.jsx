@@ -54,7 +54,7 @@ export default function CambiarContrasena({ token, onCerrar, onContrasenaCambiad
       setActual('');
       setNueva('');
       setConfirmacion('');
-      onContrasenaCambiada?.();
+      onContrasenaCambiada?.(resultado.token || null);
     } catch (err) {
       setError(err.message);
     } finally {

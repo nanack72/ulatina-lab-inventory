@@ -5,6 +5,8 @@ const vm = require('node:vm');
 const { createRequire } = require('node:module');
 const { test } = require('node:test');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const crypto = require('node:crypto');
 const { PGlite } = require('@electric-sql/pglite');
 const {
   MENSAJE_GENERICO_SOLICITUD,
@@ -54,6 +56,11 @@ test('Recuperación de contraseña con migración 011 y rol pes_runtime (PGlite)
       permiso_inventario text NOT NULL DEFAULT 'consulta',
       puede_eliminar_equipos boolean NOT NULL DEFAULT false
     );
+    CREATE TABLE public.token_revocado (
+      jti uuid PRIMARY KEY,
+      id_usuario integer NOT NULL REFERENCES public.usuario(id_usuario) ON DELETE CASCADE,
+      expira_en timestamptz NOT NULL
+    );
     INSERT INTO public.rol VALUES (1, 'Superadministrador'), (2, 'Tecnico');
     INSERT INTO public.usuario
       (id_usuario, id_rol, nombre_completo, correo_institucional, contrasena_hash, activo)
@@ -63,7 +70,9 @@ test('Recuperación de contraseña con migración 011 y rol pes_runtime (PGlite)
 
     ALTER TABLE public.rol OWNER TO pes_owner;
     ALTER TABLE public.usuario OWNER TO pes_owner;
+    ALTER TABLE public.token_revocado OWNER TO pes_owner;
     GRANT SELECT ON public.rol TO pes_runtime;
+    GRANT SELECT, INSERT ON public.token_revocado TO pes_runtime;
     GRANT SELECT (id_usuario, id_rol, nombre_completo, correo_institucional, contrasena_hash, activo, permiso_inventario, puede_eliminar_equipos)
       ON public.usuario TO pes_runtime;
   `);
@@ -72,7 +81,12 @@ test('Recuperación de contraseña con migración 011 y rol pes_runtime (PGlite)
     path.join(__dirname, '../../database/migrations/011_recuperacion_contrasena.sql'),
     'utf8'
   );
+  const mig012 = fs.readFileSync(
+    path.join(__dirname, '../../database/migrations/012_invalidacion_sesiones.sql'),
+    'utf8'
+  );
   await db.exec(mig011);
+  await db.exec(mig012);
   await db.exec('SET ROLE pes_runtime');
 
   const pool = crearPoolPglite(db);
@@ -212,28 +226,11 @@ test('Recuperación de contraseña con migración 011 y rol pes_runtime (PGlite)
   await db.query('UPDATE public.usuario SET activo = true WHERE id_usuario = 1');
   await db.exec('SET ROLE pes_runtime');
 
-  // 7. Restablecimiento exitoso + un solo uso + login posterior con la nueva clave
-  const claveNueva = 'NuevaClaveULatina2026!';
-  const resCambio = await restablecerContrasenaConToken(pool, {
-    token: tercerToken,
-    contrasenaNueva: claveNueva,
-  });
-  assert.equal(resCambio.success, true);
-
-  // Reutilizar el mismo token una segunda vez debe fallar (un solo uso)
-  await assert.rejects(
-    () =>
-      restablecerContrasenaConToken(pool, {
-        token: tercerToken,
-        contrasenaNueva: 'OtraClaveDiferente2026!',
-      }),
-    (err) => err.status === 400
-  );
-
-  // Verificar login real con authController: clave vieja falla (401), clave nueva entra (200 + JWT)
+  // Preparar authController y authMiddleware reales apuntando a PGlite (con pes_runtime)
   const rutaAuthCtrl = path.join(__dirname, '../src/controllers/authController.js');
-  const localReq = createRequire(rutaAuthCtrl);
+  const rutaAuthMw = path.join(__dirname, '../src/middlewares/authMiddleware.js');
   const modAuth = { exports: {} };
+  const modMw = { exports: {} };
   const secretoPrevio = process.env.JWT_SECRET;
   process.env.JWT_SECRET = 'secreto-pruebas-recuperacion-2026';
   t.after(() => {
@@ -246,7 +243,14 @@ test('Recuperación de contraseña con migración 011 y rol pes_runtime (PGlite)
     console,
     Buffer,
     process,
-    require: (n) => (n === '../config/database' ? pool : localReq(n)),
+    require: (n) => (n === '../config/database' ? pool : createRequire(rutaAuthCtrl)(n)),
+  });
+  vm.runInNewContext(fs.readFileSync(rutaAuthMw, 'utf8'), {
+    module: modMw,
+    console,
+    Buffer,
+    process,
+    require: (n) => (n === '../config/database' ? pool : createRequire(rutaAuthMw)(n)),
   });
 
   const ejecutarLogin = async (contrasena) => {
@@ -268,6 +272,66 @@ test('Recuperación de contraseña con migración 011 y rol pes_runtime (PGlite)
     return res;
   };
 
+  const probarMiddleware = async (token) => {
+    let paso = false;
+    const req = { headers: { authorization: `Bearer ${token}` } };
+    const res = {
+      codigo: 200,
+      status(c) {
+        this.codigo = c;
+        return this;
+      },
+      json(d) {
+        this.body = d;
+        return this;
+      },
+    };
+    await modMw.exports.verificarToken(req, res, () => {
+      paso = true;
+    });
+    return { paso, codigo: res.codigo, body: res.body, usuario: req.usuario };
+  };
+
+  // Emitir una sesión ANTES del restablecimiento de contraseña y verificar que inicialmente es válida
+  const loginAntesReset = await ejecutarLogin('ClaveInicialSegura2026!');
+  assert.equal(loginAntesReset.codigo, 200);
+  const tokenPrevioReset = loginAntesReset.body.token;
+  assert.equal((await probarMiddleware(tokenPrevioReset)).paso, true);
+
+  // 7. Restablecimiento exitoso + un solo uso + invalidación inmediata de sesiones previas (OWASP)
+  const claveNueva = 'NuevaClaveULatina2026!';
+  const resCambio = await restablecerContrasenaConToken(pool, {
+    token: tercerToken,
+    contrasenaNueva: claveNueva,
+  });
+  assert.equal(resCambio.success, true);
+
+  // El token emitido ANTES del restablecimiento debe ser rechazado de inmediato (401)
+  const accesoConTokenViejo = await probarMiddleware(tokenPrevioReset);
+  assert.equal(accesoConTokenViejo.paso, false);
+  assert.equal(accesoConTokenViejo.codigo, 401);
+
+  // Un token heredado sin versionSesion también debe ser rechazado (401)
+  const tokenSinVersion = jwt.sign(
+    { idUsuario: 1, rol: 'Tecnico' },
+    process.env.JWT_SECRET,
+    { expiresIn: '1h', jwtid: crypto.randomUUID(), algorithm: 'HS256' }
+  );
+  const accesoSinVersion = await probarMiddleware(tokenSinVersion);
+  assert.equal(accesoSinVersion.paso, false);
+  assert.equal(accesoSinVersion.codigo, 401);
+
+  // Reutilizar el mismo token una segunda vez debe fallar (un solo uso)
+  await assert.rejects(
+    () =>
+      restablecerContrasenaConToken(pool, {
+        token: tercerToken,
+        contrasenaNueva: 'OtraClaveDiferente2026!',
+      }),
+    (err) => err.status === 400
+  );
+
+  // Login con clave vieja falla (401); login con clave nueva entra (200) y pasa verificarToken
   const loginViejo = await ejecutarLogin('ClaveInicialSegura2026!');
   assert.equal(loginViejo.codigo, 401);
 
@@ -275,6 +339,47 @@ test('Recuperación de contraseña con migración 011 y rol pes_runtime (PGlite)
   assert.equal(loginNuevo.codigo, 200);
   assert.equal(loginNuevo.body.success, true);
   assert.ok(loginNuevo.body.token);
+  const sesionPrincipal = await probarMiddleware(loginNuevo.body.token);
+  assert.equal(sesionPrincipal.paso, true);
+
+  // Segunda sesión abierta en otro dispositivo antes de cambiar contraseña desde Mi perfil
+  const loginOtroDispositivo = await ejecutarLogin(claveNueva);
+  assert.equal(loginOtroDispositivo.codigo, 200);
+  assert.equal((await probarMiddleware(loginOtroDispositivo.body.token)).paso, true);
+
+  // Al cambiar contraseña autenticado (PATCH /mi-contrasena), todas las sesiones previas mueren (401)
+  // y el token rotado devuelto en la respuesta sí queda vigente.
+  const claveTercera = 'TerceraClaveSegura2026!';
+  const resCambiar = {
+    codigo: 200,
+    status(c) {
+      this.codigo = c;
+      return this;
+    },
+    json(d) {
+      this.body = d;
+      return this;
+    },
+  };
+  await modAuth.exports.cambiarContrasena(
+    {
+      usuario: sesionPrincipal.usuario,
+      body: { contrasenaActual: claveNueva, contrasenaNueva: claveTercera },
+    },
+    resCambiar
+  );
+  assert.equal(resCambiar.codigo, 200);
+  assert.ok(resCambiar.body.token);
+
+  assert.equal((await probarMiddleware(loginNuevo.body.token)).codigo, 401);
+  assert.equal((await probarMiddleware(loginOtroDispositivo.body.token)).codigo, 401);
+  assert.equal((await probarMiddleware(resCambiar.body.token)).paso, true);
+
+  // Restricción CHECK de migración 012 impide version_sesion < 1
+  await assert.rejects(
+    () => db.query('UPDATE public.usuario SET version_sesion = 0 WHERE id_usuario = 1'),
+    (err) => err.code === '23514'
+  );
 
   // 8. Permisos mínimos de pes_runtime: no puede hacer DELETE ni alterar token_hash,
   // pero SÍ puede invocar la función SECURITY DEFINER de limpieza de tokens antiguos.

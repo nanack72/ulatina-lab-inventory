@@ -1,5 +1,6 @@
 const pool = require('../config/database');
 const { verificarAccesoEquipo } = require('../utils/accesoEquipos');
+const { tieneAccesoGlobal } = require('../utils/alcanceUsuario');
 
 // Valores canónicos con tilde
 const PRIORIDADES_VALIDAS = ['Baja', 'Media', 'Alta', 'Crítica'];
@@ -18,10 +19,7 @@ const esIdValido = (valor) =>
   /^[1-9]\d*$/.test(String(valor ?? '').trim()) &&
   Number.isSafeInteger(Number(valor));
 
-const esUsuarioAdmin = (rol) =>
-  ['superadministrador', 'administrador', 'admin', 'coordinador', 'director'].includes(
-    normalizar(rol)
-  );
+const esUsuarioAdmin = (rol) => tieneAccesoGlobal(rol);
 
 /**
  * 1. REGISTRAR INCIDENCIA

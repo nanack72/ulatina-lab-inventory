@@ -1,5 +1,5 @@
-// Consulta GET autenticada y devuelve resultado.data (arreglo).
-async function consultar(url, token, signal, mensajeError) {
+// Consulta GET autenticada y devuelve la respuesta JSON validada.
+async function consultarRespuesta(url, token, signal, mensajeError) {
   if (!token) {
     throw new Error('Debe iniciar sesión para consultar esta información.');
   }
@@ -37,6 +37,12 @@ async function consultar(url, token, signal, mensajeError) {
     throw new Error('El servidor devolvió datos con un formato inesperado.');
   }
 
+  return resultado;
+}
+
+// Consulta GET autenticada y devuelve resultado.data (arreglo).
+async function consultar(url, token, signal, mensajeError) {
+  const resultado = await consultarRespuesta(url, token, signal, mensajeError);
   return resultado.data;
 }
 
@@ -48,6 +54,20 @@ export function obtenerMantenimientos(token, signal) {
     signal,
     'No fue posible consultar los mantenimientos.'
   );
+}
+
+// GET /api/mantenimientos?pagina=1&limite=5 (recientes + conteo real total en resumen)
+export async function obtenerMantenimientosInicio(token, signal, limite = 5) {
+  const resultado = await consultarRespuesta(
+    `/api/mantenimientos?pagina=1&limite=${encodeURIComponent(limite)}`,
+    token,
+    signal,
+    'No fue posible consultar los mantenimientos.'
+  );
+  return {
+    data: resultado.data,
+    resumen: resultado.resumen || null,
+  };
 }
 
 // GET /api/dashboard/actividad
